@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { Logo } from "../components/AppShell";
 import { createDashboard, getDashboard } from "../server/api";
@@ -21,7 +21,7 @@ function LandingPage() {
   React.useEffect(() => {
     const existing = getStoredDashboardId();
     if (existing) {
-      // Already logged in — soft suggest
+      // Already logged in â€” soft suggest
       setLoginId(existing);
     }
   }, []);
@@ -47,7 +47,7 @@ function LandingPage() {
     setLoading(true);
     const id = loginId.trim();
     if (!/^[0-9a-fA-F-]{36}$/.test(id)) {
-      setError("ID må være en gyldig UUID (36 tegn med bindestreker).");
+      setError("ID mÃ¥ vÃ¦re en gyldig UUID (36 tegn med bindestreker).");
       setLoading(false);
       return;
     }
@@ -84,26 +84,26 @@ function LandingPage() {
     <div className="min-h-screen flex flex-col">
       <header className="px-6 py-4 flex items-center gap-2">
         <Logo className="w-9 h-9" />
-        <span className="font-semibold text-lg">Økonomi</span>
+        <span className="font-semibold text-lg">Ã˜konomi</span>
       </header>
 
       <main className="flex-1 flex items-center justify-center px-5">
         <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-10 items-center">
           <div className="space-y-5">
-            <div className="badge">Privat · Anonymt · Norsk</div>
+            <div className="badge">Privat Â· Anonymt Â· Norsk</div>
             <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
-              Ta kontroll over <span className="bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent">økonomien</span> din.
+              Ta kontroll over <span className="bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent">Ã¸konomien</span> din.
             </h1>
-            <p className="text-[color:var(--color-muted)] text-lg leading-relaxed">
-              Ett dashboard for budsjett, sparing, formue og lån. Ingen bruker, ingen e-post —
-              bare en privat ID som er din nøkkel.
+            <p className="text-muted text-lg leading-relaxed">
+              Ett dashboard for budsjett, sparing, formue og lÃ¥n. Ingen bruker, ingen e-post â€”
+              bare en privat ID som er din nÃ¸kkel.
             </p>
-            <ul className="space-y-2 text-sm text-[color:var(--color-muted)]">
-              <li className="flex gap-2"><Check /> Månedlig budsjett med kategorier og grafer</li>
+            <ul className="space-y-2 text-sm text-muted">
+              <li className="flex gap-2"><Check /> MÃ¥nedlig budsjett med kategorier og grafer</li>
               <li className="flex gap-2"><Check /> Sinking funds med progress og bidrag</li>
               <li className="flex gap-2"><Check /> Oversikt over ASK, pensjon og andre verdier</li>
-              <li className="flex gap-2"><Check /> Lån med utvikling over tid</li>
-              <li className="flex gap-2"><Check /> Årsoversikt og recap</li>
+              <li className="flex gap-2"><Check /> LÃ¥n med utvikling over tid</li>
+              <li className="flex gap-2"><Check /> Ã…rsoversikt og recap</li>
             </ul>
           </div>
 
@@ -111,7 +111,7 @@ function LandingPage() {
             {mode === "home" && (
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold">Kom i gang</h2>
-                <p className="text-sm text-[color:var(--color-muted)]">
+                <p className="text-sm text-muted">
                   Opprett et nytt dashboard, eller logg inn med din eksisterende ID.
                 </p>
                 <div className="grid gap-3 pt-1">
@@ -129,7 +129,7 @@ function LandingPage() {
               <form onSubmit={handleCreate} className="space-y-4">
                 <h2 className="text-xl font-semibold">Nytt dashboard</h2>
                 <div>
-                  <label className="label">Navn på dashboardet (valgfritt)</label>
+                  <label className="label">Navn pÃ¥ dashboardet (valgfritt)</label>
                   <input
                     autoFocus
                     className="input"
@@ -141,7 +141,7 @@ function LandingPage() {
                 {error && <p className="text-sm text-red-400">{error}</p>}
                 <div className="grid gap-2">
                   <button disabled={loading} className="btn btn-primary w-full">
-                    {loading ? "Oppretter…" : "Opprett"}
+                    {loading ? "Oppretterâ€¦" : "Opprett"}
                   </button>
                   <button type="button" onClick={() => setMode("home")} className="btn btn-ghost w-full">
                     Tilbake
@@ -166,7 +166,7 @@ function LandingPage() {
                 {error && <p className="text-sm text-red-400">{error}</p>}
                 <div className="grid gap-2">
                   <button disabled={loading} className="btn btn-primary w-full">
-                    {loading ? "Sjekker…" : "Logg inn"}
+                    {loading ? "Sjekkerâ€¦" : "Logg inn"}
                   </button>
                   <button type="button" onClick={() => setMode("home")} className="btn btn-ghost w-full">
                     Tilbake
@@ -177,19 +177,19 @@ function LandingPage() {
 
             {mode === "created" && createdId && (
               <div className="space-y-4">
-                <h2 className="text-xl font-semibold">Dashboard opprettet 🎉</h2>
-                <p className="text-sm text-[color:var(--color-muted)]">
-                  Dette er din unike ID. <strong className="text-[color:var(--color-text)]">Ta vare på den</strong> —
-                  den er din eneste måte å logge inn på. Det er ingen recovery.
+                <h2 className="text-xl font-semibold">Dashboard opprettet ðŸŽ‰</h2>
+                <p className="text-sm text-muted">
+                  Dette er din unike ID. <strong className="text-text">Ta vare pÃ¥ den</strong> â€”
+                  den er din eneste mÃ¥te Ã¥ logge inn pÃ¥. Det er ingen recovery.
                 </p>
                 <div className="card-soft">
                   <div className="font-mono text-sm break-all">{createdId}</div>
                   <button onClick={copyCreatedId} className="btn btn-ghost mt-3 w-full text-xs">
-                    {copied ? "✓ Kopiert" : "Kopier ID"}
+                    {copied ? "âœ“ Kopiert" : "Kopier ID"}
                   </button>
                 </div>
                 <button onClick={goToDashboard} className="btn btn-primary w-full">
-                  Gå til dashboardet
+                  GÃ¥ til dashboardet
                 </button>
               </div>
             )}
@@ -197,7 +197,7 @@ function LandingPage() {
         </div>
       </main>
 
-      <footer className="py-6 text-center text-xs text-[color:var(--color-muted)]">
+      <footer className="py-6 text-center text-xs text-muted">
         Bygget med TanStack Start, Tailwind og Netlify. Data lagres privat per dashboard-ID.
       </footer>
     </div>
@@ -211,3 +211,4 @@ function Check() {
     </svg>
   );
 }
+

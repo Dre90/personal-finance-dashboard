@@ -1,7 +1,9 @@
 import * as React from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { cn } from "../lib/utils";
-import { clearStoredDashboardId, getStoredDashboardId } from "../lib/auth";
+import { clearStoredDashboardId } from "../lib/auth";
+import { useDashboard } from "../lib/dashboard-context";
+import { clearQueryCache } from "../lib/query";
 
 const NAV = [
   { to: "/dashboard", label: "Forside" },
@@ -14,22 +16,18 @@ const NAV = [
   { to: "/dashboard/settings", label: "Innstillinger" },
 ] as const;
 
-export function AppShell({ children, dashboardName }: { children: React.ReactNode; dashboardName?: string }) {
+export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [id, setId] = React.useState<string | null>(null);
+  const { id, dashboard } = useDashboard();
   const [copied, setCopied] = React.useState(false);
-
-  React.useEffect(() => {
-    setId(getStoredDashboardId());
-  }, []);
 
   function handleLogout() {
     clearStoredDashboardId();
+    clearQueryCache();
     router.navigate({ to: "/" });
   }
 
   async function copyId() {
-    if (!id) return;
     try {
       await navigator.clipboard.writeText(id);
       setCopied(true);
@@ -41,16 +39,14 @@ export function AppShell({ children, dashboardName }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b border-[color:var(--color-border)] bg-[color:var(--color-bg-soft)]/80 backdrop-blur sticky top-0 z-30">
+      <header className="border-b border-app bg-soft/80 backdrop-blur sticky top-0 z-30">
         <div className="max-w-[1400px] mx-auto px-5 py-3 flex items-center gap-4">
           <Link to="/dashboard" className="flex items-center gap-2 font-semibold text-lg">
             <Logo className="w-8 h-8" />
             <span>Økonomi</span>
-            {dashboardName && (
-              <span className="text-sm font-normal text-[color:var(--color-muted)] ml-2 hidden md:inline">
-                — {dashboardName}
-              </span>
-            )}
+            <span className="text-sm font-normal text-muted ml-2 hidden md:inline">
+              — {dashboard.name}
+            </span>
           </Link>
           <nav className="hidden lg:flex items-center gap-1 ml-4 overflow-x-auto">
             {NAV.map((item) => (
@@ -59,26 +55,26 @@ export function AppShell({ children, dashboardName }: { children: React.ReactNod
           </nav>
           <div className="flex-1" />
           <div className="flex items-center gap-2">
-            {id && (
-              <button
-                onClick={copyId}
-                title="Kopier ID"
-                className="text-xs text-[color:var(--color-muted)] font-mono hover:text-[color:var(--color-text)] px-2 py-1 rounded-md hover:bg-[color:var(--color-surface-2)] transition-colors"
-              >
-                {copied ? "✓ kopiert" : `ID: ${id.slice(0, 8)}…`}
-              </button>
-            )}
-            <button onClick={handleLogout} className="btn btn-ghost text-xs">Logg ut</button>
+            <button
+              onClick={copyId}
+              title="Kopier ID"
+              className="text-xs text-muted font-mono hover:text-text px-2 py-1 rounded-md hover:bg-surface-2 transition-colors"
+            >
+              {copied ? "✓ kopiert" : `ID: ${id.slice(0, 8)}…`}
+            </button>
+            <button onClick={handleLogout} className="btn btn-ghost text-xs">
+              Logg ut
+            </button>
           </div>
         </div>
-        <nav className="lg:hidden border-t border-[color:var(--color-border)] px-3 py-2 flex gap-1 overflow-x-auto">
+        <nav className="lg:hidden border-t border-app px-3 py-2 flex gap-1 overflow-x-auto">
           {NAV.map((item) => (
             <NavLink key={item.to} to={item.to} label={item.label} />
           ))}
         </nav>
       </header>
       <main className="flex-1 max-w-[1400px] w-full mx-auto px-5 py-6">{children}</main>
-      <footer className="border-t border-[color:var(--color-border)] py-4 text-center text-xs text-[color:var(--color-muted)]">
+      <footer className="border-t border-app py-4 text-center text-xs text-muted">
         Husk å ta vare på dashboard-ID-en din — det er din eneste nøkkel.
       </footer>
     </div>
@@ -92,10 +88,10 @@ function NavLink({ to, label }: { to: string; label: string }) {
       activeOptions={{ exact: to === "/dashboard" }}
       className={cn(
         "px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors",
-        "text-[color:var(--color-muted)] hover:text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-2)]",
+        "text-muted hover:text-text hover:bg-surface-2",
       )}
       activeProps={{
-        className: "bg-[color:var(--color-surface-2)] text-[color:var(--color-text)]",
+        className: "bg-surface-2 text-text",
       }}
     >
       {label}

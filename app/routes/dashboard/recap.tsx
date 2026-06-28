@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { PageHeader, StatCard, Empty } from "../../components/ui";
+import { Empty, LoadingPlaceholder, PageHeader, StatCard } from "../../components/ui";
+import { MoneyBarChart } from "../../components/charts";
 import { getBudgetYear } from "../../server/api";
-import { useDashboardId, useServerData } from "../../lib/hooks";
+import { useDashboard } from "../../lib/dashboard-context";
+import { useQuery } from "../../lib/query";
+import { FLOW_COLORS } from "../../lib/colors";
 import { formatNOK, monthsInYear, shortMonthLabel, toNumber } from "../../lib/utils";
 
 export const Route = createFileRoute("/dashboard/recap")({
@@ -11,20 +13,21 @@ export const Route = createFileRoute("/dashboard/recap")({
 });
 
 function RecapPage() {
-  const dashboardId = useDashboardId();
+  const { id: dashboardId } = useDashboard();
   const [year, setYear] = React.useState<number>(() => new Date().getFullYear() - 1);
 
-  const { data, loading } = useServerData(
-    async () => (dashboardId ? getBudgetYear({ data: { dashboardId, year } }) : Promise.resolve(null)),
-    [dashboardId, year],
-  );
+  const { data, isInitialLoading } = useQuery({
+    key: ["budget-year", dashboardId, year],
+    fn: () => getBudgetYear({ data: { dashboardId, year } }),
+  });
 
-  if (loading || !data) return <div className="text-[color:var(--color-muted)]">Laster…</div>;
+  if (isInitialLoading || !data) return <LoadingPlaceholder />;
 
   const months = monthsInYear(year);
   const catMap = new Map(data.categories.map((c) => [c.id, c]));
 
-  let incomeTotal = 0, expenseTotal = 0;
+  let incomeTotal = 0;
+  let expenseTotal = 0;
   const monthData = months.map((ym) => {
     let income = 0, expense = 0;
     for (const e of data.entries) {
@@ -39,7 +42,6 @@ function RecapPage() {
     return { month: shortMonthLabel(ym), income, expense, savings: income - expense };
   });
 
-  // Top expense categories
   const expenseByCategory = new Map<string, number>();
   for (const e of data.entries) {
     const c = catMap.get(e.categoryId);
@@ -65,7 +67,12 @@ function RecapPage() {
         actions={
           <>
             <button onClick={() => setYear(year - 1)} className="btn btn-ghost">←</button>
-            <input type="number" value={year} onChange={(e) => setYear(parseInt(e.target.value, 10))} className="input w-28 text-center num" />
+            <input
+              type="number"
+              value={year}
+              onChange={(e) => setYear(parseInt(e.target.value, 10))}
+              className="input w-28 text-center num"
+            />
             <button onClick={() => setYear(year + 1)} className="btn btn-ghost">→</button>
           </>
         }
@@ -88,7 +95,7 @@ function RecapPage() {
               {bestMonth ? (
                 <>
                   <div className="text-3xl font-semibold">{bestMonth.month}</div>
-                  <div className="text-sm text-[color:var(--color-muted)] mt-1">
+                  <div className="text-sm text-muted mt-1">
                     Sparte <span className="pos num">{formatNOK(bestMonth.savings)}</span>
                   </div>
                 </>
@@ -99,8 +106,11 @@ function RecapPage() {
               {worstMonth ? (
                 <>
                   <div className="text-3xl font-semibold">{worstMonth.month}</div>
-                  <div className="text-sm text-[color:var(--color-muted)] mt-1">
-                    {worstMonth.savings < 0 ? "Brukte" : "Sparte"} <span className={`num ${worstMonth.savings < 0 ? "neg" : "pos"}`}>{formatNOK(Math.abs(worstMonth.savings))}</span>
+                  <div className="text-sm text-muted mt-1">
+                    {worstMonth.savings < 0 ? "Brukte" : "Sparte"}{" "}
+                    <span className={`num ${worstMonth.savings < 0 ? "neg" : "pos"}`}>
+                      {formatNOK(Math.abs(worstMonth.savings))}
+                    </span>
                   </div>
                 </>
               ) : <p className="text-sm">—</p>}
@@ -109,31 +119,38 @@ function RecapPage() {
 
           <div className="card">
             <h3 className="font-semibold mb-3">Per måned</h3>
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={monthData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2a3760" />
-                <XAxis dataKey="month" stroke="#9aa6c7" tick={{ fontSize: 11 }} />
-                <YAxis stroke="#9aa6c7" tick={{ fontSize: 11 }} tickFormatter={(v) => formatNOK(v)} />
-                <Tooltip contentStyle={{ background: "#161f3d", border: "1px solid #2a3760", borderRadius: 8 }} formatter={(v: any) => formatNOK(v)} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="income" name="Inntekt" fill="#10b981" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expense" name="Utgift" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="savings" name="Sparing" fill="#6366f1" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <MoneyBarChart
+              data={monthData}
+              xKey="month"
+              height={320}
+              series={[
+                { dataKey: "income", name: "Inntekt", color: FLOW_COLORS.income },
+                { dataKey: "expense", name: "Utgift", color: FLOW_COLORS.expense },
+                { dataKey: "savings", name: "Sparing", color: FLOW_COLORS.savings },
+              ]}
+            />
           </div>
 
           <div className="card">
             <h3 className="font-semibold mb-3">Største utgiftsposter</h3>
             <table className="table">
-              <thead><tr><th>Kategori</th><th className="text-right">Totalt</th><th className="text-right">Snitt/mnd</th><th className="text-right">Andel</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Kategori</th>
+                  <th className="text-right">Totalt</th>
+                  <th className="text-right">Snitt/mnd</th>
+                  <th className="text-right">Andel</th>
+                </tr>
+              </thead>
               <tbody>
                 {topExpenses.map((c) => (
                   <tr key={c.name}>
                     <td>{c.name}</td>
                     <td className="text-right num">{formatNOK(c.value)}</td>
-                    <td className="text-right num text-[color:var(--color-muted)]">{formatNOK(c.value / 12)}</td>
-                    <td className="text-right num text-[color:var(--color-muted)]">{expenseTotal > 0 ? `${((c.value / expenseTotal) * 100).toFixed(1)} %` : "—"}</td>
+                    <td className="text-right num text-muted">{formatNOK(c.value / 12)}</td>
+                    <td className="text-right num text-muted">
+                      {expenseTotal > 0 ? `${((c.value / expenseTotal) * 100).toFixed(1)} %` : "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>

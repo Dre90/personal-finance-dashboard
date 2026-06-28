@@ -1,7 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { PageHeader, StatCard, Modal, ProgressBar } from "../../components/ui";
+import {
+  Empty,
+  LoadingPlaceholder,
+  Modal,
+  PageHeader,
+  ProgressBar,
+  StatCard,
+} from "../../components/ui";
+import { MoneyDonut } from "../../components/charts";
 import {
   createCategory,
   deleteCategory,
@@ -9,7 +16,12 @@ import {
   updateCategory,
   upsertBudgetEntry,
 } from "../../server/api";
-import { useDashboardId, useServerData } from "../../lib/hooks";
+import { useDashboard } from "../../lib/dashboard-context";
+import { invalidateQueries, useMutation, useQuery } from "../../lib/query";
+import { useToast } from "../../components/Toaster";
+import { useFormState } from "../../lib/forms";
+import { CATEGORY_KIND_LABEL, type CategoryKind } from "../../lib/enums";
+import { pickColor } from "../../lib/colors";
 import {
   currentYearMonth,
   formatNOK,
@@ -18,45 +30,41 @@ import {
   previousYearMonth,
   toNumber,
 } from "../../lib/utils";
-import type { Category, BudgetEntry } from "../../../db/schema";
+import type { BudgetEntry, Category } from "../../../db/schema";
 
 export const Route = createFileRoute("/dashboard/budget")({
   component: BudgetPage,
 });
 
 function BudgetPage() {
-  const dashboardId = useDashboardId();
+  const { id: dashboardId } = useDashboard();
+  const toast = useToast();
   const [yearMonth, setYearMonth] = React.useState<string>(() => currentYearMonth());
   const [showCategoryModal, setShowCategoryModal] = React.useState(false);
   const [editingCategory, setEditingCategory] = React.useState<Category | null>(null);
 
-  const { data, loading, refetch } = useServerData(
-    async () =>
-      dashboardId
-        ? getBudgetMonth({ data: { dashboardId, yearMonth } })
-        : Promise.resolve(null),
-    [dashboardId, yearMonth],
-  );
+  const queryKey = React.useMemo(() => ["budget-month", dashboardId, yearMonth], [dashboardId, yearMonth]);
+  const { data, isInitialLoading, refetch } = useQuery({
+    key: queryKey,
+    fn: () => getBudgetMonth({ data: { dashboardId, yearMonth } }),
+  });
 
-  if (loading || !data) return <div className="text-[color:var(--color-muted)]">Laster…</div>;
-  if (!dashboardId) return null;
+  const upsertEntry = useMutation({
+    fn: (input: { categoryId: number; field: "budgeted" | "actual"; value: number }) =>
+      upsertBudgetEntry({
+        data: { dashboardId, categoryId: input.categoryId, yearMonth, [input.field]: input.value },
+      }),
+    onSuccess: () => {
+      void refetch();
+    },
+    onError: (e) => toast.push(e.message, "error"),
+  });
+
+  if (isInitialLoading || !data) return <LoadingPlaceholder />;
 
   const entryByCategoryId = new Map(data.entries.map((e) => [e.categoryId, e]));
-
   const groups = groupCategories(data.categories);
   const totals = computeTotals(data.categories, data.entries);
-
-  async function handleEntryChange(
-    categoryId: number,
-    field: "budgeted" | "actual",
-    value: string,
-  ) {
-    const n = toNumber(value);
-    await upsertBudgetEntry({
-      data: { dashboardId, categoryId, yearMonth, [field]: n },
-    });
-    await refetch();
-  }
 
   return (
     <div className="space-y-6">
@@ -77,7 +85,13 @@ function BudgetPage() {
             <button onClick={() => setYearMonth(nextYearMonth(yearMonth))} className="btn btn-ghost">
               Neste →
             </button>
-            <button onClick={() => { setEditingCategory(null); setShowCategoryModal(true); }} className="btn btn-primary">
+            <button
+              onClick={() => {
+                setEditingCategory(null);
+                setShowCategoryModal(true);
+              }}
+              className="btn btn-primary"
+            >
               + Kategori
             </button>
           </>
@@ -97,7 +111,12 @@ function BudgetPage() {
           <div className="space-y-2 text-sm">
             <Row label="Budsjett (inntekt - utgift)" value={totals.incomeBudget - totals.expenseBudget} />
             <Row label="Faktisk (inntekt - utgift)" value={totals.incomeActual - totals.expenseActual} positive />
-            <Row label="Avvik (faktisk - budsjett)" value={(totals.incomeActual - totals.expenseActual) - (totals.incomeBudget - totals.expenseBudget)} />
+            <Row
+              label="Avvik (faktisk - budsjett)"
+              value={
+                totals.incomeActual - totals.expenseActual - (totals.incomeBudget - totals.expenseBudget)
+              }
+            />
           </div>
         </div>
 
@@ -109,16 +128,22 @@ function BudgetPage() {
 
       <div className="card">
         <h3 className="font-semibold mb-3">Detaljer</h3>
+        {groups.length === 0 && (
+          <Empty
+            title="Ingen kategorier"
+            description="Legg til kategorier for å begynne å budsjettere."
+          />
+        )}
         {groups.map(({ groupName, items, kind }) => {
           const groupBudget = items.reduce((s, c) => s + toNumber(entryByCategoryId.get(c.id)?.budgeted), 0);
           const groupActual = items.reduce((s, c) => s + toNumber(entryByCategoryId.get(c.id)?.actual), 0);
           return (
             <div key={`${kind}-${groupName}`} className="mb-6 last:mb-0">
               <div className="flex justify-between items-baseline mb-2">
-                <h4 className="font-semibold text-sm uppercase tracking-wider text-[color:var(--color-muted)]">
-                  {groupName} <span className="ml-2 badge">{kind === "income" ? "Inntekt" : "Utgift"}</span>
+                <h4 className="font-semibold text-sm uppercase tracking-wider text-muted">
+                  {groupName} <span className="ml-2 badge">{CATEGORY_KIND_LABEL[kind]}</span>
                 </h4>
-                <div className="text-xs text-[color:var(--color-muted)] num">
+                <div className="text-xs text-muted num">
                   {formatNOK(groupActual)} / {formatNOK(groupBudget)}
                 </div>
               </div>
@@ -147,7 +172,13 @@ function BudgetPage() {
                               type="number"
                               step="1"
                               defaultValue={budgeted || ""}
-                              onBlur={(e) => handleEntryChange(cat.id, "budgeted", e.target.value)}
+                              onBlur={(e) =>
+                                upsertEntry.mutate({
+                                  categoryId: cat.id,
+                                  field: "budgeted",
+                                  value: toNumber(e.target.value),
+                                })
+                              }
                               className="input text-right num w-32 ml-auto"
                               placeholder="0"
                             />
@@ -157,7 +188,13 @@ function BudgetPage() {
                               type="number"
                               step="1"
                               defaultValue={actual || ""}
-                              onBlur={(e) => handleEntryChange(cat.id, "actual", e.target.value)}
+                              onBlur={(e) =>
+                                upsertEntry.mutate({
+                                  categoryId: cat.id,
+                                  field: "actual",
+                                  value: toNumber(e.target.value),
+                                })
+                              }
                               className="input text-right num w-32 ml-auto"
                               placeholder="0"
                             />
@@ -166,7 +203,13 @@ function BudgetPage() {
                             {formatNOK(diff)}
                           </td>
                           <td className="text-right">
-                            <button onClick={() => { setEditingCategory(cat); setShowCategoryModal(true); }} className="text-xs text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]">
+                            <button
+                              onClick={() => {
+                                setEditingCategory(cat);
+                                setShowCategoryModal(true);
+                              }}
+                              className="text-xs text-muted hover:text-text"
+                            >
                               Endre
                             </button>
                           </td>
@@ -186,7 +229,12 @@ function BudgetPage() {
         onClose={() => setShowCategoryModal(false)}
         dashboardId={dashboardId}
         category={editingCategory}
-        onSaved={async () => { setShowCategoryModal(false); await refetch(); }}
+        onSaved={async (msg) => {
+          setShowCategoryModal(false);
+          invalidateQueries(["budget-month", dashboardId]);
+          await refetch();
+          toast.push(msg, "success");
+        }}
       />
     </div>
   );
@@ -195,7 +243,7 @@ function BudgetPage() {
 function Row({ label, value, positive }: { label: string; value: number; positive?: boolean }) {
   return (
     <div className="flex justify-between">
-      <span className="text-[color:var(--color-muted)]">{label}</span>
+      <span className="text-muted">{label}</span>
       <span className={`num font-semibold ${value < 0 ? "neg" : positive && value > 0 ? "pos" : ""}`}>
         {formatNOK(value)}
       </span>
@@ -203,11 +251,13 @@ function Row({ label, value, positive }: { label: string; value: number; positiv
   );
 }
 
-function groupCategories(categories: Category[]) {
-  const map = new Map<string, { groupName: string; kind: "income" | "expense"; items: Category[] }>();
+function groupCategories(categories: ReadonlyArray<Category>) {
+  const map = new Map<string, { groupName: string; kind: CategoryKind; items: Category[] }>();
   for (const c of categories) {
     const k = `${c.kind}::${c.groupName}`;
-    if (!map.has(k)) map.set(k, { groupName: c.groupName, kind: c.kind as "income" | "expense", items: [] });
+    if (!map.has(k)) {
+      map.set(k, { groupName: c.groupName, kind: c.kind as CategoryKind, items: [] });
+    }
     map.get(k)!.items.push(c);
   }
   return Array.from(map.values()).sort((a, b) => {
@@ -216,7 +266,7 @@ function groupCategories(categories: Category[]) {
   });
 }
 
-function computeTotals(categories: Category[], entries: BudgetEntry[]) {
+function computeTotals(categories: ReadonlyArray<Category>, entries: ReadonlyArray<BudgetEntry>) {
   const catKind = new Map(categories.map((c) => [c.id, c.kind]));
   let incomeBudget = 0, incomeActual = 0, expenseBudget = 0, expenseActual = 0;
   for (const e of entries) {
@@ -232,7 +282,13 @@ function computeTotals(categories: Category[], entries: BudgetEntry[]) {
   return { incomeBudget, incomeActual, expenseBudget, expenseActual };
 }
 
-function ExpenseDonut({ categories, entries }: { categories: Category[]; entries: BudgetEntry[] }) {
+function ExpenseDonut({
+  categories,
+  entries,
+}: {
+  categories: ReadonlyArray<Category>;
+  entries: ReadonlyArray<BudgetEntry>;
+}) {
   const catMap = new Map(categories.map((c) => [c.id, c]));
   const byGroup = new Map<string, number>();
   for (const e of entries) {
@@ -245,25 +301,17 @@ function ExpenseDonut({ categories, entries }: { categories: Category[]; entries
   const data = Array.from(byGroup.entries()).map(([name, value], i) => ({
     name,
     value,
-    color: COLORS[i % COLORS.length],
+    color: pickColor(i),
   }));
-  if (data.length === 0) return <p className="text-sm text-[color:var(--color-muted)]">Ingen faktiske utgifter enda.</p>;
+  if (data.length === 0) {
+    return <p className="text-sm text-muted">Ingen faktiske utgifter enda.</p>;
+  }
+  const total = data.reduce((s, x) => s + x.value, 0);
   return (
     <div className="grid md:grid-cols-2 gap-4 items-center">
-      <ResponsiveContainer width="100%" height={220}>
-        <PieChart>
-          <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={45}>
-            {data.map((d, i) => (<Cell key={i} fill={d.color} />))}
-          </Pie>
-          <Tooltip
-            contentStyle={{ background: "#161f3d", border: "1px solid #2a3760", borderRadius: 8 }}
-            formatter={(v: any) => formatNOK(v)}
-          />
-        </PieChart>
-      </ResponsiveContainer>
+      <MoneyDonut data={data} height={220} />
       <div className="space-y-1.5">
         {data.map((d) => {
-          const total = data.reduce((s, x) => s + x.value, 0);
           const pct = total > 0 ? (d.value / total) * 100 : 0;
           return (
             <div key={d.name}>
@@ -283,56 +331,55 @@ function ExpenseDonut({ categories, entries }: { categories: Category[]; entries
   );
 }
 
-const COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16", "#f97316", "#a855f7"];
-
 function CategoryModal({
-  open, onClose, dashboardId, category, onSaved,
+  open,
+  onClose,
+  dashboardId,
+  category,
+  onSaved,
 }: {
   open: boolean;
   onClose: () => void;
   dashboardId: string;
   category: Category | null;
-  onSaved: () => void;
+  onSaved: (message: string) => void;
 }) {
-  const [name, setName] = React.useState("");
-  const [kind, setKind] = React.useState<"income" | "expense">("expense");
-  const [groupName, setGroupName] = React.useState("Annet");
-  const [busy, setBusy] = React.useState(false);
+  const form = useFormState(
+    {
+      name: category?.name ?? "",
+      kind: (category?.kind as CategoryKind | undefined) ?? "expense",
+      groupName: category?.groupName ?? "Annet",
+    },
+    { resetWhen: open ? category ?? "new" : null },
+  );
+  const toast = useToast();
 
-  React.useEffect(() => {
-    if (open) {
-      setName(category?.name ?? "");
-      setKind((category?.kind as "income" | "expense") ?? "expense");
-      setGroupName(category?.groupName ?? "Annet");
-    }
-  }, [open, category]);
-
-  async function save() {
-    if (!name.trim()) return;
-    setBusy(true);
-    try {
+  const saveMutation = useMutation({
+    fn: async () => {
       if (category) {
-        await updateCategory({ data: { dashboardId, id: category.id, name: name.trim(), kind, groupName } });
-      } else {
-        await createCategory({ data: { dashboardId, name: name.trim(), kind, groupName } });
+        await updateCategory({
+          data: { dashboardId, id: category.id, ...form.values },
+        });
+        return "Kategori oppdatert";
       }
-      onSaved();
-    } finally {
-      setBusy(false);
-    }
-  }
+      await createCategory({ data: { dashboardId, ...form.values } });
+      return "Kategori opprettet";
+    },
+    onSuccess: (msg) => onSaved(msg),
+    onError: (e) => toast.push(e.message, "error"),
+  });
 
-  async function remove() {
-    if (!category) return;
-    if (!confirm(`Slette "${category.name}"? Alle budsjettlinjer for kategorien forsvinner også.`)) return;
-    setBusy(true);
-    try {
+  const deleteMutation = useMutation({
+    fn: async () => {
+      if (!category) throw new Error("Ingen kategori");
       await deleteCategory({ data: { dashboardId, id: category.id } });
-      onSaved();
-    } finally {
-      setBusy(false);
-    }
-  }
+    },
+    onSuccess: () => onSaved("Kategori slettet"),
+    onError: (e) => toast.push(e.message, "error"),
+  });
+
+  const busy = saveMutation.loading || deleteMutation.loading;
+  const canSave = !!form.values.name.trim();
 
   return (
     <Modal
@@ -341,28 +388,55 @@ function CategoryModal({
       title={category ? "Endre kategori" : "Ny kategori"}
       footer={
         <>
-          {category && <button onClick={remove} className="btn btn-danger mr-auto" disabled={busy}>Slett</button>}
+          {category && (
+            <button
+              onClick={() => {
+                if (confirm(`Slette "${category.name}"? Alle budsjettlinjer forsvinner også.`)) {
+                  void deleteMutation.mutate(undefined);
+                }
+              }}
+              className="btn btn-danger mr-auto"
+              disabled={busy}
+            >
+              Slett
+            </button>
+          )}
           <button onClick={onClose} className="btn btn-ghost" disabled={busy}>Avbryt</button>
-          <button onClick={save} className="btn btn-primary" disabled={busy || !name.trim()}>Lagre</button>
+          <button
+            onClick={() => void saveMutation.mutate(undefined)}
+            className="btn btn-primary"
+            disabled={busy || !canSave}
+          >
+            Lagre
+          </button>
         </>
       }
     >
       <div className="space-y-3">
         <div>
           <label className="label">Navn</label>
-          <input autoFocus className="input" value={name} onChange={(e) => setName(e.target.value)} />
+          <input autoFocus className="input" value={form.values.name} onChange={form.setField("name")} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="label">Type</label>
-            <select className="input" value={kind} onChange={(e) => setKind(e.target.value as "income" | "expense")}>
+            <select
+              className="input"
+              value={form.values.kind}
+              onChange={form.setField("kind", (raw) => raw as CategoryKind)}
+            >
               <option value="income">Inntekt</option>
               <option value="expense">Utgift</option>
             </select>
           </div>
           <div>
             <label className="label">Gruppe</label>
-            <input className="input" value={groupName} onChange={(e) => setGroupName(e.target.value)} list="grp" />
+            <input
+              className="input"
+              value={form.values.groupName}
+              onChange={form.setField("groupName")}
+              list="grp"
+            />
             <datalist id="grp">
               <option value="Inntekt" />
               <option value="Faste utgifter" />

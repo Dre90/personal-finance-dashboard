@@ -1,5 +1,3 @@
-import * as React from "react";
-
 const STORAGE_KEY = "pfd:dashboardId";
 
 export function getStoredDashboardId(): string | null {
@@ -25,12 +23,4 @@ export function clearStoredDashboardId(): void {
   } catch {
     /* ignore */
   }
-}
-
-export function useDashboardId(): string | null {
-  const [id, setId] = React.useState<string | null>(null);
-  React.useEffect(() => {
-    setId(getStoredDashboardId());
-  }, []);
-  return id;
 }
