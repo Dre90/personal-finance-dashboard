@@ -1,0 +1,11 @@
+node_modules
+.output
+.vite
+.netlify
+.env
+.env.*
+!.env.example
+.DS_Store
+dist
+*.log
+.tanstack
