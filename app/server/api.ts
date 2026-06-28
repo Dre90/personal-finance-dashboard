@@ -31,6 +31,10 @@ export const createDashboard = createServerFn({ method: "POST" })
     z.object({ name: z.string().min(1).max(120).optional() }).parse(data),
   )
   .handler(async ({ data }) => {
+    // TEMP DIAGNOSTIC: return early to isolate framework vs DB problem
+    if (data.name === "__diag__") {
+      return { id: "00000000-0000-0000-0000-000000000000", name: "diag" };
+    }
     try {
       const [dash] = await db
         .insert(schema.dashboards)
