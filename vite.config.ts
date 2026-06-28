@@ -8,6 +8,17 @@ export default defineConfig({
   esbuild: {
     jsx: "automatic",
   },
+  environments: {
+    ssr: {
+      build: {
+        rollupOptions: {
+          output: {
+            inlineDynamicImports: true,
+          },
+        },
+      },
+    },
+  },
   plugins: [
     tsconfigPaths(),
     tailwindcss(),
