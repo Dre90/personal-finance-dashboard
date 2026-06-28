@@ -22,6 +22,8 @@ interface CacheEntry<T = unknown> {
   /** In-flight promise so concurrent subscribers dedupe. */
   promise: Promise<T> | null;
   listeners: Set<() => void>;
+  /** Monotonic version stamp so useSyncExternalStore detects changes. */
+  version: number;
 }
 
 const cache = new Map<string, CacheEntry>();
@@ -39,6 +41,7 @@ function getOrCreate<T>(key: string): CacheEntry<T> {
       loading: false,
       promise: null,
       listeners: new Set(),
+      version: 0,
     };
     cache.set(key, entry);
   }
@@ -46,6 +49,7 @@ function getOrCreate<T>(key: string): CacheEntry<T> {
 }
 
 function notify(entry: CacheEntry): void {
+  entry.version += 1;
   for (const listener of entry.listeners) listener();
 }
 
@@ -112,11 +116,12 @@ export function useQuery<T>(options: {
     [entry],
   );
 
-  const getSnapshot = React.useCallback(
-    () => entry as CacheEntry<T>,
-    [entry],
-  );
-  React.useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  // Snapshot returns a primitive (version counter) so React's Object.is
+  // comparison detects updates — returning the entry object would never
+  // change reference, and the component would never re-render.
+  const getSnapshot = React.useCallback(() => entry.version, [entry]);
+  const getServerSnapshot = React.useCallback(() => 0, []);
+  React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   React.useEffect(() => {
     if (!enabled) return;
