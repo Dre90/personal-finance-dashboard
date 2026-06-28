@@ -6,6 +6,15 @@ import { DEFAULT_CATEGORIES, DEFAULT_SINKING_FUNDS } from "../lib/defaults";
 
 const uuidSchema = z.string().uuid();
 
+function toAppError(err: unknown): Error {
+  if (err instanceof Error) {
+    const e = new Error(err.message || "Server error");
+    (e as any).code = (err as any).code;
+    return e;
+  }
+  return new Error(typeof err === "string" ? err : "Server error");
+}
+
 async function assertDashboardExists(dashboardId: string): Promise<void> {
   const [row] = await db
     .select({ id: schema.dashboards.id })
@@ -22,36 +31,41 @@ export const createDashboard = createServerFn({ method: "POST" })
     z.object({ name: z.string().min(1).max(120).optional() }).parse(data),
   )
   .handler(async ({ data }) => {
-    const [dash] = await db
-      .insert(schema.dashboards)
-      .values({ name: data.name ?? "Mitt dashboard" })
-      .returning();
-    if (!dash) throw new Error("Klarte ikke opprette dashboard");
+    try {
+      const [dash] = await db
+        .insert(schema.dashboards)
+        .values({ name: data.name ?? "Mitt dashboard" })
+        .returning();
+      if (!dash) throw new Error("Klarte ikke opprette dashboard");
 
-    // Seed default categories
-    await db.insert(schema.categories).values(
-      DEFAULT_CATEGORIES.map((c) => ({
-        dashboardId: dash.id,
-        name: c.name,
-        kind: c.kind,
-        groupName: c.groupName,
-        sortOrder: c.sortOrder,
-      })),
-    );
+      // Seed default categories
+      await db.insert(schema.categories).values(
+        DEFAULT_CATEGORIES.map((c) => ({
+          dashboardId: dash.id,
+          name: c.name,
+          kind: c.kind,
+          groupName: c.groupName,
+          sortOrder: c.sortOrder,
+        })),
+      );
 
-    // Seed default sinking funds
-    await db.insert(schema.sinkingFunds).values(
-      DEFAULT_SINKING_FUNDS.map((f, idx) => ({
-        dashboardId: dash.id,
-        name: f.name,
-        target: String(f.target),
-        monthlyContribution: String(f.monthlyContribution),
-        color: f.color,
-        sortOrder: idx * 10,
-      })),
-    );
+      // Seed default sinking funds
+      await db.insert(schema.sinkingFunds).values(
+        DEFAULT_SINKING_FUNDS.map((f, idx) => ({
+          dashboardId: dash.id,
+          name: f.name,
+          target: String(f.target),
+          monthlyContribution: String(f.monthlyContribution),
+          color: f.color,
+          sortOrder: idx * 10,
+        })),
+      );
 
-    return { id: dash.id, name: dash.name };
+      return { id: dash.id, name: dash.name };
+    } catch (err) {
+      console.error("createDashboard failed:", err);
+      throw toAppError(err);
+    }
   });
 
 export const getDashboard = createServerFn({ method: "GET" })
