@@ -9,6 +9,6 @@ export default defineConfig({
     tsconfigPaths(),
     tailwindcss(),
     tanstackStart({ srcDirectory: "app" }),
-    netlify(),
+    netlify({ build: { enabled: true } }),
   ],
 });
