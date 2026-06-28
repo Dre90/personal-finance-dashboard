@@ -5,6 +5,9 @@ import tailwindcss from "@tailwindcss/vite";
 import netlify from "@netlify/vite-plugin";
 
 export default defineConfig({
+  esbuild: {
+    jsx: "automatic",
+  },
   plugins: [
     tsconfigPaths(),
     tailwindcss(),
