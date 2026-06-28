@@ -14,8 +14,7 @@ export const uuidSchema = z.string().uuid();
  *
  * The transform happens at parse time so handlers receive strings ready for drizzle.
  */
-export const numericInput = () =>
-  z.union([z.string(), z.number()]).transform((v) => String(v));
+export const numericInput = () => z.union([z.string(), z.number()]).transform((v) => String(v));
 
 /** Date input as YYYY-MM-DD string. */
 export const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Forventet YYYY-MM-DD");

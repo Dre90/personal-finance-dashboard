@@ -24,7 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   function handleLogout() {
     clearStoredDashboardId();
     clearQueryCache();
-    router.navigate({ to: "/" });
+    void router.navigate({ to: "/" });
   }
 
   async function copyId() {

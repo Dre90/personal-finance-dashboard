@@ -43,7 +43,10 @@ function BudgetPage() {
   const [showCategoryModal, setShowCategoryModal] = React.useState(false);
   const [editingCategory, setEditingCategory] = React.useState<Category | null>(null);
 
-  const queryKey = React.useMemo(() => ["budget-month", dashboardId, yearMonth], [dashboardId, yearMonth]);
+  const queryKey = React.useMemo(
+    () => ["budget-month", dashboardId, yearMonth],
+    [dashboardId, yearMonth],
+  );
   const { data, isInitialLoading, refetch } = useQuery({
     key: queryKey,
     fn: () => getBudgetMonth({ data: { dashboardId, yearMonth } }),
@@ -73,7 +76,10 @@ function BudgetPage() {
         subtitle={monthLabel(yearMonth)}
         actions={
           <>
-            <button onClick={() => setYearMonth(previousYearMonth(yearMonth))} className="btn btn-ghost">
+            <button
+              onClick={() => setYearMonth(previousYearMonth(yearMonth))}
+              className="btn btn-ghost"
+            >
               ← Forrige
             </button>
             <input
@@ -82,7 +88,10 @@ function BudgetPage() {
               onChange={(e) => setYearMonth(e.target.value)}
               className="input max-w-[170px]"
             />
-            <button onClick={() => setYearMonth(nextYearMonth(yearMonth))} className="btn btn-ghost">
+            <button
+              onClick={() => setYearMonth(nextYearMonth(yearMonth))}
+              className="btn btn-ghost"
+            >
               Neste →
             </button>
             <button
@@ -109,12 +118,21 @@ function BudgetPage() {
         <div className="card">
           <h3 className="font-semibold mb-3">Resultat</h3>
           <div className="space-y-2 text-sm">
-            <Row label="Budsjett (inntekt - utgift)" value={totals.incomeBudget - totals.expenseBudget} />
-            <Row label="Faktisk (inntekt - utgift)" value={totals.incomeActual - totals.expenseActual} positive />
+            <Row
+              label="Budsjett (inntekt - utgift)"
+              value={totals.incomeBudget - totals.expenseBudget}
+            />
+            <Row
+              label="Faktisk (inntekt - utgift)"
+              value={totals.incomeActual - totals.expenseActual}
+              positive
+            />
             <Row
               label="Avvik (faktisk - budsjett)"
               value={
-                totals.incomeActual - totals.expenseActual - (totals.incomeBudget - totals.expenseBudget)
+                totals.incomeActual -
+                totals.expenseActual -
+                (totals.incomeBudget - totals.expenseBudget)
               }
             />
           </div>
@@ -135,8 +153,14 @@ function BudgetPage() {
           />
         )}
         {groups.map(({ groupName, items, kind }) => {
-          const groupBudget = items.reduce((s, c) => s + toNumber(entryByCategoryId.get(c.id)?.budgeted), 0);
-          const groupActual = items.reduce((s, c) => s + toNumber(entryByCategoryId.get(c.id)?.actual), 0);
+          const groupBudget = items.reduce(
+            (s, c) => s + toNumber(entryByCategoryId.get(c.id)?.budgeted),
+            0,
+          );
+          const groupActual = items.reduce(
+            (s, c) => s + toNumber(entryByCategoryId.get(c.id)?.actual),
+            0,
+          );
           return (
             <div key={`${kind}-${groupName}`} className="mb-6 last:mb-0">
               <div className="flex justify-between items-baseline mb-2">
@@ -199,7 +223,9 @@ function BudgetPage() {
                               placeholder="0"
                             />
                           </td>
-                          <td className={`text-right num ${diff < 0 ? "neg" : diff > 0 ? "pos" : ""}`}>
+                          <td
+                            className={`text-right num ${diff < 0 ? "neg" : diff > 0 ? "pos" : ""}`}
+                          >
                             {formatNOK(diff)}
                           </td>
                           <td className="text-right">
@@ -244,7 +270,9 @@ function Row({ label, value, positive }: { label: string; value: number; positiv
   return (
     <div className="flex justify-between">
       <span className="text-muted">{label}</span>
-      <span className={`num font-semibold ${value < 0 ? "neg" : positive && value > 0 ? "pos" : ""}`}>
+      <span
+        className={`num font-semibold ${value < 0 ? "neg" : positive && value > 0 ? "pos" : ""}`}
+      >
         {formatNOK(value)}
       </span>
     </div>
@@ -268,7 +296,10 @@ function groupCategories(categories: ReadonlyArray<Category>) {
 
 function computeTotals(categories: ReadonlyArray<Category>, entries: ReadonlyArray<BudgetEntry>) {
   const catKind = new Map(categories.map((c) => [c.id, c.kind]));
-  let incomeBudget = 0, incomeActual = 0, expenseBudget = 0, expenseActual = 0;
+  let incomeBudget = 0,
+    incomeActual = 0,
+    expenseBudget = 0,
+    expenseActual = 0;
   for (const e of entries) {
     const k = catKind.get(e.categoryId);
     if (k === "income") {
@@ -320,7 +351,9 @@ function ExpenseDonut({
                   <span className="w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
                   {d.name}
                 </span>
-                <span className="num">{formatNOK(d.value)} ({pct.toFixed(0)} %)</span>
+                <span className="num">
+                  {formatNOK(d.value)} ({pct.toFixed(0)} %)
+                </span>
               </div>
               <ProgressBar value={d.value} max={total} color={d.color} />
             </div>
@@ -350,7 +383,7 @@ function CategoryModal({
       kind: (category?.kind as CategoryKind | undefined) ?? "expense",
       groupName: category?.groupName ?? "Annet",
     },
-    { resetWhen: open ? category ?? "new" : null },
+    { resetWhen: open ? (category ?? "new") : null },
   );
   const toast = useToast();
 
@@ -401,7 +434,9 @@ function CategoryModal({
               Slett
             </button>
           )}
-          <button onClick={onClose} className="btn btn-ghost" disabled={busy}>Avbryt</button>
+          <button onClick={onClose} className="btn btn-ghost" disabled={busy}>
+            Avbryt
+          </button>
           <button
             onClick={() => void saveMutation.mutate(undefined)}
             className="btn btn-primary"
@@ -415,7 +450,12 @@ function CategoryModal({
       <div className="space-y-3">
         <div>
           <label className="label">Navn</label>
-          <input autoFocus className="input" value={form.values.name} onChange={form.setField("name")} />
+          <input
+            autoFocus
+            className="input"
+            value={form.values.name}
+            onChange={form.setField("name")}
+          />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>

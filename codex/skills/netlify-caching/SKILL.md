@@ -8,6 +8,7 @@ description: Guide for controlling caching on Netlify's CDN. Use when configurin
 ## Default Behavior
 
 **Static assets** are cached automatically:
+
 - CDN: cached for 1 year, invalidated on every deploy
 - Browser: always revalidates (`max-age=0, must-revalidate`)
 - No configuration needed
@@ -18,11 +19,11 @@ description: Guide for controlling caching on Netlify's CDN. Use when configurin
 
 Three headers control caching, from most to least specific:
 
-| Header | Who sees it | Use case |
-|---|---|---|
+| Header                      | Who sees it                                | Use case         |
+| --------------------------- | ------------------------------------------ | ---------------- |
 | `Netlify-CDN-Cache-Control` | Netlify CDN only (stripped before browser) | CDN-only caching |
-| `CDN-Cache-Control` | All CDN caches (stripped before browser) | Multi-CDN setups |
-| `Cache-Control` | Browser and all caches | General caching |
+| `CDN-Cache-Control`         | All CDN caches (stripped before browser)   | Multi-CDN setups |
+| `Cache-Control`             | Browser and all caches                     | General caching  |
 
 ### Common Patterns
 
@@ -110,20 +111,25 @@ return new Response(body, {
 ## Framework-Specific Caching
 
 ### Next.js
+
 ISR uses Netlify's durable cache automatically (runtime 5.5.0+). `revalidatePath` and `revalidateTag` trigger cache purge.
 
 ### Astro / Remix
+
 Full control over cache headers in server routes. Set `Netlify-CDN-Cache-Control` in responses for CDN caching.
 
 ### Nuxt
+
 Default Nitro preset handles caching. ISR-style patterns use `routeRules` with `swr` or `isr` options.
 
 ### Vite SPA
+
 Static assets are cached by default. API responses from Netlify Functions need explicit cache headers.
 
 ## Debugging
 
 Check the `Cache-Status` response header:
+
 - `HIT` — served from cache
 - `MISS` — generated fresh
 - `REVALIDATED` — stale content was revalidated

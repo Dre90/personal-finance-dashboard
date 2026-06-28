@@ -121,7 +121,11 @@ function SettingsPage() {
         <p className="text-sm text-muted">
           Slett hele dashboardet og alle dataene permanent. Kan ikke angres.
         </p>
-        <button onClick={confirmDelete} className="btn btn-danger" disabled={deleteMutation.loading}>
+        <button
+          onClick={confirmDelete}
+          className="btn btn-danger"
+          disabled={deleteMutation.loading}
+        >
           {deleteMutation.loading ? "Sletter…" : "Slett dashboard for alltid"}
         </button>
       </div>

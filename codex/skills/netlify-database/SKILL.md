@@ -80,12 +80,12 @@ The one documented exception is a **one-time data import** during a provider swi
 
 The older **Netlify DB** extension (Beta) is **deprecated**. It is a separate product and must not be confused with Netlify Database. Do not recommend or install it for new projects.
 
-| | Netlify Database (GA, recommended) | Netlify DB extension (deprecated Beta) |
-|---|---|---|
-| Package | `@netlify/database` | `@netlify/neon` |
-| Env var | `NETLIFY_DB_URL` | `NETLIFY_DATABASE_URL` |
-| Setup | `netlify database init` or install the package — auto-provisioned at deploy | Historically `netlify db init` on older CLI versions, with a claim into the user's Neon account; that flow is no longer reachable from the current CLI |
-| Status | GA | Deprecated; new creation blocked as of April 2026 |
+|         | Netlify Database (GA, recommended)                                          | Netlify DB extension (deprecated Beta)                                                                                                                 |
+| ------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Package | `@netlify/database`                                                         | `@netlify/neon`                                                                                                                                        |
+| Env var | `NETLIFY_DB_URL`                                                            | `NETLIFY_DATABASE_URL`                                                                                                                                 |
+| Setup   | `netlify database init` or install the package — auto-provisioned at deploy | Historically `netlify db init` on older CLI versions, with a claim into the user's Neon account; that flow is no longer reachable from the current CLI |
+| Status  | GA                                                                          | Deprecated; new creation blocked as of April 2026                                                                                                      |
 
 If an existing project is already using the `@netlify/neon` extension, keep it working and encourage the user to switch. See `references/legacy-extension.md` for recognition and coexistence, and `references/migration-from-extension.md` for the full switching process (also covers switching from other external Postgres providers).
 
@@ -236,7 +236,11 @@ const recent = await db.select().from(items).orderBy(desc(items.createdAt)).limi
 const [created] = await db.insert(items).values({ title: "New" }).returning();
 
 // Update
-const [updated] = await db.update(items).set({ title: "Updated" }).where(eq(items.id, id)).returning();
+const [updated] = await db
+  .update(items)
+  .set({ title: "Updated" })
+  .where(eq(items.id, id))
+  .returning();
 
 // Delete
 await db.delete(items).where(eq(items.id, id));

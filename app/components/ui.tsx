@@ -15,10 +15,13 @@ export function StatCard({
   isCurrency?: boolean;
 }) {
   const toneClass =
-    tone === "positive" ? "text-positive"
-    : tone === "negative" ? "text-[color:#fca5a5]"
-    : tone === "warn" ? "text-warn"
-    : "text-text";
+    tone === "positive"
+      ? "text-positive"
+      : tone === "negative"
+        ? "text-[color:#fca5a5]"
+        : tone === "warn"
+          ? "text-warn"
+          : "text-text";
   return (
     <div className="card">
       <div className="text-xs uppercase tracking-wider text-muted font-medium">{label}</div>
@@ -106,7 +109,11 @@ export function Modal({
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">{title}</h3>
-          <button onClick={onClose} className="text-muted hover:text-text text-xl" aria-label="Lukk">
+          <button
+            onClick={onClose}
+            className="text-muted hover:text-text text-xl"
+            aria-label="Lukk"
+          >
             ×
           </button>
         </div>

@@ -35,7 +35,8 @@ export default async (req: Request, context: Context) => {
   const image = formData.get("image") as File;
 
   if (!image) return Response.json({ error: "No image provided" }, { status: 400 });
-  if (!ALLOWED_TYPES.includes(image.type)) return Response.json({ error: "Invalid type" }, { status: 400 });
+  if (!ALLOWED_TYPES.includes(image.type))
+    return Response.json({ error: "Invalid type" }, { status: 400 });
   if (image.size > MAX_SIZE) return Response.json({ error: "File too large" }, { status: 400 });
 
   const extension = image.name.split(".").pop() || "jpg";

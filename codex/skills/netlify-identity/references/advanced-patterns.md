@@ -5,15 +5,20 @@
 Three-step flow: request recovery email, handle the callback, then set a new password.
 
 ```typescript
-import { requestPasswordRecovery, handleAuthCallback, updateUser, AuthError } from '@netlify/identity'
+import {
+  requestPasswordRecovery,
+  handleAuthCallback,
+  updateUser,
+  AuthError,
+} from "@netlify/identity";
 
 // Step 1: Send recovery email
 async function handleForgotPassword(email: string) {
   try {
-    await requestPasswordRecovery(email)
-    showSuccess('Check your email for a password reset link.')
+    await requestPasswordRecovery(email);
+    showSuccess("Check your email for a password reset link.");
   } catch (error) {
-    if (error instanceof AuthError) showError(error.message)
+    if (error instanceof AuthError) showError(error.message);
   }
 }
 
@@ -23,10 +28,10 @@ async function handleForgotPassword(email: string) {
 // Step 3: Set new password
 async function handlePasswordReset(newPassword: string) {
   try {
-    await updateUser({ password: newPassword })
-    showSuccess('Password updated.')
+    await updateUser({ password: newPassword });
+    showSuccess("Password updated.");
   } catch (error) {
-    if (error instanceof AuthError) showError(error.message)
+    if (error instanceof AuthError) showError(error.message);
   }
 }
 ```
@@ -38,14 +43,14 @@ The recovery callback fires a `'recovery'` auth event, not `'login'`. The user i
 When a user clicks an invite link, `handleAuthCallback()` returns `{ type: 'invite', user: null, token }`. Use the token to accept the invite and set a password.
 
 ```typescript
-import { acceptInvite, AuthError } from '@netlify/identity'
+import { acceptInvite, AuthError } from "@netlify/identity";
 
 async function handleAcceptInvite(token: string, password: string) {
   try {
-    const user = await acceptInvite(token, password)
-    showSuccess(`Welcome, ${user.email}! Your account is ready.`)
+    const user = await acceptInvite(token, password);
+    showSuccess(`Welcome, ${user.email}! Your account is ready.`);
   } catch (error) {
-    if (error instanceof AuthError) showError(error.message)
+    if (error instanceof AuthError) showError(error.message);
   }
 }
 ```
@@ -55,14 +60,14 @@ async function handleAcceptInvite(token: string, password: string) {
 When a user verifies an email change, `handleAuthCallback()` returns `{ type: 'email_change', user }`. The user must be logged in when clicking the verification link.
 
 ```typescript
-import { verifyEmailChange, AuthError } from '@netlify/identity'
+import { verifyEmailChange, AuthError } from "@netlify/identity";
 
 async function handleEmailChangeVerification(token: string) {
   try {
-    const user = await verifyEmailChange(token)
-    showSuccess(`Email updated to ${user.email}`)
+    const user = await verifyEmailChange(token);
+    showSuccess(`Email updated to ${user.email}`);
   } catch (error) {
-    if (error instanceof AuthError) showError(error.message)
+    if (error instanceof AuthError) showError(error.message);
   }
 }
 ```
@@ -72,9 +77,9 @@ async function handleEmailChangeVerification(token: string) {
 `hydrateSession()` bridges server-set cookies to the browser session. Call it on page load when using server-side login (e.g., login inside a Netlify Function followed by a redirect).
 
 ```typescript
-import { hydrateSession } from '@netlify/identity'
+import { hydrateSession } from "@netlify/identity";
 
-const user = await hydrateSession()
+const user = await hydrateSession();
 if (user) {
   // Browser session is now in sync with server-set cookies
 }

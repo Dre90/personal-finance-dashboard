@@ -14,7 +14,9 @@ export function createRouter() {
     defaultNotFoundComponent: () => (
       <div style={{ padding: 24 }}>
         <h2>Siden finnes ikke</h2>
-        <p><a href="/">Gå til forsiden</a></p>
+        <p>
+          <a href="/">Gå til forsiden</a>
+        </p>
       </div>
     ),
     scrollRestoration: true,

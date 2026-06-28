@@ -59,10 +59,10 @@ await store.setJSON("key", { name: "Example", count: 42 });
 
 ```typescript
 // Text (default)
-const text = await store.get("key");                    // string | null
+const text = await store.get("key"); // string | null
 
 // Typed retrieval
-const json = await store.get("key", { type: "json" });  // object | null
+const json = await store.get("key", { type: "json" }); // object | null
 const stream = await store.get("key", { type: "stream" });
 const blob = await store.get("key", { type: "blob" });
 const buffer = await store.get("key", { type: "arrayBuffer" });
@@ -99,11 +99,11 @@ const { blobs } = await store.list({ prefix: "uploads/" });
 
 ## Limits
 
-| Limit | Value |
-|---|---|
-| Max object size | 5 GB |
-| Store name max length | 64 bytes |
-| Key max length | 600 bytes |
+| Limit                 | Value     |
+| --------------------- | --------- |
+| Max object size       | 5 GB      |
+| Store name max length | 64 bytes  |
+| Key max length        | 600 bytes |
 
 ## Local Development
 

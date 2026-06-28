@@ -53,10 +53,7 @@ function notify(entry: CacheEntry): void {
   for (const listener of entry.listeners) listener();
 }
 
-async function runFetch<T>(
-  serialKey: string,
-  fn: () => Promise<T>,
-): Promise<T> {
+async function runFetch<T>(serialKey: string, fn: () => Promise<T>): Promise<T> {
   const entry = getOrCreate<T>(serialKey);
   if (entry.promise) return entry.promise;
   entry.loading = true;

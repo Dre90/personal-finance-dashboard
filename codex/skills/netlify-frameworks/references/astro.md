@@ -24,17 +24,17 @@ import { defineConfig } from "astro/config";
 import netlify from "@astrojs/netlify";
 
 export default defineConfig({
-  output: "server",  // or "hybrid" for mixed static/SSR
+  output: "server", // or "hybrid" for mixed static/SSR
   adapter: netlify(),
 });
 ```
 
 ## Output Modes
 
-| Mode | Behavior |
-|---|---|
-| `"static"` | Fully pre-rendered at build time (no adapter needed) |
-| `"server"` | All pages rendered on request (SSR) |
+| Mode       | Behavior                                                                        |
+| ---------- | ------------------------------------------------------------------------------- |
+| `"static"` | Fully pre-rendered at build time (no adapter needed)                            |
+| `"server"` | All pages rendered on request (SSR)                                             |
 | `"hybrid"` | Static by default, opt-in to SSR per page with `export const prerender = false` |
 
 ## What the Adapter Does

@@ -2,9 +2,7 @@
   "version": "8",
   "dialect": "postgres",
   "id": "e8642874-265d-417c-b373-5f424d209109",
-  "prevIds": [
-    "00000000-0000-0000-0000-000000000000"
-  ],
+  "prevIds": ["00000000-0000-0000-0000-000000000000"],
   "ddl": [
     {
       "isRlsEnabled": false,
@@ -873,14 +871,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "asset_id"
-      ],
+      "columns": ["asset_id"],
       "schemaTo": "public",
       "tableTo": "assets",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "asset_snapshots_asset_id_assets_id_fkey",
@@ -890,14 +884,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "dashboard_id"
-      ],
+      "columns": ["dashboard_id"],
       "schemaTo": "public",
       "tableTo": "dashboards",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "assets_dashboard_id_dashboards_id_fkey",
@@ -907,14 +897,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "dashboard_id"
-      ],
+      "columns": ["dashboard_id"],
       "schemaTo": "public",
       "tableTo": "dashboards",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "budget_entries_dashboard_id_dashboards_id_fkey",
@@ -924,14 +910,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "category_id"
-      ],
+      "columns": ["category_id"],
       "schemaTo": "public",
       "tableTo": "categories",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "budget_entries_category_id_categories_id_fkey",
@@ -941,14 +923,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "dashboard_id"
-      ],
+      "columns": ["dashboard_id"],
       "schemaTo": "public",
       "tableTo": "dashboards",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "categories_dashboard_id_dashboards_id_fkey",
@@ -958,14 +936,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "loan_id"
-      ],
+      "columns": ["loan_id"],
       "schemaTo": "public",
       "tableTo": "loans",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "loan_snapshots_loan_id_loans_id_fkey",
@@ -975,14 +949,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "dashboard_id"
-      ],
+      "columns": ["dashboard_id"],
       "schemaTo": "public",
       "tableTo": "dashboards",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "loans_dashboard_id_dashboards_id_fkey",
@@ -992,14 +962,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "dashboard_id"
-      ],
+      "columns": ["dashboard_id"],
       "schemaTo": "public",
       "tableTo": "dashboards",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "sinking_funds_dashboard_id_dashboards_id_fkey",
@@ -1008,9 +974,7 @@
       "table": "sinking_funds"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "asset_snapshots_pkey",
       "schema": "public",
@@ -1018,9 +982,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "assets_pkey",
       "schema": "public",
@@ -1028,9 +990,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "budget_entries_pkey",
       "schema": "public",
@@ -1038,9 +998,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "categories_pkey",
       "schema": "public",
@@ -1048,9 +1006,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "dashboards_pkey",
       "schema": "public",
@@ -1058,9 +1014,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "loan_snapshots_pkey",
       "schema": "public",
@@ -1068,9 +1022,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "loans_pkey",
       "schema": "public",
@@ -1078,9 +1030,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "sinking_funds_pkey",
       "schema": "public",
@@ -1089,10 +1039,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "asset_id",
-        "snapshot_date"
-      ],
+      "columns": ["asset_id", "snapshot_date"],
       "nullsNotDistinct": false,
       "name": "asset_snapshots_asset_date_unique",
       "entityType": "uniques",
@@ -1101,10 +1048,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "category_id",
-        "year_month"
-      ],
+      "columns": ["category_id", "year_month"],
       "nullsNotDistinct": false,
       "name": "budget_entries_cat_month_unique",
       "entityType": "uniques",
@@ -1113,10 +1057,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "loan_id",
-        "snapshot_date"
-      ],
+      "columns": ["loan_id", "snapshot_date"],
       "nullsNotDistinct": false,
       "name": "loan_snapshots_loan_date_unique",
       "entityType": "uniques",

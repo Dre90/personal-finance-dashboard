@@ -23,6 +23,7 @@ Is user authenticated?
 **Context**: User has a project that has never been deployed to Netlify.
 
 **Steps**:
+
 1. Check authentication: `npx netlify status`
 2. If not authenticated: `npx netlify login`
 3. Initialize new site: `npx netlify init`
@@ -32,6 +33,7 @@ Is user authenticated?
 5. Deploy to production: `npx netlify deploy --prod`
 
 **Example**:
+
 ```bash
 npx netlify status
 # Not linked to a site
@@ -51,6 +53,7 @@ npx netlify deploy --prod
 **Context**: User has a site already on Netlify and wants to link their local repo.
 
 **Steps**:
+
 1. Check authentication: `npx netlify status`
 2. Get Git remote: `git remote show origin`
 3. Extract URL (e.g., `https://github.com/user/repo.git`)
@@ -58,6 +61,7 @@ npx netlify deploy --prod
 5. If found, linked. If not, run `netlify init`
 
 **Example**:
+
 ```bash
 git remote show origin
 # * remote origin
@@ -72,6 +76,7 @@ npx netlify link --git-remote-url https://github.com/user/my-app.git
 **Context**: User wants to test changes before pushing to production.
 
 **Steps**:
+
 1. Ensure site is linked: `npx netlify status`
 2. Make code changes
 3. Deploy preview: `npx netlify deploy`
@@ -79,6 +84,7 @@ npx netlify link --git-remote-url https://github.com/user/my-app.git
 5. If approved, deploy to prod: `npx netlify deploy --prod`
 
 **Example**:
+
 ```bash
 # Make changes to code
 
@@ -128,6 +134,7 @@ npx netlify deploy --dir=. --prod
 **Context**: Project is in a subdirectory of a monorepo.
 
 **Steps**:
+
 1. Navigate to project subdirectory: `cd packages/frontend`
 2. Or set base in netlify.toml:
    ```toml
@@ -143,6 +150,7 @@ npx netlify deploy --dir=. --prod
 **Context**: Project needs secrets or environment-specific config.
 
 **Steps**:
+
 1. Never commit secrets to Git
 2. Set in Netlify dashboard or CLI:
    ```bash
@@ -157,6 +165,7 @@ npx netlify deploy --dir=. --prod
 **Context**: User wants to use a custom domain.
 
 **Steps**:
+
 1. Deploy site first: `npx netlify deploy --prod`
 2. Add domain via dashboard or CLI:
    ```bash
@@ -199,6 +208,7 @@ This ensures consistent builds across all deployments.
 ### 3. Framework Detection
 
 Let Netlify auto-detect when possible. Only specify build settings if:
+
 - Netlify can't detect your framework
 - You need custom build commands
 - Your project has a non-standard structure
@@ -238,6 +248,7 @@ npx netlify deploy --prod --message="Fix login bug"
 **Cause**: Build command didn't create expected output directory.
 
 **Fix**:
+
 1. Run build locally: `npm run build`
 2. Check output directory name
 3. Update netlify.toml or CLI prompts with correct path
@@ -247,6 +258,7 @@ npx netlify deploy --prod --message="Fix login bug"
 **Cause**: Build command failed.
 
 **Fix**:
+
 1. Check build logs for specific error
 2. Run build locally to reproduce: `npm run build`
 3. Fix the build error
@@ -257,6 +269,7 @@ npx netlify deploy --prod --message="Fix login bug"
 **Cause**: Authentication token expired or missing.
 
 **Fix**:
+
 ```bash
 npx netlify logout
 npx netlify login
@@ -267,6 +280,7 @@ npx netlify login
 **Cause**: Project not connected to a Netlify site.
 
 **Fix**:
+
 ```bash
 # Try linking to existing site
 npx netlify link
@@ -278,6 +292,7 @@ npx netlify init
 ## Performance Tips
 
 1. **Enable processing** in netlify.toml for auto-optimization:
+
    ```toml
    [build.processing.css]
      bundle = true
@@ -285,6 +300,7 @@ npx netlify init
    ```
 
 2. **Use caching headers** for static assets:
+
    ```toml
    [[headers]]
      for = "/assets/*"

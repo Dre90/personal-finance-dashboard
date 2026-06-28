@@ -29,7 +29,8 @@ function RecapPage() {
   let incomeTotal = 0;
   let expenseTotal = 0;
   const monthData = months.map((ym) => {
-    let income = 0, expense = 0;
+    let income = 0,
+      expense = 0;
     for (const e of data.entries) {
       if (e.yearMonth !== ym) continue;
       const c = catMap.get(e.categoryId);
@@ -66,26 +67,37 @@ function RecapPage() {
         subtitle={`Oppsummering ${year}`}
         actions={
           <>
-            <button onClick={() => setYear(year - 1)} className="btn btn-ghost">←</button>
+            <button onClick={() => setYear(year - 1)} className="btn btn-ghost">
+              ←
+            </button>
             <input
               type="number"
               value={year}
               onChange={(e) => setYear(parseInt(e.target.value, 10))}
               className="input w-28 text-center num"
             />
-            <button onClick={() => setYear(year + 1)} className="btn btn-ghost">→</button>
+            <button onClick={() => setYear(year + 1)} className="btn btn-ghost">
+              →
+            </button>
           </>
         }
       />
 
       {!hasData ? (
-        <Empty title={`Ingen budsjettdata for ${year}`} description="Velg et annet år, eller legg inn budsjett først." />
+        <Empty
+          title={`Ingen budsjettdata for ${year}`}
+          description="Velg et annet år, eller legg inn budsjett først."
+        />
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard label="Total inntekt" value={incomeTotal} tone="positive" />
             <StatCard label="Total utgift" value={expenseTotal} tone="warn" />
-            <StatCard label="Total sparing" value={savings} tone={savings >= 0 ? "positive" : "negative"} />
+            <StatCard
+              label="Total sparing"
+              value={savings}
+              tone={savings >= 0 ? "positive" : "negative"}
+            />
             <StatCard label="Sparerate" value={`${savingsRate.toFixed(1)} %`} isCurrency={false} />
           </div>
 
@@ -99,7 +111,9 @@ function RecapPage() {
                     Sparte <span className="pos num">{formatNOK(bestMonth.savings)}</span>
                   </div>
                 </>
-              ) : <p className="text-sm">—</p>}
+              ) : (
+                <p className="text-sm">—</p>
+              )}
             </div>
             <div className="card">
               <h3 className="font-semibold mb-3">Tøffeste måned</h3>
@@ -113,7 +127,9 @@ function RecapPage() {
                     </span>
                   </div>
                 </>
-              ) : <p className="text-sm">—</p>}
+              ) : (
+                <p className="text-sm">—</p>
+              )}
             </div>
           </div>
 

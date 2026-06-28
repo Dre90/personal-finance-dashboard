@@ -27,11 +27,11 @@ Place files in `netlify/edge-functions/`. Uses `.ts`, `.js`, `.tsx`, or `.jsx` e
 
 ```typescript
 export const config: Config = {
-  path: "/api/*",                    // URLPattern path(s)
-  excludedPath: "/api/public/*",     // Exclusions
-  method: ["GET", "POST"],           // HTTP methods
-  onError: "bypass",                 // "fail" (default), "bypass", or "/error-page"
-  cache: "manual",                   // Enable response caching
+  path: "/api/*", // URLPattern path(s)
+  excludedPath: "/api/public/*", // Exclusions
+  method: ["GET", "POST"], // HTTP methods
+  onError: "bypass", // "fail" (default), "bypass", or "/error-page"
+  cache: "manual", // Enable response caching
 };
 ```
 
@@ -108,19 +108,19 @@ For URL imports, use an import map:
 
 ## When to Use Edge vs Serverless
 
-| Use Edge Functions for | Use Serverless Functions for |
-|---|---|
-| Low-latency responses | Long-running operations (up to 15 min) |
-| Request/response manipulation | Complex Node.js dependencies |
-| Geolocation-based logic | Database-heavy operations |
-| Auth checks and redirects | Background/scheduled tasks |
-| A/B testing, personalization | Tasks needing > 512 MB memory |
+| Use Edge Functions for        | Use Serverless Functions for           |
+| ----------------------------- | -------------------------------------- |
+| Low-latency responses         | Long-running operations (up to 15 min) |
+| Request/response manipulation | Complex Node.js dependencies           |
+| Geolocation-based logic       | Database-heavy operations              |
+| Auth checks and redirects     | Background/scheduled tasks             |
+| A/B testing, personalization  | Tasks needing > 512 MB memory          |
 
 ## Limits
 
-| Resource | Limit |
-|---|---|
-| CPU time | 50 ms per request |
-| Memory | 512 MB per deployed set |
-| Response header timeout | 40 seconds |
-| Code size | 20 MB compressed |
+| Resource                | Limit                   |
+| ----------------------- | ----------------------- |
+| CPU time                | 50 ms per request       |
+| Memory                  | 512 MB per deployed set |
+| Response header timeout | 40 seconds              |
+| Code size               | 20 MB compressed        |

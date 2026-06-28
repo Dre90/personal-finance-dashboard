@@ -24,7 +24,11 @@ function DashboardHome() {
       <Empty
         title="Dashboardet er tomt"
         description="Legg inn budsjett, formue og lån for å se en oversikt."
-        action={<Link to="/dashboard/budget" className="btn btn-primary">Start med budsjett</Link>}
+        action={
+          <Link to="/dashboard/budget" className="btn btn-primary">
+            Start med budsjett
+          </Link>
+        }
       />
     );
   }
@@ -50,21 +54,41 @@ function DashboardHome() {
       color: f.color,
     }));
 
-  const cashFlowData = cur && prev
-    ? [
-        { label: "Inntekt (budsjett)", inneværende: cur.incomeBudget, forrige: prev.incomeBudget },
-        { label: "Inntekt (faktisk)", inneværende: cur.incomeActual, forrige: prev.incomeActual },
-        { label: "Utgift (budsjett)", inneværende: cur.expenseBudget, forrige: prev.expenseBudget },
-        { label: "Utgift (faktisk)", inneværende: cur.expenseActual, forrige: prev.expenseActual },
-      ]
-    : null;
+  const cashFlowData =
+    cur && prev
+      ? [
+          {
+            label: "Inntekt (budsjett)",
+            inneværende: cur.incomeBudget,
+            forrige: prev.incomeBudget,
+          },
+          { label: "Inntekt (faktisk)", inneværende: cur.incomeActual, forrige: prev.incomeActual },
+          {
+            label: "Utgift (budsjett)",
+            inneværende: cur.expenseBudget,
+            forrige: prev.expenseBudget,
+          },
+          {
+            label: "Utgift (faktisk)",
+            inneværende: cur.expenseActual,
+            forrige: prev.expenseActual,
+          },
+        ]
+      : null;
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Oversikt" subtitle={`Stilling per i dag · ${monthLabel(data.currentMonth)}`} />
+      <PageHeader
+        title="Oversikt"
+        subtitle={`Stilling per i dag · ${monthLabel(data.currentMonth)}`}
+      />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Netto formue" value={data.netWorth} tone={data.netWorth >= 0 ? "positive" : "negative"} />
+        <StatCard
+          label="Netto formue"
+          value={data.netWorth}
+          tone={data.netWorth >= 0 ? "positive" : "negative"}
+        />
         <StatCard label="Totale eiendeler" value={data.totalAssets} />
         <StatCard label="Total gjeld" value={data.totalDebt} tone="warn" />
         <StatCard
@@ -166,7 +190,8 @@ function DashboardHome() {
                   <div>
                     <div className="font-medium">{l.name}</div>
                     <div className="text-xs text-muted">
-                      Rente {Number(l.interestRate).toFixed(2)} % · Mnd. {formatNOK(l.monthlyPayment)}
+                      Rente {Number(l.interestRate).toFixed(2)} % · Mnd.{" "}
+                      {formatNOK(l.monthlyPayment)}
                     </div>
                   </div>
                   <div className="text-right">

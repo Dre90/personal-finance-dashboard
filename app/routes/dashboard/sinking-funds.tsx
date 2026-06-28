@@ -230,7 +230,7 @@ function FundModal({
       color: fund?.color ?? SINKING_COLORS[0],
       notes: fund?.notes ?? "",
     },
-    { resetWhen: open ? fund ?? "new" : null },
+    { resetWhen: open ? (fund ?? "new") : null },
   );
   const toast = useToast();
 
@@ -285,7 +285,9 @@ function FundModal({
               Slett
             </button>
           )}
-          <button onClick={onClose} className="btn btn-ghost" disabled={busy}>Avbryt</button>
+          <button onClick={onClose} className="btn btn-ghost" disabled={busy}>
+            Avbryt
+          </button>
           <button
             onClick={() => void saveMutation.mutate(undefined)}
             className="btn btn-primary"
@@ -299,21 +301,41 @@ function FundModal({
       <div className="space-y-3">
         <div>
           <label className="label">Navn</label>
-          <input autoFocus className="input" value={form.values.name} onChange={form.setField("name")} />
+          <input
+            autoFocus
+            className="input"
+            value={form.values.name}
+            onChange={form.setField("name")}
+          />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="label">Nåværende beløp</label>
-            <input className="input num" type="number" value={form.values.current} onChange={form.setField("current")} />
+            <input
+              className="input num"
+              type="number"
+              value={form.values.current}
+              onChange={form.setField("current")}
+            />
           </div>
           <div>
             <label className="label">Målbeløp</label>
-            <input className="input num" type="number" value={form.values.target} onChange={form.setField("target")} />
+            <input
+              className="input num"
+              type="number"
+              value={form.values.target}
+              onChange={form.setField("target")}
+            />
           </div>
         </div>
         <div>
           <label className="label">Månedlig bidrag</label>
-          <input className="input num" type="number" value={form.values.monthly} onChange={form.setField("monthly")} />
+          <input
+            className="input num"
+            type="number"
+            value={form.values.monthly}
+            onChange={form.setField("monthly")}
+          />
         </div>
         <div>
           <label className="label">Farge</label>

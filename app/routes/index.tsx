@@ -69,7 +69,7 @@ function LandingPage() {
   function goToDashboard() {
     if (createdId) {
       setStoredDashboardId(createdId);
-      navigate({ to: "/dashboard" });
+      void navigate({ to: "/dashboard" });
     }
   }
 
@@ -92,18 +92,32 @@ function LandingPage() {
           <div className="space-y-5">
             <div className="badge">Privat · Anonymt · Norsk</div>
             <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
-              Ta kontroll over <span className="bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent">økonomien</span> din.
+              Ta kontroll over{" "}
+              <span className="bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent">
+                økonomien
+              </span>{" "}
+              din.
             </h1>
             <p className="text-muted text-lg leading-relaxed">
-              Ett dashboard for budsjett, sparing, formue og lån. Ingen bruker, ingen e-post —
-              bare en privat ID som er din nøkkel.
+              Ett dashboard for budsjett, sparing, formue og lån. Ingen bruker, ingen e-post — bare
+              en privat ID som er din nøkkel.
             </p>
             <ul className="space-y-2 text-sm text-muted">
-              <li className="flex gap-2"><Check /> Månedlig budsjett med kategorier og grafer</li>
-              <li className="flex gap-2"><Check /> Sinking funds med progress og bidrag</li>
-              <li className="flex gap-2"><Check /> Oversikt over ASK, pensjon og andre verdier</li>
-              <li className="flex gap-2"><Check /> Lån med utvikling over tid</li>
-              <li className="flex gap-2"><Check /> Årsoversikt og recap</li>
+              <li className="flex gap-2">
+                <Check /> Månedlig budsjett med kategorier og grafer
+              </li>
+              <li className="flex gap-2">
+                <Check /> Sinking funds med progress og bidrag
+              </li>
+              <li className="flex gap-2">
+                <Check /> Oversikt over ASK, pensjon og andre verdier
+              </li>
+              <li className="flex gap-2">
+                <Check /> Lån med utvikling over tid
+              </li>
+              <li className="flex gap-2">
+                <Check /> Årsoversikt og recap
+              </li>
             </ul>
           </div>
 
@@ -143,7 +157,11 @@ function LandingPage() {
                   <button disabled={loading} className="btn btn-primary w-full">
                     {loading ? "Oppretter…" : "Opprett"}
                   </button>
-                  <button type="button" onClick={() => setMode("home")} className="btn btn-ghost w-full">
+                  <button
+                    type="button"
+                    onClick={() => setMode("home")}
+                    className="btn btn-ghost w-full"
+                  >
                     Tilbake
                   </button>
                 </div>
@@ -168,7 +186,11 @@ function LandingPage() {
                   <button disabled={loading} className="btn btn-primary w-full">
                     {loading ? "Sjekker…" : "Logg inn"}
                   </button>
-                  <button type="button" onClick={() => setMode("home")} className="btn btn-ghost w-full">
+                  <button
+                    type="button"
+                    onClick={() => setMode("home")}
+                    className="btn btn-ghost w-full"
+                  >
                     Tilbake
                   </button>
                 </div>
@@ -179,8 +201,8 @@ function LandingPage() {
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold">Dashboard opprettet 🎉</h2>
                 <p className="text-sm text-muted">
-                  Dette er din unike ID. <strong className="text-text">Ta vare på den</strong> —
-                  den er din eneste måte å logge inn på. Det er ingen recovery.
+                  Dette er din unike ID. <strong className="text-text">Ta vare på den</strong> — den
+                  er din eneste måte å logge inn på. Det er ingen recovery.
                 </p>
                 <div className="card-soft">
                   <div className="font-mono text-sm break-all">{createdId}</div>
@@ -206,9 +228,20 @@ function LandingPage() {
 
 function Check() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-emerald-400 mt-0.5 shrink-0">
-      <path d="M5 12l5 5L20 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      className="text-emerald-400 mt-0.5 shrink-0"
+    >
+      <path
+        d="M5 12l5 5L20 7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
-

@@ -46,6 +46,7 @@ Site ID is stored in `.netlify/state.json`. Add `.netlify` to `.gitignore`.
 ### Git-Based Deploys (Continuous Deployment)
 
 Set up with `netlify init`. Automatic deploys trigger on push/PR:
+
 - Push to production branch → production deploy
 - Open PR → deploy preview with unique URL
 - Push to other branches → branch deploy
@@ -73,6 +74,7 @@ netlify dev
 ```
 
 Wraps your framework's dev server and provides:
+
 - Environment variable injection
 - Functions and edge functions
 - Redirects and headers processing
@@ -139,13 +141,13 @@ netlify env:set DEBUG "true" --context branch:feature-x
 
 ## Useful Commands
 
-| Command | Description |
-|---|---|
-| `netlify status` | Auth and site link status |
-| `netlify dev` | Start local dev server |
-| `netlify build` | Run build locally (mimics Netlify environment) |
-| `netlify deploy` | Draft deploy |
-| `netlify deploy --prod` | Production deploy |
-| `netlify dev:exec <cmd>` | Run command with Netlify environment loaded |
-| `netlify env:list` | List environment variables |
-| `netlify clone org/repo` | Clone, link, and set up in one step |
+| Command                  | Description                                    |
+| ------------------------ | ---------------------------------------------- |
+| `netlify status`         | Auth and site link status                      |
+| `netlify dev`            | Start local dev server                         |
+| `netlify build`          | Run build locally (mimics Netlify environment) |
+| `netlify deploy`         | Draft deploy                                   |
+| `netlify deploy --prod`  | Production deploy                              |
+| `netlify dev:exec <cmd>` | Run command with Netlify environment loaded    |
+| `netlify env:list`       | List environment variables                     |
+| `netlify clone org/repo` | Clone, link, and set up in one step            |

@@ -129,9 +129,7 @@ const response = await ai.models.generateContent({
   contents: "A watercolor portrait of a corgi wearing a beret",
 });
 
-const imagePart = response.candidates[0].content.parts.find(
-  (p) => p.inlineData,
-);
+const imagePart = response.candidates[0].content.parts.find((p) => p.inlineData);
 const base64 = imagePart.inlineData.data;
 const mimeType = imagePart.inlineData.mimeType; // e.g. "image/png"
 const bytes = Buffer.from(base64, "base64");
@@ -159,16 +157,16 @@ The response shape is the same — pull `base64` and `mimeType` off the first pa
 
 All of these are injected automatically by Netlify when AI is enabled. Setting your own value for any of the per-provider vars disables gateway routing.
 
-| Variable | Provider | Purpose |
-|---|---|---|
-| `OPENAI_BASE_URL` | OpenAI | Gateway endpoint |
-| `OPENAI_API_KEY` | OpenAI | Placeholder; satisfies the SDK's "key required" check |
-| `ANTHROPIC_BASE_URL` | Anthropic | Gateway endpoint |
-| `ANTHROPIC_API_KEY` | Anthropic | Placeholder; satisfies the SDK's "key required" check |
-| `GOOGLE_GEMINI_BASE_URL` | Google Gemini | Gateway endpoint |
-| `GEMINI_API_KEY` | Google Gemini | Placeholder; satisfies the SDK's "key required" check |
-| `NETLIFY_AI_GATEWAY_BASE_URL` | (universal) | Provider-agnostic gateway endpoint |
-| `NETLIFY_AI_GATEWAY_KEY` | (universal) | Provider-agnostic gateway key |
+| Variable                      | Provider      | Purpose                                               |
+| ----------------------------- | ------------- | ----------------------------------------------------- |
+| `OPENAI_BASE_URL`             | OpenAI        | Gateway endpoint                                      |
+| `OPENAI_API_KEY`              | OpenAI        | Placeholder; satisfies the SDK's "key required" check |
+| `ANTHROPIC_BASE_URL`          | Anthropic     | Gateway endpoint                                      |
+| `ANTHROPIC_API_KEY`           | Anthropic     | Placeholder; satisfies the SDK's "key required" check |
+| `GOOGLE_GEMINI_BASE_URL`      | Google Gemini | Gateway endpoint                                      |
+| `GEMINI_API_KEY`              | Google Gemini | Placeholder; satisfies the SDK's "key required" check |
+| `NETLIFY_AI_GATEWAY_BASE_URL` | (universal)   | Provider-agnostic gateway endpoint                    |
+| `NETLIFY_AI_GATEWAY_KEY`      | (universal)   | Provider-agnostic gateway key                         |
 
 The real upstream API keys live on Netlify's side. The per-provider `*_API_KEY` vars are placeholders so the SDKs construct successfully; the gateway authenticates server-side.
 
@@ -188,11 +186,13 @@ With `@netlify/vite-plugin` or `netlify dev`, gateway environment variables are 
 _Verified 2026-04-30 against the live AI Gateway providers list. The user-facing reference is https://docs.netlify.com/build/ai-gateway/overview/ — re-check before pinning a new model._
 
 ### Anthropic (chat)
+
 - `claude-haiku-4-5`, `claude-haiku-4-5-20251001`
 - `claude-sonnet-4-0`, `claude-sonnet-4-20250514`, `claude-sonnet-4-5`, `claude-sonnet-4-5-20250929`, `claude-sonnet-4-6`
 - `claude-opus-4-1-20250805`, `claude-opus-4-20250514`, `claude-opus-4-5`, `claude-opus-4-5-20251101`, `claude-opus-4-6`, `claude-opus-4-7`
 
 ### OpenAI (chat / reasoning / Codex)
+
 - gpt-4 family: `gpt-4o`, `gpt-4o-mini`, `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`
 - gpt-5: `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `gpt-5-pro`, `gpt-5-codex`; dated: `gpt-5-2025-08-07`, `gpt-5-mini-2025-08-07`
 - gpt-5.1: `gpt-5.1`, `gpt-5.1-codex`, `gpt-5.1-codex-max`, `gpt-5.1-codex-mini`; dated: `gpt-5.1-2025-11-13`
@@ -203,6 +203,6 @@ _Verified 2026-04-30 against the live AI Gateway providers list. The user-facing
 - Reasoning (o-series): `o3`, `o3-mini`, `o4-mini`
 
 ### Google Gemini (chat + image)
+
 - Chat: `gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`, `gemini-2.5-pro`, `gemini-3-flash-preview`, `gemini-3.1-flash-lite-preview`, `gemini-3.1-pro-preview`, `gemini-3.1-pro-preview-customtools`, `gemini-flash-latest`, `gemini-flash-lite-latest`
 - Image: `gemini-2.5-flash-image`, `gemini-3-pro-image-preview`, `gemini-3.1-flash-image-preview`
-

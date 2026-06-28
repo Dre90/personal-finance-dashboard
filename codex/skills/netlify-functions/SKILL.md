@@ -54,7 +54,7 @@ Define custom paths via the `config` export:
 
 ```typescript
 export const config: Config = {
-  path: "/api/items",                    // Static path
+  path: "/api/items", // Static path
   // path: "/api/items/:id",            // Path parameter
   // path: ["/api/items", "/api/items/:id"], // Multiple paths
   // excludedPath: "/api/items/special", // Excluded paths
@@ -79,10 +79,14 @@ export default async (req: Request, context: Context) => {
 ```typescript
 export default async (req: Request, context: Context) => {
   switch (req.method) {
-    case "GET":    return handleGet(context.params.id);
-    case "POST":   return handlePost(await req.json());
-    case "DELETE": return handleDelete(context.params.id);
-    default:       return new Response("Method not allowed", { status: 405 });
+    case "GET":
+      return handleGet(context.params.id);
+    case "POST":
+      return handlePost(await req.json());
+    case "DELETE":
+      return handleDelete(context.params.id);
+    default:
+      return new Response("Method not allowed", { status: 405 });
   }
 };
 
@@ -119,7 +123,7 @@ Functions default to 1024 MB of memory and a proportional amount of compute. Con
 
 ```typescript
 export const config: Config = {
-  memory: "2gb",  // or memory: 2048; allowed range 1024–4096 MB
+  memory: "2gb", // or memory: 2048; allowed range 1024–4096 MB
   // vcpu: 1.5,   // alternatively; allowed range 0.5–2.0
 };
 ```
@@ -140,7 +144,7 @@ Override the deployment region per function via the `region` property. Accepts a
 
 ```typescript
 export const config: Config = {
-  region: "dub",  // Dublin (eu-west-1)
+  region: "dub", // Dublin (eu-west-1)
 };
 ```
 
@@ -169,7 +173,9 @@ Return a `ReadableStream` body for streamed responses (up to 20 MB):
 
 ```typescript
 export default async (req: Request) => {
-  const stream = new ReadableStream({ /* ... */ });
+  const stream = new ReadableStream({
+    /* ... */
+  });
   return new Response(stream, {
     headers: { "Content-Type": "text/event-stream" },
   });
@@ -203,12 +209,12 @@ A single function can declare multiple handlers; multiple functions can also sub
 
 **Available handlers:**
 
-| Handler | Trigger |
-|---|---|
-| `fetch` | HTTP request (equivalent to a bare function default export) |
-| `deployBuilding` / `deploySucceeded` / `deployFailed` / `deployDeleted` / `deployLocked` / `deployUnlocked` | Deploy lifecycle |
-| `userSignup` / `userLogin` / `userValidate` / `userModified` / `userDeleted` | Identity lifecycle |
-| `formSubmitted` | Form submission verified |
+| Handler                                                                                                     | Trigger                                                     |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `fetch`                                                                                                     | HTTP request (equivalent to a bare function default export) |
+| `deployBuilding` / `deploySucceeded` / `deployFailed` / `deployDeleted` / `deployLocked` / `deployUnlocked` | Deploy lifecycle                                            |
+| `userSignup` / `userLogin` / `userValidate` / `userModified` / `userDeleted`                                | Identity lifecycle                                          |
+| `formSubmitted`                                                                                             | Form submission verified                                    |
 
 ### Identity handlers: deny an action
 
@@ -228,17 +234,17 @@ If multiple functions subscribe to the same event, the first to call `event.deny
 
 ## Context Object
 
-| Property | Description |
-|---|---|
-| `context.params` | Path parameters from config |
-| `context.geo` | `{ city, country: {code, name}, latitude, longitude, subdivision, timezone, postalCode }` |
-| `context.ip` | Client IP address |
-| `context.cookies` | `.get()`, `.set()`, `.delete()` |
-| `context.deploy` | `{ context, id, published }` |
-| `context.site` | `{ id, name, url }` |
-| `context.account.id` | Team account ID |
-| `context.requestId` | Unique request ID |
-| `context.waitUntil(promise)` | Extend execution after response is sent |
+| Property                     | Description                                                                               |
+| ---------------------------- | ----------------------------------------------------------------------------------------- |
+| `context.params`             | Path parameters from config                                                               |
+| `context.geo`                | `{ city, country: {code, name}, latitude, longitude, subdivision, timezone, postalCode }` |
+| `context.ip`                 | Client IP address                                                                         |
+| `context.cookies`            | `.get()`, `.set()`, `.delete()`                                                           |
+| `context.deploy`             | `{ context, id, published }`                                                              |
+| `context.site`               | `{ id, name, url }`                                                                       |
+| `context.account.id`         | Team account ID                                                                           |
+| `context.requestId`          | Unique request ID                                                                         |
+| `context.waitUntil(promise)` | Extend execution after response is sent                                                   |
 
 ## Environment Variables
 
@@ -250,14 +256,14 @@ const apiKey = Netlify.env.get("API_KEY");
 
 ## Resource Limits
 
-| Resource | Limit |
-|---|---|
-| Synchronous timeout | 60 seconds |
-| Background timeout | 15 minutes |
-| Scheduled timeout | 30 seconds |
-| Memory | 1024 MB default; configurable 1024–4096 MB (see [Resource Configuration](#resource-configuration)) |
-| Buffered payload | 6 MB |
-| Streamed payload | 20 MB |
+| Resource            | Limit                                                                                              |
+| ------------------- | -------------------------------------------------------------------------------------------------- |
+| Synchronous timeout | 60 seconds                                                                                         |
+| Background timeout  | 15 minutes                                                                                         |
+| Scheduled timeout   | 30 seconds                                                                                         |
+| Memory              | 1024 MB default; configurable 1024–4096 MB (see [Resource Configuration](#resource-configuration)) |
+| Buffered payload    | 6 MB                                                                                               |
+| Streamed payload    | 20 MB                                                                                              |
 
 ## Framework Considerations
 

@@ -15,14 +15,14 @@ During build, the framework adapter writes files to `.netlify/v1/` — functions
 
 Check these files to determine the framework:
 
-| File | Framework |
-|---|---|
-| `astro.config.*` | Astro |
-| `next.config.*` | Next.js |
-| `nuxt.config.*` | Nuxt |
-| `vite.config.*` + `react-router` | Vite + React (SPA or Remix) |
-| `app.config.*` + `@tanstack/react-start` | TanStack Start |
-| `svelte.config.*` | SvelteKit |
+| File                                     | Framework                   |
+| ---------------------------------------- | --------------------------- |
+| `astro.config.*`                         | Astro                       |
+| `next.config.*`                          | Next.js                     |
+| `nuxt.config.*`                          | Nuxt                        |
+| `vite.config.*` + `react-router`         | Vite + React (SPA or Remix) |
+| `app.config.*` + `@tanstack/react-start` | TanStack Start              |
+| `svelte.config.*`                        | SvelteKit                   |
 
 ## Framework Reference Guides
 
@@ -56,11 +56,11 @@ status = 200
 
 Each framework exposes environment variables to client-side code differently:
 
-| Framework | Client prefix | Access pattern |
-|---|---|---|
-| Vite / React | `VITE_` | `import.meta.env.VITE_VAR` |
-| Astro | `PUBLIC_` | `import.meta.env.PUBLIC_VAR` |
-| Next.js | `NEXT_PUBLIC_` | `process.env.NEXT_PUBLIC_VAR` |
-| Nuxt | `NUXT_PUBLIC_` | `useRuntimeConfig().public.var` |
+| Framework    | Client prefix  | Access pattern                  |
+| ------------ | -------------- | ------------------------------- |
+| Vite / React | `VITE_`        | `import.meta.env.VITE_VAR`      |
+| Astro        | `PUBLIC_`      | `import.meta.env.PUBLIC_VAR`    |
+| Next.js      | `NEXT_PUBLIC_` | `process.env.NEXT_PUBLIC_VAR`   |
+| Nuxt         | `NUXT_PUBLIC_` | `useRuntimeConfig().public.var` |
 
 Server-side code in all frameworks can access variables via `process.env.VAR` or `Netlify.env.get("VAR")`.

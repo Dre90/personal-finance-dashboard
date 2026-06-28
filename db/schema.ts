@@ -75,7 +75,9 @@ export const sinkingFunds = pgTable(
     name: text().notNull(),
     target: numeric({ precision: 14, scale: 2 }).notNull().default("0"),
     currentAmount: numeric("current_amount", { precision: 14, scale: 2 }).notNull().default("0"),
-    monthlyContribution: numeric("monthly_contribution", { precision: 14, scale: 2 }).notNull().default("0"),
+    monthlyContribution: numeric("monthly_contribution", { precision: 14, scale: 2 })
+      .notNull()
+      .default("0"),
     color: text().notNull().default("#10b981"),
     sortOrder: integer("sort_order").notNull().default(0),
     notes: text(),
@@ -126,7 +128,9 @@ export const loans = pgTable(
       .notNull()
       .references(() => dashboards.id, { onDelete: "cascade" }),
     name: text().notNull(),
-    originalPrincipal: numeric("original_principal", { precision: 14, scale: 2 }).notNull().default("0"),
+    originalPrincipal: numeric("original_principal", { precision: 14, scale: 2 })
+      .notNull()
+      .default("0"),
     currentBalance: numeric("current_balance", { precision: 14, scale: 2 }).notNull().default("0"),
     interestRate: numeric("interest_rate", { precision: 6, scale: 3 }).notNull().default("0"),
     monthlyPayment: numeric("monthly_payment", { precision: 14, scale: 2 }).notNull().default("0"),

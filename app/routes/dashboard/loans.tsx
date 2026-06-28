@@ -54,8 +54,7 @@ function LoansPage() {
   });
 
   const deleteSnapshotMutation = useMutation({
-    fn: (snapshotId: number) =>
-      deleteLoanSnapshot({ data: { dashboardId, id: snapshotId } }),
+    fn: (snapshotId: number) => deleteLoanSnapshot({ data: { dashboardId, id: snapshotId } }),
     onSuccess: () => {
       void refetch();
       toast.push("Datapunkt slettet", "success");
@@ -131,7 +130,9 @@ function LoansPage() {
                     {loan.notes && <p className="text-xs text-muted mt-1">{loan.notes}</p>}
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-semibold num text-amber-400">{formatNOK(cur)}</div>
+                    <div className="text-2xl font-semibold num text-amber-400">
+                      {formatNOK(cur)}
+                    </div>
                     <div className="text-xs text-muted">av {formatNOK(orig)}</div>
                     <div className="text-xs pos num">{pctPaid.toFixed(1)} % nedbetalt</div>
                   </div>
@@ -139,7 +140,10 @@ function LoansPage() {
 
                 {snaps.length > 1 && (
                   <MoneyLineChart
-                    data={snaps.map((s) => ({ date: s.snapshotDate, balance: toNumber(s.balance) }))}
+                    data={snaps.map((s) => ({
+                      date: s.snapshotDate,
+                      balance: toNumber(s.balance),
+                    }))}
                     xKey="date"
                     height={140}
                     yWidth={70}
@@ -169,7 +173,11 @@ function LoansPage() {
                     </summary>
                     <table className="table mt-2">
                       <thead>
-                        <tr><th>Dato</th><th className="text-right">Saldo</th><th></th></tr>
+                        <tr>
+                          <th>Dato</th>
+                          <th className="text-right">Saldo</th>
+                          <th></th>
+                        </tr>
                       </thead>
                       <tbody>
                         {[...snaps].reverse().map((s) => (
@@ -253,7 +261,7 @@ function LoanModal({
       monthly: loan?.monthlyPayment ?? "",
       notes: loan?.notes ?? "",
     },
-    { resetWhen: open ? loan ?? "new" : null },
+    { resetWhen: open ? (loan ?? "new") : null },
   );
   const toast = useToast();
 
@@ -310,7 +318,9 @@ function LoanModal({
               Slett
             </button>
           )}
-          <button onClick={onClose} className="btn btn-ghost" disabled={busy}>Avbryt</button>
+          <button onClick={onClose} className="btn btn-ghost" disabled={busy}>
+            Avbryt
+          </button>
           <button
             onClick={() => void saveMutation.mutate(undefined)}
             className="btn btn-primary"
@@ -335,19 +345,40 @@ function LoanModal({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="label">Opprinnelig sum</label>
-            <input className="input num" type="number" value={form.values.orig} onChange={form.setField("orig")} />
+            <input
+              className="input num"
+              type="number"
+              value={form.values.orig}
+              onChange={form.setField("orig")}
+            />
           </div>
           <div>
             <label className="label">Nåværende saldo</label>
-            <input className="input num" type="number" value={form.values.cur} onChange={form.setField("cur")} />
+            <input
+              className="input num"
+              type="number"
+              value={form.values.cur}
+              onChange={form.setField("cur")}
+            />
           </div>
           <div>
             <label className="label">Rente (%)</label>
-            <input className="input num" type="number" step="0.01" value={form.values.rate} onChange={form.setField("rate")} />
+            <input
+              className="input num"
+              type="number"
+              step="0.01"
+              value={form.values.rate}
+              onChange={form.setField("rate")}
+            />
           </div>
           <div>
             <label className="label">Månedlig betaling</label>
-            <input className="input num" type="number" value={form.values.monthly} onChange={form.setField("monthly")} />
+            <input
+              className="input num"
+              type="number"
+              value={form.values.monthly}
+              onChange={form.setField("monthly")}
+            />
           </div>
         </div>
         <div>

@@ -98,9 +98,7 @@ export const deleteDashboard = createServerFn({ method: "POST" })
 
 export const listCategories = createServerFn({ method: "GET" })
   .validator((data: unknown) =>
-    z
-      .object({ dashboardId: uuidSchema, includeArchived: z.boolean().optional() })
-      .parse(data),
+    z.object({ dashboardId: uuidSchema, includeArchived: z.boolean().optional() }).parse(data),
   )
   .handler(
     safeHandler(async ({ data }) => {
@@ -483,9 +481,7 @@ export const updateAsset = createServerFn({ method: "POST" })
       await db
         .update(schema.assets)
         .set(set)
-        .where(
-          and(eq(schema.assets.id, data.id), eq(schema.assets.dashboardId, data.dashboardId)),
-        );
+        .where(and(eq(schema.assets.id, data.id), eq(schema.assets.dashboardId, data.dashboardId)));
       return { ok: true as const };
     }),
   );
@@ -498,9 +494,7 @@ export const deleteAsset = createServerFn({ method: "POST" })
     safeHandler(async ({ data }) => {
       await db
         .delete(schema.assets)
-        .where(
-          and(eq(schema.assets.id, data.id), eq(schema.assets.dashboardId, data.dashboardId)),
-        );
+        .where(and(eq(schema.assets.id, data.id), eq(schema.assets.dashboardId, data.dashboardId)));
       return { ok: true as const };
     }),
   );
@@ -522,10 +516,7 @@ export const upsertAssetSnapshot = createServerFn({ method: "POST" })
         .select({ id: schema.assets.id })
         .from(schema.assets)
         .where(
-          and(
-            eq(schema.assets.id, data.assetId),
-            eq(schema.assets.dashboardId, data.dashboardId),
-          ),
+          and(eq(schema.assets.id, data.assetId), eq(schema.assets.dashboardId, data.dashboardId)),
         )
         .limit(1);
       if (!own) throw new Error("Ugyldig eiendel");
@@ -614,9 +605,7 @@ const loanFieldsSchema = z.object({
 });
 
 export const createLoan = createServerFn({ method: "POST" })
-  .validator((data: unknown) =>
-    loanFieldsSchema.extend({ dashboardId: uuidSchema }).parse(data),
-  )
+  .validator((data: unknown) => loanFieldsSchema.extend({ dashboardId: uuidSchema }).parse(data))
   .handler(
     safeHandler(async ({ data }) => {
       await assertDashboardExists(data.dashboardId);
@@ -664,9 +653,7 @@ export const updateLoan = createServerFn({ method: "POST" })
       await db
         .update(schema.loans)
         .set(set)
-        .where(
-          and(eq(schema.loans.id, data.id), eq(schema.loans.dashboardId, data.dashboardId)),
-        );
+        .where(and(eq(schema.loans.id, data.id), eq(schema.loans.dashboardId, data.dashboardId)));
       return { ok: true as const };
     }),
   );
@@ -679,9 +666,7 @@ export const deleteLoan = createServerFn({ method: "POST" })
     safeHandler(async ({ data }) => {
       await db
         .delete(schema.loans)
-        .where(
-          and(eq(schema.loans.id, data.id), eq(schema.loans.dashboardId, data.dashboardId)),
-        );
+        .where(and(eq(schema.loans.id, data.id), eq(schema.loans.dashboardId, data.dashboardId)));
       return { ok: true as const };
     }),
   );
@@ -703,10 +688,7 @@ export const upsertLoanSnapshot = createServerFn({ method: "POST" })
         .select({ id: schema.loans.id })
         .from(schema.loans)
         .where(
-          and(
-            eq(schema.loans.id, data.loanId),
-            eq(schema.loans.dashboardId, data.dashboardId),
-          ),
+          and(eq(schema.loans.id, data.loanId), eq(schema.loans.dashboardId, data.dashboardId)),
         )
         .limit(1);
       if (!own) throw new Error("Ugyldig lån");
@@ -828,10 +810,7 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
           actual: schema.budgetEntries.actual,
         })
         .from(schema.budgetEntries)
-        .innerJoin(
-          schema.categories,
-          eq(schema.categories.id, schema.budgetEntries.categoryId),
-        )
+        .innerJoin(schema.categories, eq(schema.categories.id, schema.budgetEntries.categoryId))
         .where(
           and(
             eq(schema.budgetEntries.dashboardId, dashboardId),
@@ -901,10 +880,7 @@ export const exportDashboard = createServerFn({ method: "GET" })
       if (!dashboard) throw new Error("Dashboardet finnes ikke");
 
       const [categories, budgetEntries, sinkingFunds, assets, loans] = await Promise.all([
-        db
-          .select()
-          .from(schema.categories)
-          .where(eq(schema.categories.dashboardId, dashboardId)),
+        db.select().from(schema.categories).where(eq(schema.categories.dashboardId, dashboardId)),
         db
           .select()
           .from(schema.budgetEntries)

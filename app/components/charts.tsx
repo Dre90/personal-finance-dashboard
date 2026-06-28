@@ -59,11 +59,7 @@ interface AxisChildrenProps {
 }
 
 /** Renders the standard X + Y axis pair with our theming. */
-export function MoneyAxes({
-  xKey,
-  yFormatter = (v) => formatNOK(v),
-  yWidth,
-}: AxisChildrenProps) {
+export function MoneyAxes({ xKey, yFormatter = (v) => formatNOK(v), yWidth }: AxisChildrenProps) {
   return (
     <>
       <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} />
@@ -85,11 +81,7 @@ export function MoneyTooltip(props: Partial<TooltipProps<number, string>> = {}) 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const TT = Tooltip as any;
   return (
-    <TT
-      contentStyle={TOOLTIP_STYLE}
-      formatter={(v: unknown) => formatNOK(Number(v))}
-      {...props}
-    />
+    <TT contentStyle={TOOLTIP_STYLE} formatter={(v: unknown) => formatNOK(Number(v))} {...props} />
   );
 }
 

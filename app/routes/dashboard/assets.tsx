@@ -48,8 +48,7 @@ function AssetsPage() {
   });
 
   const deleteSnapshotMutation = useMutation({
-    fn: (snapshotId: number) =>
-      deleteAssetSnapshot({ data: { dashboardId, id: snapshotId } }),
+    fn: (snapshotId: number) => deleteAssetSnapshot({ data: { dashboardId, id: snapshotId } }),
     onSuccess: () => {
       void refetch();
       invalidateQueries(["summary", dashboardId]);
@@ -114,15 +113,16 @@ function AssetsPage() {
             const cur = valuePerAsset.get(asset.id) ?? 0;
             const first = snaps[0];
             const change = first ? cur - toNumber(first.value) : 0;
-            const pctChange = first && toNumber(first.value) !== 0
-              ? (change / toNumber(first.value)) * 100
-              : 0;
+            const pctChange =
+              first && toNumber(first.value) !== 0 ? (change / toNumber(first.value)) * 100 : 0;
             const color = ASSET_KIND_COLOR[asset.kind as AssetKind] ?? FLOW_COLORS.savings;
             return (
               <div key={asset.id} className="card">
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="badge">{ASSET_KIND_LABEL[asset.kind as AssetKind] ?? asset.kind}</span>
+                    <span className="badge">
+                      {ASSET_KIND_LABEL[asset.kind as AssetKind] ?? asset.kind}
+                    </span>
                     <h3 className="font-semibold text-lg mt-2">{asset.name}</h3>
                     {asset.notes && <p className="text-xs text-muted mt-1">{asset.notes}</p>}
                   </div>
@@ -130,7 +130,8 @@ function AssetsPage() {
                     <div className="text-2xl font-semibold num">{formatNOK(cur)}</div>
                     {first && (
                       <div className={`text-xs num ${change >= 0 ? "pos" : "neg"}`}>
-                        {change >= 0 ? "+" : ""}{formatNOK(change)} ({pctChange.toFixed(1)} %)
+                        {change >= 0 ? "+" : ""}
+                        {formatNOK(change)} ({pctChange.toFixed(1)} %)
                       </div>
                     )}
                   </div>
@@ -168,7 +169,11 @@ function AssetsPage() {
                     </summary>
                     <table className="table mt-2">
                       <thead>
-                        <tr><th>Dato</th><th className="text-right">Verdi</th><th></th></tr>
+                        <tr>
+                          <th>Dato</th>
+                          <th className="text-right">Verdi</th>
+                          <th></th>
+                        </tr>
                       </thead>
                       <tbody>
                         {[...snaps].reverse().map((s) => (
@@ -253,7 +258,7 @@ function AssetModal({
       notes: asset?.notes ?? "",
       initialValue: "",
     },
-    { resetWhen: open ? asset ?? "new" : null },
+    { resetWhen: open ? (asset ?? "new") : null },
   );
   const toast = useToast();
 
@@ -262,7 +267,9 @@ function AssetModal({
       const name = form.values.name.trim();
       const notes = form.values.notes.trim() || null;
       if (asset) {
-        await updateAsset({ data: { dashboardId, id: asset.id, name, kind: form.values.kind, notes } });
+        await updateAsset({
+          data: { dashboardId, id: asset.id, name, kind: form.values.kind, notes },
+        });
         return "Eiendel oppdatert";
       }
       await createAsset({
@@ -312,7 +319,9 @@ function AssetModal({
               Slett
             </button>
           )}
-          <button onClick={onClose} className="btn btn-ghost" disabled={busy}>Avbryt</button>
+          <button onClick={onClose} className="btn btn-ghost" disabled={busy}>
+            Avbryt
+          </button>
           <button
             onClick={() => void saveMutation.mutate(undefined)}
             className="btn btn-primary"
@@ -342,7 +351,9 @@ function AssetModal({
             onChange={form.setField("kind", (raw) => raw as AssetKind)}
           >
             {ASSET_KINDS.map((k) => (
-              <option key={k} value={k}>{ASSET_KIND_LABEL[k]}</option>
+              <option key={k} value={k}>
+                {ASSET_KIND_LABEL[k]}
+              </option>
             ))}
           </select>
         </div>

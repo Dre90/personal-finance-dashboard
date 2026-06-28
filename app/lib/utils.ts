@@ -42,8 +42,18 @@ export function formatPercent(value: string | number | null | undefined, decimal
 }
 
 const MONTH_NAMES = [
-  "Januar", "Februar", "Mars", "April", "Mai", "Juni",
-  "Juli", "August", "September", "Oktober", "November", "Desember",
+  "Januar",
+  "Februar",
+  "Mars",
+  "April",
+  "Mai",
+  "Juni",
+  "Juli",
+  "August",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
 ];
 
 export function monthLabel(yearMonth: string): string {

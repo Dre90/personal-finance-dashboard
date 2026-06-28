@@ -28,10 +28,7 @@ export function SnapshotModal({
   helperText,
   onSubmit,
 }: SnapshotModalProps) {
-  const form = useFormState(
-    { date: todayISO(), value: initialValue },
-    { resetWhen: open },
-  );
+  const form = useFormState({ date: todayISO(), value: initialValue }, { resetWhen: open });
   const [busy, setBusy] = React.useState(false);
 
   async function save() {
@@ -57,11 +54,7 @@ export function SnapshotModal({
           <button onClick={onClose} className="btn btn-ghost" disabled={busy}>
             Avbryt
           </button>
-          <button
-            onClick={save}
-            className="btn btn-primary"
-            disabled={busy || !form.values.value}
-          >
+          <button onClick={save} className="btn btn-primary" disabled={busy || !form.values.value}>
             Lagre
           </button>
         </>

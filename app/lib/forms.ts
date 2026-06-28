@@ -44,14 +44,14 @@ export function useFormState<T extends Record<string, unknown>>(
     <K extends keyof T>(key: K, coerce?: (raw: string) => T[K]) =>
       (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const raw = e.target.value;
-        const next = (coerce ? coerce(raw) : (raw as unknown as T[K]));
+        const next = coerce ? coerce(raw) : (raw as unknown as T[K]);
         setValues((prev) => ({ ...prev, [key]: next }));
       },
     [],
   );
 
   const reset = React.useCallback((next?: Partial<T>) => {
-    setValues({ ...initialRef.current, ...(next ?? {}) });
+    setValues({ ...initialRef.current, ...next });
   }, []);
 
   return { values, set, setField, reset };

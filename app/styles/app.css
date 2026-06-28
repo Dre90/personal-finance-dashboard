@@ -16,18 +16,36 @@
 }
 
 @layer base {
-  html, body {
+  html,
+  body {
     background: linear-gradient(180deg, #0b1020 0%, #0e1428 100%);
     color: var(--color-text);
     min-height: 100vh;
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Inter", sans-serif;
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      "Inter",
+      sans-serif;
     font-feature-settings: "cv11", "ss01";
   }
 
-  *::-webkit-scrollbar { width: 10px; height: 10px; }
-  *::-webkit-scrollbar-track { background: transparent; }
-  *::-webkit-scrollbar-thumb { background: #2a3760; border-radius: 8px; }
-  *::-webkit-scrollbar-thumb:hover { background: #3a4880; }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #2a3760;
+    border-radius: 8px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: #3a4880;
+  }
 }
 
 @layer components {
@@ -36,7 +54,9 @@
     border: 1px solid var(--color-border);
     border-radius: 14px;
     padding: 20px;
-    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.03) inset, 0 8px 24px rgba(0, 0, 0, 0.25);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.03) inset,
+      0 8px 24px rgba(0, 0, 0, 0.25);
   }
   .card-soft {
     background: var(--color-bg-soft);
@@ -62,19 +82,26 @@
     background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
     color: white;
   }
-  .btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .btn-primary:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+  }
   .btn-ghost {
     background: transparent;
     color: var(--color-text);
     border: 1px solid var(--color-border);
   }
-  .btn-ghost:hover { background: var(--color-surface-2); }
+  .btn-ghost:hover {
+    background: var(--color-surface-2);
+  }
   .btn-danger {
     background: #2a1320;
     color: #fca5a5;
     border: 1px solid #5b1d29;
   }
-  .btn-danger:hover { background: #3a1a2c; }
+  .btn-danger:hover {
+    background: #3a1a2c;
+  }
   .input {
     width: 100%;
     padding: 9px 12px;
@@ -84,7 +111,9 @@
     color: var(--color-text);
     font-size: 14px;
     outline: none;
-    transition: border-color 120ms ease, box-shadow 120ms ease;
+    transition:
+      border-color 120ms ease,
+      box-shadow 120ms ease;
   }
   .input:focus {
     border-color: var(--color-primary);
@@ -130,30 +159,66 @@
     padding: 10px;
     border-bottom: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
   }
-  .table tr:last-child td { border-bottom: none; }
-  .table tr:hover td { background: color-mix(in srgb, var(--color-surface-2) 50%, transparent); }
-  .num { font-variant-numeric: tabular-nums; }
-  .pos { color: #34d399; }
-  .neg { color: #fca5a5; }
+  .table tr:last-child td {
+    border-bottom: none;
+  }
+  .table tr:hover td {
+    background: color-mix(in srgb, var(--color-surface-2) 50%, transparent);
+  }
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+  .pos {
+    color: #34d399;
+  }
+  .neg {
+    color: #fca5a5;
+  }
 }
 
 @layer utilities {
   /* Semantic colour utilities so pages don't need to spell out
      `text-[color:var(--color-muted)]` over and over. */
-  .text-muted { color: var(--color-muted); }
-  .text-text { color: var(--color-text); }
-  .text-positive { color: var(--color-accent); }
-  .text-warn { color: var(--color-warn); }
-  .text-danger { color: var(--color-danger); }
-  .bg-surface { background: var(--color-surface); }
-  .bg-surface-2 { background: var(--color-surface-2); }
-  .bg-soft { background: var(--color-bg-soft); }
-  .border-app { border-color: var(--color-border); }
+  .text-muted {
+    color: var(--color-muted);
+  }
+  .text-text {
+    color: var(--color-text);
+  }
+  .text-positive {
+    color: var(--color-accent);
+  }
+  .text-warn {
+    color: var(--color-warn);
+  }
+  .text-danger {
+    color: var(--color-danger);
+  }
+  .bg-surface {
+    background: var(--color-surface);
+  }
+  .bg-surface-2 {
+    background: var(--color-surface-2);
+  }
+  .bg-soft {
+    background: var(--color-bg-soft);
+  }
+  .border-app {
+    border-color: var(--color-border);
+  }
 
   /* Toast slide-in animation */
   @keyframes toast-in {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  .animate-toast-in { animation: toast-in 180ms ease-out; }
+  .animate-toast-in {
+    animation: toast-in 180ms ease-out;
+  }
 }

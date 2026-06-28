@@ -5,7 +5,12 @@ export const DEFAULT_CATEGORIES = [
   { name: "Andre inntekter", kind: "income" as const, groupName: "Inntekt", sortOrder: 30 },
 
   // Faste utgifter
-  { name: "Boliglån/Husleie", kind: "expense" as const, groupName: "Faste utgifter", sortOrder: 100 },
+  {
+    name: "Boliglån/Husleie",
+    kind: "expense" as const,
+    groupName: "Faste utgifter",
+    sortOrder: 100,
+  },
   { name: "Strøm", kind: "expense" as const, groupName: "Faste utgifter", sortOrder: 110 },
   { name: "Internett", kind: "expense" as const, groupName: "Faste utgifter", sortOrder: 120 },
   { name: "Mobil", kind: "expense" as const, groupName: "Faste utgifter", sortOrder: 130 },
@@ -15,11 +20,31 @@ export const DEFAULT_CATEGORIES = [
 
   // Variable utgifter
   { name: "Mat", kind: "expense" as const, groupName: "Variable utgifter", sortOrder: 200 },
-  { name: "Transport/Drivstoff", kind: "expense" as const, groupName: "Variable utgifter", sortOrder: 210 },
+  {
+    name: "Transport/Drivstoff",
+    kind: "expense" as const,
+    groupName: "Variable utgifter",
+    sortOrder: 210,
+  },
   { name: "Klær", kind: "expense" as const, groupName: "Variable utgifter", sortOrder: 220 },
-  { name: "Personlig pleie", kind: "expense" as const, groupName: "Variable utgifter", sortOrder: 230 },
-  { name: "Restaurant/Take-away", kind: "expense" as const, groupName: "Variable utgifter", sortOrder: 240 },
-  { name: "Underholdning", kind: "expense" as const, groupName: "Variable utgifter", sortOrder: 250 },
+  {
+    name: "Personlig pleie",
+    kind: "expense" as const,
+    groupName: "Variable utgifter",
+    sortOrder: 230,
+  },
+  {
+    name: "Restaurant/Take-away",
+    kind: "expense" as const,
+    groupName: "Variable utgifter",
+    sortOrder: 240,
+  },
+  {
+    name: "Underholdning",
+    kind: "expense" as const,
+    groupName: "Variable utgifter",
+    sortOrder: 250,
+  },
   { name: "Helse", kind: "expense" as const, groupName: "Variable utgifter", sortOrder: 260 },
   { name: "Gaver", kind: "expense" as const, groupName: "Variable utgifter", sortOrder: 270 },
   { name: "Hobby", kind: "expense" as const, groupName: "Variable utgifter", sortOrder: 280 },
