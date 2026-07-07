@@ -6,15 +6,24 @@ import { useDashboard } from "../../lib/dashboard-context";
 import { clearQueryCache, useMutation } from "../../lib/query";
 import { useToast } from "../../components/Toaster";
 import { clearStoredDashboardId } from "../../lib/auth";
+import { useTheme } from "../../lib/theme-context";
+import type { ThemePreference } from "../../lib/theme";
 
 export const Route = createFileRoute("/dashboard/settings")({
   component: SettingsPage,
 });
 
+const THEME_OPTIONS: ReadonlyArray<{ value: ThemePreference; label: string }> = [
+  { value: "auto", label: "Auto" },
+  { value: "light", label: "Lyst" },
+  { value: "dark", label: "Mørkt" },
+];
+
 function SettingsPage() {
   const { id, dashboard, refetch } = useDashboard();
   const navigate = useNavigate();
   const toast = useToast();
+  const { preference, setPreference } = useTheme();
   const [name, setName] = React.useState(dashboard.name);
   const [copied, setCopied] = React.useState(false);
 
@@ -99,6 +108,28 @@ function SettingsPage() {
           >
             {renameMutation.loading ? "Lagrer…" : "Lagre navn"}
           </button>
+        </div>
+      </div>
+
+      <div className="card space-y-3">
+        <h3 className="font-semibold">Utseende</h3>
+        <p className="text-sm text-muted">
+          Velg tema. «Auto» følger systeminnstillingen din. Lagres på denne enheten.
+        </p>
+        <div className="inline-flex rounded-[10px] border border-app bg-soft p-1 gap-1">
+          {THEME_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setPreference(opt.value)}
+              aria-pressed={preference === opt.value}
+              className={
+                "btn text-sm px-4 py-1.5 " +
+                (preference === opt.value ? "btn-primary" : "btn-ghost border-transparent")
+              }
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
