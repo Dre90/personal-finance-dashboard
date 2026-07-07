@@ -1,23 +1,89 @@
 import * as React from "react";
-import { Link, useRouter } from "@tanstack/react-router";
-import { cn } from "../lib/utils";
-import { clearStoredDashboardId } from "../lib/auth";
-import { useDashboard } from "../lib/dashboard-context";
-import { clearQueryCache } from "../lib/query";
+import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import {
+  LayoutDashboard,
+  Wallet,
+  CalendarRange,
+  PiggyBank,
+  TrendingUp,
+  Landmark,
+  ChartColumnBig,
+  Settings,
+  Copy,
+  Check,
+  LogOut,
+} from "lucide-react";
+import { clearStoredDashboardId } from "~/lib/auth";
+import { useDashboard } from "~/lib/dashboard-context";
+import { clearQueryCache } from "~/lib/query";
+import { Separator } from "~/components/ui/separator";
+import { Toaster } from "~/components/ui/sonner";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "~/components/ui/sidebar";
 
-const NAV = [
-  { to: "/dashboard", label: "Forside" },
-  { to: "/dashboard/budget", label: "Budsjett" },
-  { to: "/dashboard/budget/yearly", label: "Årsoversikt" },
-  { to: "/dashboard/sinking-funds", label: "Sinking funds" },
-  { to: "/dashboard/assets", label: "Formue" },
-  { to: "/dashboard/loans", label: "Lån" },
-  { to: "/dashboard/recap", label: "Recap" },
-  { to: "/dashboard/settings", label: "Innstillinger" },
-] as const;
+interface NavItem {
+  to: string;
+  label: string;
+  icon: React.ComponentType;
+  /** Match the route exactly (used for parents whose path prefixes a sibling). */
+  exact?: boolean;
+}
+
+const NAV: ReadonlyArray<NavItem> = [
+  { to: "/dashboard", label: "Forside", icon: LayoutDashboard, exact: true },
+  { to: "/dashboard/budget", label: "Budsjett", icon: Wallet, exact: true },
+  { to: "/dashboard/budget/yearly", label: "Årsoversikt", icon: CalendarRange },
+  { to: "/dashboard/sinking-funds", label: "Sinking funds", icon: PiggyBank },
+  { to: "/dashboard/assets", label: "Formue", icon: TrendingUp },
+  { to: "/dashboard/loans", label: "Lån", icon: Landmark },
+  { to: "/dashboard/recap", label: "Recap", icon: ChartColumnBig },
+  { to: "/dashboard/settings", label: "Innstillinger", icon: Settings },
+];
+
+function matchesRoute(item: NavItem, pathname: string): boolean {
+  if (item.exact) return pathname === item.to;
+  return pathname === item.to || pathname.startsWith(`${item.to}/`);
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="bg-background/80 sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-1 data-[orientation=vertical]:h-4" />
+          <CurrentPageTitle />
+        </header>
+        <div className="flex-1 p-4 md:p-6">{children}</div>
+      </SidebarInset>
+      <Toaster />
+    </SidebarProvider>
+  );
+}
+
+function CurrentPageTitle() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const current = [...NAV].reverse().find((n) => matchesRoute(n, pathname));
+  return <span className="text-sm font-medium">{current?.label ?? "Dashboard"}</span>;
+}
+
+function AppSidebar() {
   const router = useRouter();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { id, dashboard } = useDashboard();
   const [copied, setCopied] = React.useState(false);
 
@@ -38,64 +104,59 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b border-app bg-soft/80 backdrop-blur sticky top-0 z-30">
-        <div className="max-w-[1400px] mx-auto px-5 py-3 flex items-center gap-4">
-          <Link to="/dashboard" className="flex items-center gap-2 font-semibold text-lg">
-            <Logo className="w-8 h-8" />
-            <span>Økonomi</span>
-            <span className="text-sm font-normal text-muted ml-2 hidden md:inline">
-              — {dashboard.name}
-            </span>
-          </Link>
-          <nav className="hidden lg:flex items-center gap-1 ml-4 overflow-x-auto">
-            {NAV.map((item) => (
-              <NavLink key={item.to} to={item.to} label={item.label} />
-            ))}
-          </nav>
-          <div className="flex-1" />
-          <div className="flex items-center gap-2">
-            <button
-              onClick={copyId}
-              title="Kopier ID"
-              className="text-xs text-muted font-mono hover:text-text px-2 py-1 rounded-md hover:bg-surface-2 transition-colors"
-            >
-              {copied ? "✓ kopiert" : `ID: ${id.slice(0, 8)}…`}
-            </button>
-            <button onClick={handleLogout} className="btn btn-ghost text-xs">
-              Logg ut
-            </button>
+    <Sidebar>
+      <SidebarHeader>
+        <Link to="/dashboard" className="flex items-center gap-2 px-1 py-1.5">
+          <Logo className="size-7 shrink-0" />
+          <div className="flex min-w-0 flex-col leading-tight">
+            <span className="text-sm font-semibold">Økonomi</span>
+            <span className="text-muted-foreground truncate text-xs">{dashboard.name}</span>
           </div>
-        </div>
-        <nav className="lg:hidden border-t border-app px-3 py-2 flex gap-1 overflow-x-auto">
-          {NAV.map((item) => (
-            <NavLink key={item.to} to={item.to} label={item.label} />
-          ))}
-        </nav>
-      </header>
-      <main className="flex-1 max-w-[1400px] w-full mx-auto px-5 py-6">{children}</main>
-      <footer className="border-t border-app py-4 text-center text-xs text-muted">
-        Husk å ta vare på dashboard-ID-en din — det er din eneste nøkkel.
-      </footer>
-    </div>
-  );
-}
-
-function NavLink({ to, label }: { to: string; label: string }) {
-  return (
-    <Link
-      to={to}
-      activeOptions={{ exact: to === "/dashboard" }}
-      className={cn(
-        "px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors",
-        "text-muted hover:text-text hover:bg-surface-2",
-      )}
-      activeProps={{
-        className: "bg-surface-2 text-text",
-      }}
-    >
-      {label}
-    </Link>
+        </Link>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Navigasjon</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {NAV.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <SidebarMenuItem key={item.to}>
+                    <SidebarMenuButton
+                      isActive={matchesRoute(item, pathname)}
+                      tooltip={item.label}
+                      render={<Link to={item.to} />}
+                    >
+                      <Icon />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={copyId} tooltip="Kopier dashboard-ID">
+              {copied ? <Check /> : <Copy />}
+              <span className="truncate font-mono">
+                {copied ? "Kopiert!" : `ID: ${id.slice(0, 8)}…`}
+              </span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleLogout} tooltip="Logg ut">
+              <LogOut />
+              <span>Logg ut</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   );
 }
 
