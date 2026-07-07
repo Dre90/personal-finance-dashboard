@@ -1,10 +1,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import * as React from "react";
+import { ArrowLeft } from "lucide-react";
 import { LoadingPlaceholder, PageHeader } from "../../components/ui";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Card, CardContent } from "../../components/ui/card";
+import { Field, FieldLabel } from "../../components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
 import { listSinkingFunds, listSinkingFundTransactions } from "../../server/api";
 import { useDashboard } from "../../lib/dashboard-context";
 import { useQuery } from "../../lib/query";
-import { formatNOK } from "../../lib/utils";
+import { cn, formatNOK } from "../../lib/utils";
 import type { SinkingFund, SinkingFundTransaction } from "../../../db/schema";
 
 export const Route = createFileRoute("/dashboard/sinking-funds_/history")({
@@ -12,6 +25,14 @@ export const Route = createFileRoute("/dashboard/sinking-funds_/history")({
 });
 
 type KindFilter = "all" | "deposit" | "withdrawal" | "adjustment" | "opening";
+
+const KIND_ITEMS: Record<KindFilter, string> = {
+  all: "Alle",
+  deposit: "Innskudd",
+  withdrawal: "Uttak",
+  adjustment: "Justering",
+  opening: "Startbeholdning",
+};
 
 function SinkingFundsHistoryPage() {
   const { id: dashboardId } = useDashboard();
@@ -43,6 +64,10 @@ function SinkingFundsHistoryPage() {
   const funds = fundsQuery.data ?? [];
   const filtered = txnsQuery.data ?? [];
   const fundById = new Map(funds.map((f) => [f.id, f]));
+  const fundItems: Record<string, string> = {
+    all: "Alle",
+    ...Object.fromEntries(funds.map((f) => [String(f.id), f.name])),
+  };
 
   // Group consecutive rows sharing an allocationGroupId into visual bands.
   const groups: Array<
@@ -72,68 +97,87 @@ function SinkingFundsHistoryPage() {
         title="Historikk — sinking funds"
         subtitle="Alle innskudd og uttak på tvers av fond"
         actions={
-          <Link to="/dashboard/sinking-funds" className="btn btn-ghost">
-            ← Tilbake
-          </Link>
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={<Link to="/dashboard/sinking-funds" />}
+          >
+            <ArrowLeft />
+            Tilbake
+          </Button>
         }
       />
 
-      <div className="card">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div>
-            <label className="label">Fond</label>
-            <select
-              className="input"
-              value={fundFilter === "all" ? "all" : String(fundFilter)}
-              onChange={(e) =>
-                setFundFilter(e.target.value === "all" ? "all" : Number(e.target.value))
-              }
-            >
-              <option value="all">Alle</option>
-              {funds.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
+      <Card>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <Field>
+              <FieldLabel htmlFor="filter-fund">Fond</FieldLabel>
+              <Select
+                items={fundItems}
+                value={fundFilter === "all" ? "all" : String(fundFilter)}
+                onValueChange={(v) => setFundFilter(v === "all" ? "all" : Number(v))}
+              >
+                <SelectTrigger id="filter-fund" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="all">Alle</SelectItem>
+                    {funds.map((f) => (
+                      <SelectItem key={f.id} value={String(f.id)}>
+                        {f.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="filter-kind">Type</FieldLabel>
+              <Select
+                items={KIND_ITEMS}
+                value={kindFilter}
+                onValueChange={(v) => setKindFilter(v as KindFilter)}
+              >
+                <SelectTrigger id="filter-kind" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {(Object.keys(KIND_ITEMS) as KindFilter[]).map((k) => (
+                      <SelectItem key={k} value={k}>
+                        {KIND_ITEMS[k]}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="filter-from">Fra dato</FieldLabel>
+              <Input
+                id="filter-from"
+                type="date"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="filter-to">Til dato</FieldLabel>
+              <Input
+                id="filter-to"
+                type="date"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+              />
+            </Field>
           </div>
-          <div>
-            <label className="label">Type</label>
-            <select
-              className="input"
-              value={kindFilter}
-              onChange={(e) => setKindFilter(e.target.value as KindFilter)}
-            >
-              <option value="all">Alle</option>
-              <option value="deposit">Innskudd</option>
-              <option value="withdrawal">Uttak</option>
-              <option value="adjustment">Justering</option>
-              <option value="opening">Startbeholdning</option>
-            </select>
-          </div>
-          <div>
-            <label className="label">Fra dato</label>
-            <input
-              type="date"
-              className="input"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="label">Til dato</label>
-            <input
-              type="date"
-              className="input"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-muted">Ingen transaksjoner som matcher filteret.</p>
+        <p className="text-muted-foreground text-sm">Ingen transaksjoner som matcher filteret.</p>
       ) : (
         <div className="space-y-3">
           {groups.map((g) => {
@@ -149,32 +193,41 @@ function SinkingFundsHistoryPage() {
             const total = g.txns.reduce((s, t) => s + Number(t.amount), 0);
             const occurredAt = g.txns[0]?.occurredAt ?? "";
             return (
-              <div key={`group-${g.id}`} className="card border-l-4 border-l-primary">
-                <div className="flex justify-between items-center text-sm mb-2">
-                  <div>
-                    <span className="font-semibold">Fordeling {occurredAt}</span>
-                    {g.txns[0]?.note && <span className="text-muted ml-2">· {g.txns[0].note}</span>}
+              <Card key={`group-${g.id}`} className="border-l-primary border-l-4">
+                <CardContent>
+                  <div className="mb-2 flex items-center justify-between text-sm">
+                    <div>
+                      <span className="font-semibold">Fordeling {occurredAt}</span>
+                      {g.txns[0]?.note && (
+                        <span className="text-muted-foreground ml-2">· {g.txns[0].note}</span>
+                      )}
+                    </div>
+                    <span className="text-success font-semibold tabular-nums">
+                      + {formatNOK(total)}
+                    </span>
                   </div>
-                  <span className="num font-semibold text-positive">+ {formatNOK(total)}</span>
-                </div>
-                <ul className="space-y-1">
-                  {g.txns.map((t) => {
-                    const fund = fundById.get(t.sinkingFundId);
-                    return (
-                      <li key={t.id} className="flex items-center gap-3 text-sm pl-2 text-muted">
-                        <span
-                          className="w-2 h-2 rounded-full flex-none"
-                          style={{ background: fund?.color ?? "#888" }}
-                        />
-                        <span className="flex-1 truncate text-text">
-                          {fund?.name ?? "(slettet)"}
-                        </span>
-                        <span className="num text-positive">+ {formatNOK(t.amount)}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
+                  <ul className="space-y-1">
+                    {g.txns.map((t) => {
+                      const fund = fundById.get(t.sinkingFundId);
+                      return (
+                        <li
+                          key={t.id}
+                          className="text-muted-foreground flex items-center gap-3 pl-2 text-sm"
+                        >
+                          <span
+                            className="size-2 flex-none rounded-full"
+                            style={{ background: fund?.color ?? "#888" }}
+                          />
+                          <span className="text-foreground flex-1 truncate">
+                            {fund?.name ?? "(slettet)"}
+                          </span>
+                          <span className="text-success tabular-nums">+ {formatNOK(t.amount)}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </CardContent>
+              </Card>
             );
           })}
         </div>
@@ -195,24 +248,29 @@ function SingleRow({ txn, fund }: { txn: SinkingFundTransaction; fund: SinkingFu
           ? "Innskudd"
           : "Uttak";
   return (
-    <div className="card flex items-center gap-3 text-sm">
-      <span className="text-muted num w-24 flex-none">{txn.occurredAt}</span>
-      <span
-        className="w-3 h-3 rounded-full flex-none"
-        style={{ background: fund?.color ?? "#888" }}
-      />
-      <div className="flex-1 min-w-0">
-        <div className="truncate">
-          {fund?.name ?? "(slettet)"}
-          <span className="text-xs text-muted ml-2">· {label}</span>
+    <Card>
+      <CardContent className="flex items-center gap-3 text-sm">
+        <span className="text-muted-foreground w-24 flex-none tabular-nums">{txn.occurredAt}</span>
+        <span
+          className="size-3 flex-none rounded-full"
+          style={{ background: fund?.color ?? "#888" }}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="truncate">
+            {fund?.name ?? "(slettet)"}
+            <span className="text-muted-foreground ml-2 text-xs">· {label}</span>
+          </div>
+          {txn.note && <div className="text-muted-foreground truncate text-xs">{txn.note}</div>}
         </div>
-        {txn.note && <div className="text-xs text-muted truncate">{txn.note}</div>}
-      </div>
-      <span
-        className={`num font-semibold w-28 text-right flex-none ${positive ? "text-positive" : "text-danger"}`}
-      >
-        {positive ? "+" : "−"} {formatNOK(Math.abs(amount))}
-      </span>
-    </div>
+        <span
+          className={cn(
+            "w-28 flex-none text-right font-semibold tabular-nums",
+            positive ? "text-success" : "text-destructive",
+          )}
+        >
+          {positive ? "+" : "−"} {formatNOK(Math.abs(amount))}
+        </span>
+      </CardContent>
+    </Card>
   );
 }
