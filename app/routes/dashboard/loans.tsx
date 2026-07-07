@@ -23,7 +23,7 @@ import {
   listLoans,
   updateLoan,
   upsertLoanSnapshot,
-} from "../../server/api";
+} from "~/features/loans/server";
 import { useDashboard } from "../../lib/dashboard-context";
 import { invalidateQueries, useMutation, useQuery } from "../../lib/query";
 import { useToast } from "../../components/Toaster";

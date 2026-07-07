@@ -4,7 +4,7 @@ import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { MoneyBarChart, MoneyDonut } from "../../components/charts";
-import { getDashboardSummary } from "../../server/api";
+import { getDashboardSummary } from "~/features/dashboard/server";
 import { useDashboard } from "../../lib/dashboard-context";
 import { useQuery } from "../../lib/query";
 import { ASSET_KIND_COLOR, FLOW_COLORS } from "../../lib/colors";

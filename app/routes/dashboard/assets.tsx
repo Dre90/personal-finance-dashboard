@@ -40,14 +40,14 @@ import {
   listAssets,
   updateAsset,
   upsertAssetSnapshot,
-} from "../../server/api";
+} from "~/features/assets/server";
 import { useDashboard } from "../../lib/dashboard-context";
 import { invalidateQueries, useMutation, useQuery } from "../../lib/query";
 import { useToast } from "../../components/Toaster";
 import { useFormState } from "../../lib/forms";
 import { ASSET_KIND_COLOR, FLOW_COLORS } from "../../lib/colors";
 import { ASSET_KIND_LABEL, ASSET_KINDS, type AssetKind } from "../../lib/enums";
-import { buildStackedSeries } from "../../lib/assets";
+import { buildStackedSeries } from "~/features/assets/stacked-series";
 import { formatNOK, toNumber } from "../../lib/utils";
 import type { Asset, AssetSnapshot } from "../../../db/schema";
 

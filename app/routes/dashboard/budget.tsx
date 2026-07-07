@@ -30,7 +30,7 @@ import {
   getBudgetMonth,
   updateCategory,
   upsertBudgetEntry,
-} from "../../server/api";
+} from "~/features/budget/server";
 import { useDashboard } from "../../lib/dashboard-context";
 import { invalidateQueries, useMutation, useQuery } from "../../lib/query";
 import { useToast } from "../../components/Toaster";

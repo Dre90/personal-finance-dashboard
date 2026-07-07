@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/select";
-import { listSinkingFunds, listSinkingFundTransactions } from "../../server/api";
+import { listSinkingFunds, listSinkingFundTransactions } from "~/features/sinking-funds/server";
 import { useDashboard } from "../../lib/dashboard-context";
 import { useQuery } from "../../lib/query";
 import { cn, formatNOK } from "../../lib/utils";
