@@ -6,42 +6,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  /* Token registration for Tailwind. Values here are the dark defaults; the
-     theme-specific blocks below override them based on the `data-theme`
-     attribute set on <html> by the pre-paint script. */
-  --color-bg: #0b1020;
-  --color-bg-soft: #111933;
-  --color-surface: #161f3d;
-  --color-surface-2: #1d2950;
-  --color-border: #2a3760;
-  --color-text: #e8ecf6;
-  --color-muted: #9aa6c7;
-  --color-primary: #6366f1;
-  --color-primary-2: #818cf8;
-  --color-accent: #10b981;
-  --color-warn: #f59e0b;
-  --color-danger: #ef4444;
-}
-
-/* Dark is the default theme — also the fallback when JS is disabled and no
-   `data-theme` attribute is present. Holds the extra (non-token) themeable
-   variables; the core --color-* tokens come from @theme above. */
-:root,
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --app-gradient: linear-gradient(180deg, #0b1020 0%, #0e1428 100%);
-  --color-scrollbar: #2a3760;
-  --color-scrollbar-hover: #3a4880;
-  --btn-danger-bg: #2a1320;
-  --btn-danger-fg: #fca5a5;
-  --btn-danger-border: #5b1d29;
-  --btn-danger-bg-hover: #3a1a2c;
-  --color-pos: #34d399;
-  --color-neg: #fca5a5;
-}
-
-:root[data-theme="light"] {
-  color-scheme: light;
+  /* App semantic colour tokens registered so Tailwind emits the matching
+     `.bg-*` / `.text-*` / `.border-*` utilities. The values here are the LIGHT
+     theme, so bare `:root` renders light (matching shadcn's convention); the
+     `.dark` block below overrides them for dark mode. The theme is toggled by
+     adding the `.dark` class to <html> (see app/lib/theme.ts), NOT a
+     `data-theme` attribute. */
   --color-bg: #f5f7fb;
   --color-bg-soft: #eef1f8;
   --color-surface: #ffffff;
@@ -54,6 +24,12 @@
   --color-accent: #059669;
   --color-warn: #d97706;
   --color-danger: #dc2626;
+}
+
+/* Light theme (default). Holds the extra (non-token) themeable variables; the
+   core --color-* tokens come from @theme above. */
+:root {
+  color-scheme: light;
   --app-gradient: linear-gradient(180deg, #f5f7fb 0%, #eaeef7 100%);
   --color-scrollbar: #cbd3e3;
   --color-scrollbar-hover: #b3bdd4;
@@ -63,6 +39,32 @@
   --btn-danger-bg-hover: #fbdcdc;
   --color-pos: #059669;
   --color-neg: #dc2626;
+}
+
+/* Dark theme — activated by the `.dark` class on <html>. Overrides both the
+   core --color-* tokens (--color-primary/-primary-2 are identical in both
+   themes so they aren't repeated) and the extra themeable variables. */
+.dark {
+  color-scheme: dark;
+  --color-bg: #0b1020;
+  --color-bg-soft: #111933;
+  --color-surface: #161f3d;
+  --color-surface-2: #1d2950;
+  --color-border: #2a3760;
+  --color-text: #e8ecf6;
+  --color-muted: #9aa6c7;
+  --color-accent: #10b981;
+  --color-warn: #f59e0b;
+  --color-danger: #ef4444;
+  --app-gradient: linear-gradient(180deg, #0b1020 0%, #0e1428 100%);
+  --color-scrollbar: #2a3760;
+  --color-scrollbar-hover: #3a4880;
+  --btn-danger-bg: #2a1320;
+  --btn-danger-fg: #fca5a5;
+  --btn-danger-border: #5b1d29;
+  --btn-danger-bg-hover: #3a1a2c;
+  --color-pos: #34d399;
+  --color-neg: #fca5a5;
 }
 
 @layer base {
@@ -314,6 +316,13 @@
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  /* Finance semantic tokens — bridged to the app's own theme-aware colours so
+     `bg-success` / `text-success` / `text-warning` follow light/dark. Negative
+     amounts use the existing `text-destructive` / `.neg`. */
+  --color-success: var(--color-pos);
+  --color-success-foreground: #ffffff;
+  --color-warning: var(--color-warn);
+  --color-warning-foreground: #1c1400;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
