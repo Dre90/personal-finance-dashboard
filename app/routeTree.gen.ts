@@ -8,272 +8,281 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
-import { Route as DashboardSinkingFundsRouteImport } from './routes/dashboard/sinking-funds'
-import { Route as DashboardSettingsRouteImport } from './routes/dashboard/settings'
-import { Route as DashboardRecapRouteImport } from './routes/dashboard/recap'
-import { Route as DashboardLoansRouteImport } from './routes/dashboard/loans'
-import { Route as DashboardBudgetRouteImport } from './routes/dashboard/budget'
-import { Route as DashboardAssetsRouteImport } from './routes/dashboard/assets'
-import { Route as DashboardBudgetYearlyRouteImport } from './routes/dashboard/budget.yearly'
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as DashboardRouteImport } from "./routes/dashboard";
+import { Route as IndexRouteImport } from "./routes/index";
+import { Route as DashboardIndexRouteImport } from "./routes/dashboard/index";
+import { Route as DashboardSinkingFundsRouteImport } from "./routes/dashboard/sinking-funds";
+import { Route as DashboardSettingsRouteImport } from "./routes/dashboard/settings";
+import { Route as DashboardRecapRouteImport } from "./routes/dashboard/recap";
+import { Route as DashboardLoansRouteImport } from "./routes/dashboard/loans";
+import { Route as DashboardBudgetRouteImport } from "./routes/dashboard/budget";
+import { Route as DashboardAssetsRouteImport } from "./routes/dashboard/assets";
+import { Route as DashboardSinkingFundsHistoryRouteImport } from "./routes/dashboard/sinking-funds_.history";
+import { Route as DashboardBudgetYearlyRouteImport } from "./routes/dashboard/budget_.yearly";
 
 const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+  id: "/dashboard",
+  path: "/dashboard",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => DashboardRoute,
-} as any)
+} as any);
 const DashboardSinkingFundsRoute = DashboardSinkingFundsRouteImport.update({
-  id: '/sinking-funds',
-  path: '/sinking-funds',
+  id: "/sinking-funds",
+  path: "/sinking-funds",
   getParentRoute: () => DashboardRoute,
-} as any)
+} as any);
 const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+  id: "/settings",
+  path: "/settings",
   getParentRoute: () => DashboardRoute,
-} as any)
+} as any);
 const DashboardRecapRoute = DashboardRecapRouteImport.update({
-  id: '/recap',
-  path: '/recap',
+  id: "/recap",
+  path: "/recap",
   getParentRoute: () => DashboardRoute,
-} as any)
+} as any);
 const DashboardLoansRoute = DashboardLoansRouteImport.update({
-  id: '/loans',
-  path: '/loans',
+  id: "/loans",
+  path: "/loans",
   getParentRoute: () => DashboardRoute,
-} as any)
+} as any);
 const DashboardBudgetRoute = DashboardBudgetRouteImport.update({
-  id: '/budget',
-  path: '/budget',
+  id: "/budget",
+  path: "/budget",
   getParentRoute: () => DashboardRoute,
-} as any)
+} as any);
 const DashboardAssetsRoute = DashboardAssetsRouteImport.update({
-  id: '/assets',
-  path: '/assets',
+  id: "/assets",
+  path: "/assets",
   getParentRoute: () => DashboardRoute,
-} as any)
+} as any);
+const DashboardSinkingFundsHistoryRoute = DashboardSinkingFundsHistoryRouteImport.update({
+  id: "/sinking-funds_/history",
+  path: "/sinking-funds/history",
+  getParentRoute: () => DashboardRoute,
+} as any);
 const DashboardBudgetYearlyRoute = DashboardBudgetYearlyRouteImport.update({
-  id: '/yearly',
-  path: '/yearly',
-  getParentRoute: () => DashboardBudgetRoute,
-} as any)
+  id: "/budget_/yearly",
+  path: "/budget/yearly",
+  getParentRoute: () => DashboardRoute,
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRouteWithChildren
-  '/dashboard/assets': typeof DashboardAssetsRoute
-  '/dashboard/budget': typeof DashboardBudgetRouteWithChildren
-  '/dashboard/loans': typeof DashboardLoansRoute
-  '/dashboard/recap': typeof DashboardRecapRoute
-  '/dashboard/settings': typeof DashboardSettingsRoute
-  '/dashboard/sinking-funds': typeof DashboardSinkingFundsRoute
-  '/dashboard/': typeof DashboardIndexRoute
-  '/dashboard/budget/yearly': typeof DashboardBudgetYearlyRoute
+  "/": typeof IndexRoute;
+  "/dashboard": typeof DashboardRouteWithChildren;
+  "/dashboard/assets": typeof DashboardAssetsRoute;
+  "/dashboard/budget": typeof DashboardBudgetRoute;
+  "/dashboard/loans": typeof DashboardLoansRoute;
+  "/dashboard/recap": typeof DashboardRecapRoute;
+  "/dashboard/settings": typeof DashboardSettingsRoute;
+  "/dashboard/sinking-funds": typeof DashboardSinkingFundsRoute;
+  "/dashboard/": typeof DashboardIndexRoute;
+  "/dashboard/budget/yearly": typeof DashboardBudgetYearlyRoute;
+  "/dashboard/sinking-funds/history": typeof DashboardSinkingFundsHistoryRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/dashboard/assets': typeof DashboardAssetsRoute
-  '/dashboard/budget': typeof DashboardBudgetRouteWithChildren
-  '/dashboard/loans': typeof DashboardLoansRoute
-  '/dashboard/recap': typeof DashboardRecapRoute
-  '/dashboard/settings': typeof DashboardSettingsRoute
-  '/dashboard/sinking-funds': typeof DashboardSinkingFundsRoute
-  '/dashboard': typeof DashboardIndexRoute
-  '/dashboard/budget/yearly': typeof DashboardBudgetYearlyRoute
+  "/": typeof IndexRoute;
+  "/dashboard/assets": typeof DashboardAssetsRoute;
+  "/dashboard/budget": typeof DashboardBudgetRoute;
+  "/dashboard/loans": typeof DashboardLoansRoute;
+  "/dashboard/recap": typeof DashboardRecapRoute;
+  "/dashboard/settings": typeof DashboardSettingsRoute;
+  "/dashboard/sinking-funds": typeof DashboardSinkingFundsRoute;
+  "/dashboard": typeof DashboardIndexRoute;
+  "/dashboard/budget/yearly": typeof DashboardBudgetYearlyRoute;
+  "/dashboard/sinking-funds/history": typeof DashboardSinkingFundsHistoryRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRouteWithChildren
-  '/dashboard/assets': typeof DashboardAssetsRoute
-  '/dashboard/budget': typeof DashboardBudgetRouteWithChildren
-  '/dashboard/loans': typeof DashboardLoansRoute
-  '/dashboard/recap': typeof DashboardRecapRoute
-  '/dashboard/settings': typeof DashboardSettingsRoute
-  '/dashboard/sinking-funds': typeof DashboardSinkingFundsRoute
-  '/dashboard/': typeof DashboardIndexRoute
-  '/dashboard/budget/yearly': typeof DashboardBudgetYearlyRoute
+  __root__: typeof rootRouteImport;
+  "/": typeof IndexRoute;
+  "/dashboard": typeof DashboardRouteWithChildren;
+  "/dashboard/assets": typeof DashboardAssetsRoute;
+  "/dashboard/budget": typeof DashboardBudgetRoute;
+  "/dashboard/loans": typeof DashboardLoansRoute;
+  "/dashboard/recap": typeof DashboardRecapRoute;
+  "/dashboard/settings": typeof DashboardSettingsRoute;
+  "/dashboard/sinking-funds": typeof DashboardSinkingFundsRoute;
+  "/dashboard/": typeof DashboardIndexRoute;
+  "/dashboard/budget_/yearly": typeof DashboardBudgetYearlyRoute;
+  "/dashboard/sinking-funds_/history": typeof DashboardSinkingFundsHistoryRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
-    | '/'
-    | '/dashboard'
-    | '/dashboard/assets'
-    | '/dashboard/budget'
-    | '/dashboard/loans'
-    | '/dashboard/recap'
-    | '/dashboard/settings'
-    | '/dashboard/sinking-funds'
-    | '/dashboard/'
-    | '/dashboard/budget/yearly'
-  fileRoutesByTo: FileRoutesByTo
+    | "/"
+    | "/dashboard"
+    | "/dashboard/assets"
+    | "/dashboard/budget"
+    | "/dashboard/loans"
+    | "/dashboard/recap"
+    | "/dashboard/settings"
+    | "/dashboard/sinking-funds"
+    | "/dashboard/"
+    | "/dashboard/budget/yearly"
+    | "/dashboard/sinking-funds/history";
+  fileRoutesByTo: FileRoutesByTo;
   to:
-    | '/'
-    | '/dashboard/assets'
-    | '/dashboard/budget'
-    | '/dashboard/loans'
-    | '/dashboard/recap'
-    | '/dashboard/settings'
-    | '/dashboard/sinking-funds'
-    | '/dashboard'
-    | '/dashboard/budget/yearly'
+    | "/"
+    | "/dashboard/assets"
+    | "/dashboard/budget"
+    | "/dashboard/loans"
+    | "/dashboard/recap"
+    | "/dashboard/settings"
+    | "/dashboard/sinking-funds"
+    | "/dashboard"
+    | "/dashboard/budget/yearly"
+    | "/dashboard/sinking-funds/history";
   id:
-    | '__root__'
-    | '/'
-    | '/dashboard'
-    | '/dashboard/assets'
-    | '/dashboard/budget'
-    | '/dashboard/loans'
-    | '/dashboard/recap'
-    | '/dashboard/settings'
-    | '/dashboard/sinking-funds'
-    | '/dashboard/'
-    | '/dashboard/budget/yearly'
-  fileRoutesById: FileRoutesById
+    | "__root__"
+    | "/"
+    | "/dashboard"
+    | "/dashboard/assets"
+    | "/dashboard/budget"
+    | "/dashboard/loans"
+    | "/dashboard/recap"
+    | "/dashboard/settings"
+    | "/dashboard/sinking-funds"
+    | "/dashboard/"
+    | "/dashboard/budget_/yearly"
+    | "/dashboard/sinking-funds_/history";
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRouteWithChildren
+  IndexRoute: typeof IndexRoute;
+  DashboardRoute: typeof DashboardRouteWithChildren;
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard/': {
-      id: '/dashboard/'
-      path: '/'
-      fullPath: '/dashboard/'
-      preLoaderRoute: typeof DashboardIndexRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/sinking-funds': {
-      id: '/dashboard/sinking-funds'
-      path: '/sinking-funds'
-      fullPath: '/dashboard/sinking-funds'
-      preLoaderRoute: typeof DashboardSinkingFundsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/settings': {
-      id: '/dashboard/settings'
-      path: '/settings'
-      fullPath: '/dashboard/settings'
-      preLoaderRoute: typeof DashboardSettingsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/recap': {
-      id: '/dashboard/recap'
-      path: '/recap'
-      fullPath: '/dashboard/recap'
-      preLoaderRoute: typeof DashboardRecapRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/loans': {
-      id: '/dashboard/loans'
-      path: '/loans'
-      fullPath: '/dashboard/loans'
-      preLoaderRoute: typeof DashboardLoansRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/budget': {
-      id: '/dashboard/budget'
-      path: '/budget'
-      fullPath: '/dashboard/budget'
-      preLoaderRoute: typeof DashboardBudgetRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/assets': {
-      id: '/dashboard/assets'
-      path: '/assets'
-      fullPath: '/dashboard/assets'
-      preLoaderRoute: typeof DashboardAssetsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/budget/yearly': {
-      id: '/dashboard/budget/yearly'
-      path: '/yearly'
-      fullPath: '/dashboard/budget/yearly'
-      preLoaderRoute: typeof DashboardBudgetYearlyRouteImport
-      parentRoute: typeof DashboardBudgetRoute
-    }
+    "/dashboard": {
+      id: "/dashboard";
+      path: "/dashboard";
+      fullPath: "/dashboard";
+      preLoaderRoute: typeof DashboardRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/": {
+      id: "/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/dashboard/": {
+      id: "/dashboard/";
+      path: "/";
+      fullPath: "/dashboard/";
+      preLoaderRoute: typeof DashboardIndexRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/dashboard/sinking-funds": {
+      id: "/dashboard/sinking-funds";
+      path: "/sinking-funds";
+      fullPath: "/dashboard/sinking-funds";
+      preLoaderRoute: typeof DashboardSinkingFundsRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/dashboard/settings": {
+      id: "/dashboard/settings";
+      path: "/settings";
+      fullPath: "/dashboard/settings";
+      preLoaderRoute: typeof DashboardSettingsRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/dashboard/recap": {
+      id: "/dashboard/recap";
+      path: "/recap";
+      fullPath: "/dashboard/recap";
+      preLoaderRoute: typeof DashboardRecapRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/dashboard/loans": {
+      id: "/dashboard/loans";
+      path: "/loans";
+      fullPath: "/dashboard/loans";
+      preLoaderRoute: typeof DashboardLoansRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/dashboard/budget": {
+      id: "/dashboard/budget";
+      path: "/budget";
+      fullPath: "/dashboard/budget";
+      preLoaderRoute: typeof DashboardBudgetRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/dashboard/assets": {
+      id: "/dashboard/assets";
+      path: "/assets";
+      fullPath: "/dashboard/assets";
+      preLoaderRoute: typeof DashboardAssetsRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/dashboard/sinking-funds_/history": {
+      id: "/dashboard/sinking-funds_/history";
+      path: "/sinking-funds/history";
+      fullPath: "/dashboard/sinking-funds/history";
+      preLoaderRoute: typeof DashboardSinkingFundsHistoryRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
+    "/dashboard/budget_/yearly": {
+      id: "/dashboard/budget_/yearly";
+      path: "/budget/yearly";
+      fullPath: "/dashboard/budget/yearly";
+      preLoaderRoute: typeof DashboardBudgetYearlyRouteImport;
+      parentRoute: typeof DashboardRoute;
+    };
   }
 }
 
-interface DashboardBudgetRouteChildren {
-  DashboardBudgetYearlyRoute: typeof DashboardBudgetYearlyRoute
-}
-
-const DashboardBudgetRouteChildren: DashboardBudgetRouteChildren = {
-  DashboardBudgetYearlyRoute: DashboardBudgetYearlyRoute,
-}
-
-const DashboardBudgetRouteWithChildren = DashboardBudgetRoute._addFileChildren(
-  DashboardBudgetRouteChildren,
-)
-
 interface DashboardRouteChildren {
-  DashboardAssetsRoute: typeof DashboardAssetsRoute
-  DashboardBudgetRoute: typeof DashboardBudgetRouteWithChildren
-  DashboardLoansRoute: typeof DashboardLoansRoute
-  DashboardRecapRoute: typeof DashboardRecapRoute
-  DashboardSettingsRoute: typeof DashboardSettingsRoute
-  DashboardSinkingFundsRoute: typeof DashboardSinkingFundsRoute
-  DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardAssetsRoute: typeof DashboardAssetsRoute;
+  DashboardBudgetRoute: typeof DashboardBudgetRoute;
+  DashboardLoansRoute: typeof DashboardLoansRoute;
+  DashboardRecapRoute: typeof DashboardRecapRoute;
+  DashboardSettingsRoute: typeof DashboardSettingsRoute;
+  DashboardSinkingFundsRoute: typeof DashboardSinkingFundsRoute;
+  DashboardIndexRoute: typeof DashboardIndexRoute;
+  DashboardBudgetYearlyRoute: typeof DashboardBudgetYearlyRoute;
+  DashboardSinkingFundsHistoryRoute: typeof DashboardSinkingFundsHistoryRoute;
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAssetsRoute: DashboardAssetsRoute,
-  DashboardBudgetRoute: DashboardBudgetRouteWithChildren,
+  DashboardBudgetRoute: DashboardBudgetRoute,
   DashboardLoansRoute: DashboardLoansRoute,
   DashboardRecapRoute: DashboardRecapRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
   DashboardSinkingFundsRoute: DashboardSinkingFundsRoute,
   DashboardIndexRoute: DashboardIndexRoute,
-}
+  DashboardBudgetYearlyRoute: DashboardBudgetYearlyRoute,
+  DashboardSinkingFundsHistoryRoute: DashboardSinkingFundsHistoryRoute,
+};
 
-const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
-  DashboardRouteChildren,
-)
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(DashboardRouteChildren);
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRouteWithChildren,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
 
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
+import type { getRouter } from "./router.tsx";
+import type { createStart } from "@tanstack/react-start";
+declare module "@tanstack/react-start" {
   interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
+    ssr: true;
+    router: Awaited<ReturnType<typeof getRouter>>;
   }
 }
