@@ -27,7 +27,11 @@ function DashboardHome() {
       <Empty
         title="Dashboardet er tomt"
         description="Legg inn budsjett, formue og lån for å se en oversikt."
-        action={<Button render={<Link to="/dashboard/budget" />}>Start med budsjett</Button>}
+        action={
+          <Button nativeButton={false} render={<Link to="/dashboard/budget" />}>
+            Start med budsjett
+          </Button>
+        }
       />
     );
   }

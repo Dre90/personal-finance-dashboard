@@ -1,6 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import * as React from "react";
 import {
+  ArrowDownUp,
+  ChevronDown,
+  ChevronUp,
+  GripVertical,
+  History,
+  Minus,
+  Pencil,
+  Plus,
+  X,
+} from "lucide-react";
+import {
   Empty,
   LoadingPlaceholder,
   Modal,
@@ -8,6 +19,10 @@ import {
   ProgressBar,
   StatCard,
 } from "../../components/ui";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Field, FieldLabel } from "../../components/ui/field";
+import { Card, CardContent } from "../../components/ui/card";
 import {
   allocateSinkingFundDeposit,
   createSinkingFund,
@@ -25,7 +40,7 @@ import { invalidateQueries, useMutation, useQuery } from "../../lib/query";
 import { useToast } from "../../components/Toaster";
 import { useFormState } from "../../lib/forms";
 import { SINKING_COLORS } from "../../lib/colors";
-import { formatNOK, toNumber, todayISO } from "../../lib/utils";
+import { cn, formatNOK, toNumber, todayISO } from "../../lib/utils";
 import type { SinkingFund, SinkingFundTransaction } from "../../../db/schema";
 
 export const Route = createFileRoute("/dashboard/sinking-funds")({
@@ -71,28 +86,32 @@ function SinkingFundsPage() {
         title="Sinking funds"
         subtitle="Fond for fremtidige planlagte utgifter"
         actions={
-          <div className="flex gap-2 items-center">
-            <Link to="/dashboard/sinking-funds/history" className="btn btn-ghost">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link to="/dashboard/sinking-funds/history" />}
+            >
+              <History />
               Historikk
-            </Link>
-            <button
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => setModal({ kind: "allocate" })}
-              className="btn btn-ghost"
               disabled={data.length === 0}
             >
-              + Fordel innskudd
-            </button>
-            <button
-              onClick={() => setModal({ kind: "edit-fund", fund: null })}
-              className="btn btn-primary"
-            >
-              + Nytt fond
-            </button>
+              <Plus />
+              Fordel innskudd
+            </Button>
+            <Button onClick={() => setModal({ kind: "edit-fund", fund: null })}>
+              <Plus />
+              Nytt fond
+            </Button>
           </div>
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
         <StatCard label="Totalt spart" value={total} tone="positive" />
         <StatCard label="Totalt mål" value={target} />
         <StatCard label="Månedlig bidrag" value={monthly} />
@@ -100,13 +119,15 @@ function SinkingFundsPage() {
 
       {data.length > 1 && (
         <div className="flex justify-end">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setModal({ kind: "reorder" })}
-            className="btn btn-ghost text-xs"
             title="Endre rekkefølge på fond"
           >
-            <span aria-hidden>↕</span> Sortér fond
-          </button>
+            <ArrowDownUp />
+            Sortér fond
+          </Button>
         </div>
       )}
 
@@ -115,16 +136,13 @@ function SinkingFundsPage() {
           title="Ingen sinking funds enda"
           description="Opprett ditt første fond for planlagte utgifter."
           action={
-            <button
-              onClick={() => setModal({ kind: "edit-fund", fund: null })}
-              className="btn btn-primary"
-            >
+            <Button onClick={() => setModal({ kind: "edit-fund", fund: null })}>
               Opprett fond
-            </button>
+            </Button>
           }
         />
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.map((f) => {
             const cur = toNumber(f.currentAmount);
             const tgt = toNumber(f.target);
@@ -135,58 +153,70 @@ function SinkingFundsPage() {
                 ? Math.ceil((tgt - cur) / monthlyContribution)
                 : null;
             return (
-              <div key={f.id} className="card relative">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full" style={{ background: f.color }} />
-                      <h3 className="font-semibold">{f.name}</h3>
+              <Card key={f.id}>
+                <CardContent>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="size-3 rounded-full" style={{ background: f.color }} />
+                        <h3 className="font-semibold">{f.name}</h3>
+                      </div>
+                      {f.notes && <p className="text-muted-foreground mt-1 text-xs">{f.notes}</p>}
                     </div>
-                    {f.notes && <p className="text-xs text-muted mt-1">{f.notes}</p>}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setModal({ kind: "edit-fund", fund: f })}
+                    >
+                      Endre
+                    </Button>
                   </div>
-                  <button
-                    onClick={() => setModal({ kind: "edit-fund", fund: f })}
-                    className="text-xs text-muted hover:text-text"
-                  >
-                    Endre
-                  </button>
-                </div>
-                <div className="mt-4">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="num font-semibold">{formatNOK(cur)}</span>
-                    <span className="num text-muted">av {formatNOK(tgt)}</span>
+                  <div className="mt-4">
+                    <div className="mb-1 flex justify-between text-sm">
+                      <span className="font-semibold tabular-nums">{formatNOK(cur)}</span>
+                      <span className="text-muted-foreground tabular-nums">
+                        av {formatNOK(tgt)}
+                      </span>
+                    </div>
+                    <ProgressBar value={cur} max={tgt || 1} color={f.color} />
+                    <div className="text-muted-foreground mt-2 flex justify-between text-xs">
+                      <span>{pct.toFixed(0)} % nådd</span>
+                      <span>
+                        {monthlyContribution > 0 && `+ ${formatNOK(monthlyContribution)} / mnd`}
+                        {monthsLeft !== null && ` · ${monthsLeft} mnd igjen`}
+                      </span>
+                    </div>
                   </div>
-                  <ProgressBar value={cur} max={tgt || 1} color={f.color} />
-                  <div className="mt-2 text-xs text-muted flex justify-between">
-                    <span>{pct.toFixed(0)} % nådd</span>
-                    <span>
-                      {monthlyContribution > 0 && `+ ${formatNOK(monthlyContribution)} / mnd`}
-                      {monthsLeft !== null && ` · ${monthsLeft} mnd igjen`}
-                    </span>
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setModal({ kind: "single-txn", fund: f, txnKind: "deposit" })}
+                    >
+                      <Plus />
+                      Innskudd
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={cur <= 0}
+                      onClick={() =>
+                        setModal({ kind: "single-txn", fund: f, txnKind: "withdrawal" })
+                      }
+                    >
+                      <Minus />
+                      Uttak
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setModal({ kind: "history", fund: f })}
+                    >
+                      Historikk
+                    </Button>
                   </div>
-                </div>
-                <div className="mt-4 grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => setModal({ kind: "single-txn", fund: f, txnKind: "deposit" })}
-                    className="btn btn-ghost text-xs"
-                  >
-                    + Innskudd
-                  </button>
-                  <button
-                    onClick={() => setModal({ kind: "single-txn", fund: f, txnKind: "withdrawal" })}
-                    className="btn btn-ghost text-xs"
-                    disabled={cur <= 0}
-                  >
-                    − Uttak
-                  </button>
-                  <button
-                    onClick={() => setModal({ kind: "history", fund: f })}
-                    className="btn btn-ghost text-xs"
-                  >
-                    Historikk
-                  </button>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             );
           })}
         </div>
@@ -358,69 +388,69 @@ function AllocateDepositModal({
       title="Fordel innskudd"
       footer={
         <>
-          <button onClick={onClose} className="btn btn-ghost" disabled={saveMutation.loading}>
+          <Button variant="outline" onClick={onClose} disabled={saveMutation.loading}>
             Avbryt
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => void saveMutation.mutate(undefined)}
-            className="btn btn-primary"
             disabled={!canSave || saveMutation.loading}
           >
             Lagre
-          </button>
+          </Button>
         </>
       }
     >
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label">Totalbeløp</label>
-            <input
+          <Field>
+            <FieldLabel htmlFor="alloc-total">Totalbeløp</FieldLabel>
+            <Input
+              id="alloc-total"
               autoFocus
-              className="input num"
+              className="tabular-nums"
               type="number"
               value={form.values.total}
               onChange={form.setField("total")}
             />
-          </div>
-          <div>
-            <label className="label">Dato</label>
-            <input
-              className="input"
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="alloc-date">Dato</FieldLabel>
+            <Input
+              id="alloc-date"
               type="date"
               value={form.values.occurredAt}
               onChange={form.setField("occurredAt")}
             />
-          </div>
+          </Field>
         </div>
-        <div>
-          <label className="label">Notat (f.eks. "Lønn juni")</label>
-          <input className="input" value={form.values.note} onChange={form.setField("note")} />
-        </div>
+        <Field>
+          <FieldLabel htmlFor="alloc-note">Notat (f.eks. «Lønn juni»)</FieldLabel>
+          <Input id="alloc-note" value={form.values.note} onChange={form.setField("note")} />
+        </Field>
 
-        <div className="flex justify-between items-center pt-2">
-          <span className="text-xs text-muted">Fordeling per fond</span>
-          <button type="button" onClick={fillFromMonthly} className="btn btn-ghost text-xs">
+        <div className="flex items-center justify-between pt-2">
+          <span className="text-muted-foreground text-xs">Fordeling per fond</span>
+          <Button type="button" variant="ghost" size="sm" onClick={fillFromMonthly}>
             Bruk månedlig bidrag
-          </button>
+          </Button>
         </div>
 
-        <div className="space-y-2 max-h-80 overflow-auto">
+        <div className="max-h-80 space-y-2 overflow-auto">
           {funds.map((f) => {
             const cur = toNumber(f.currentAmount);
             const tgt = toNumber(f.target);
             return (
               <div key={f.id} className="flex items-center gap-3">
-                <span className="w-3 h-3 rounded-full flex-none" style={{ background: f.color }} />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm truncate">{f.name}</div>
-                  <div className="text-xs text-muted num">
+                <span className="size-3 flex-none rounded-full" style={{ background: f.color }} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm">{f.name}</div>
+                  <div className="text-muted-foreground text-xs tabular-nums">
                     {formatNOK(cur)}
                     {tgt > 0 && ` av ${formatNOK(tgt)}`}
                   </div>
                 </div>
-                <input
-                  className="input num w-32"
+                <Input
+                  className="w-32 tabular-nums"
                   type="number"
                   min={0}
                   step={0.01}
@@ -433,20 +463,21 @@ function AllocateDepositModal({
           })}
         </div>
 
-        <div className="flex justify-between text-sm border-t border-border pt-3">
-          <span className="text-muted">
-            Fordelt: <span className="num text-text">{formatNOK(allocatedNum)}</span>
+        <div className="flex justify-between border-t pt-3 text-sm">
+          <span className="text-muted-foreground">
+            Fordelt: <span className="text-foreground tabular-nums">{formatNOK(allocatedNum)}</span>
           </span>
           <span
             className={
               Math.abs(remaining) < 0.005
-                ? "text-muted"
+                ? "text-muted-foreground"
                 : remaining < 0
-                  ? "text-danger"
-                  : "text-amber-400"
+                  ? "text-destructive"
+                  : "text-warning"
             }
           >
-            Igjen å fordele: <span className="num font-semibold">{formatNOK(remaining)}</span>
+            Igjen å fordele:{" "}
+            <span className="font-semibold tabular-nums">{formatNOK(remaining)}</span>
           </span>
         </div>
       </div>
@@ -519,29 +550,31 @@ function ReorderFundsModal({
       title="Endre rekkefølge"
       footer={
         <>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            className="mr-auto"
             onClick={() => setOrder(funds)}
-            className="btn btn-ghost mr-auto"
             disabled={!isChanged || saveMutation.loading}
           >
             Tilbakestill
-          </button>
-          <button onClick={onClose} className="btn btn-ghost" disabled={saveMutation.loading}>
+          </Button>
+          <Button variant="outline" onClick={onClose} disabled={saveMutation.loading}>
             Avbryt
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => void saveMutation.mutate(undefined)}
-            className="btn btn-primary"
             disabled={!isChanged || saveMutation.loading}
           >
             Lagre
-          </button>
+          </Button>
         </>
       }
     >
-      <p className="text-xs text-muted mb-2">Dra radene for å sortere, eller bruk pilene.</p>
-      <ul className="space-y-1 max-h-96 overflow-auto">
+      <p className="text-muted-foreground mb-2 text-xs">
+        Dra radene for å sortere, eller bruk pilene.
+      </p>
+      <ul className="max-h-96 space-y-1 overflow-auto">
         {order.map((f, i) => {
           const isDragged = dragIndex === i;
           const isOver = overIndex === i && dragIndex !== null && dragIndex !== i;
@@ -574,35 +607,39 @@ function ReorderFundsModal({
                 setDragIndex(null);
                 setOverIndex(null);
               }}
-              className={`flex items-center gap-3 py-2 px-2 rounded select-none cursor-grab active:cursor-grabbing ${
-                isDragged ? "opacity-40" : "hover:bg-surface-2"
-              } ${isOver ? "ring-2 ring-primary" : ""}`}
+              className={cn(
+                "flex cursor-grab items-center gap-3 rounded px-2 py-2 select-none active:cursor-grabbing",
+                isDragged ? "opacity-40" : "hover:bg-muted",
+                isOver && "ring-primary ring-2",
+              )}
             >
-              <span className="text-muted text-base flex-none" aria-hidden>
-                ⋮⋮
+              <GripVertical className="text-muted-foreground size-4 flex-none" aria-hidden />
+              <span className="text-muted-foreground w-6 flex-none text-right text-xs tabular-nums">
+                {i + 1}
               </span>
-              <span className="text-xs text-muted w-6 flex-none num text-right">{i + 1}</span>
-              <span className="w-3 h-3 rounded-full flex-none" style={{ background: f.color }} />
-              <span className="flex-1 min-w-0 truncate text-sm">{f.name}</span>
-              <div className="flex gap-1 flex-none">
-                <button
+              <span className="size-3 flex-none rounded-full" style={{ background: f.color }} />
+              <span className="min-w-0 flex-1 truncate text-sm">{f.name}</span>
+              <div className="flex flex-none gap-1">
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => move(i, -1)}
                   disabled={i === 0}
-                  className="btn btn-ghost text-xs px-2"
                   aria-label="Flytt opp"
                 >
-                  ↑
-                </button>
-                <button
+                  <ChevronUp />
+                </Button>
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => move(i, 1)}
                   disabled={i === order.length - 1}
-                  className="btn btn-ghost text-xs px-2"
                   aria-label="Flytt ned"
                 >
-                  ↓
-                </button>
+                  <ChevronDown />
+                </Button>
               </div>
             </li>
           );
@@ -700,45 +737,45 @@ function SingleTxnModal({
       title={title}
       footer={
         <>
-          <button onClick={onClose} className="btn btn-ghost" disabled={saveMutation.loading}>
+          <Button variant="outline" onClick={onClose} disabled={saveMutation.loading}>
             Avbryt
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => void saveMutation.mutate(undefined)}
-            className="btn btn-primary"
             disabled={!canSave || saveMutation.loading}
           >
             Lagre
-          </button>
+          </Button>
         </>
       }
     >
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label">Beløp</label>
-            <input
+          <Field>
+            <FieldLabel htmlFor="txn-amount">Beløp</FieldLabel>
+            <Input
+              id="txn-amount"
               autoFocus
-              className="input num"
+              className="tabular-nums"
               type="number"
               value={form.values.amount}
               onChange={form.setField("amount")}
             />
-          </div>
-          <div>
-            <label className="label">Dato</label>
-            <input
-              className="input"
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="txn-date">Dato</FieldLabel>
+            <Input
+              id="txn-date"
               type="date"
               value={form.values.occurredAt}
               onChange={form.setField("occurredAt")}
             />
-          </div>
+          </Field>
         </div>
-        <div>
-          <label className="label">Notat (valgfritt)</label>
-          <input className="input" value={form.values.note} onChange={form.setField("note")} />
-        </div>
+        <Field>
+          <FieldLabel htmlFor="txn-note">Notat (valgfritt)</FieldLabel>
+          <Input id="txn-note" value={form.values.note} onChange={form.setField("note")} />
+        </Field>
       </div>
     </Modal>
   );
@@ -788,21 +825,22 @@ function FundHistoryModal({
       onClose={onClose}
       title={`Historikk — ${fund.name}`}
       footer={
-        <button onClick={onClose} className="btn btn-ghost">
+        <Button variant="outline" onClick={onClose}>
           Lukk
-        </button>
+        </Button>
       }
     >
       <div className="space-y-3">
-        <div className="text-sm text-muted">
-          Saldo nå: <span className="num text-text font-semibold">{formatNOK(balance)}</span>
+        <div className="text-muted-foreground text-sm">
+          Saldo nå:{" "}
+          <span className="text-foreground font-semibold tabular-nums">{formatNOK(balance)}</span>
         </div>
         {isInitialLoading ? (
           <LoadingPlaceholder />
         ) : !data || data.length === 0 ? (
-          <p className="text-sm text-muted">Ingen transaksjoner enda.</p>
+          <p className="text-muted-foreground text-sm">Ingen transaksjoner enda.</p>
         ) : (
-          <ul className="divide-y divide-border max-h-96 overflow-auto">
+          <ul className="max-h-96 divide-y divide-border overflow-auto">
             {data.map((t) => (
               <TxnRow
                 key={t.id}
@@ -834,38 +872,44 @@ function TxnRow({
   const amount = Number(txn.amount);
   const isPositive = amount >= 0;
   return (
-    <li className="py-2 flex items-center gap-3 text-sm">
-      <span className="text-muted num w-24 flex-none">{txn.occurredAt}</span>
+    <li className="flex items-center gap-3 py-2 text-sm">
+      <span className="text-muted-foreground w-24 flex-none tabular-nums">{txn.occurredAt}</span>
       <span
-        className={`num font-semibold w-28 flex-none text-right ${
-          isPositive ? "text-positive" : "text-danger"
-        }`}
+        className={cn(
+          "w-28 flex-none text-right font-semibold tabular-nums",
+          isPositive ? "text-success" : "text-destructive",
+        )}
       >
         {isPositive ? "+" : "−"} {formatNOK(Math.abs(amount))}
       </span>
-      <span className="flex-1 min-w-0 truncate">
+      <span className="min-w-0 flex-1 truncate">
         {txn.note || (txn.kind === "opening" ? "Startbeholdning" : "")}
-        {txn.allocationGroupId && <span className="ml-2 text-xs text-muted">· fordeling</span>}
+        {txn.allocationGroupId && (
+          <span className="text-muted-foreground ml-2 text-xs">· fordeling</span>
+        )}
       </span>
-      <div className="flex gap-1 flex-none">
-        <button
+      <div className="flex flex-none gap-1">
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={onEdit}
-          className="text-xs text-muted hover:text-text px-2"
           aria-label="Endre"
           disabled={txn.kind === "opening"}
           title={txn.kind === "opening" ? "Startbeholdning kan ikke endres her" : "Endre"}
         >
-          ✏
-        </button>
-        <button
+          <Pencil />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="hover:text-destructive"
           onClick={onDelete}
-          className="text-xs text-muted hover:text-danger px-2"
           aria-label="Slett"
           disabled={txn.kind === "opening"}
           title={txn.kind === "opening" ? "Startbeholdning kan ikke slettes" : "Slett"}
         >
-          ✕
-        </button>
+          <X />
+        </Button>
       </div>
     </li>
   );
@@ -946,75 +990,78 @@ function FundModal({
       footer={
         <>
           {fund && (
-            <button
+            <Button
+              variant="destructive"
+              className="mr-auto"
+              disabled={busy}
               onClick={() => {
                 if (confirm(`Slette "${fund.name}"?`)) void deleteMutation.mutate(undefined);
               }}
-              className="btn btn-danger mr-auto"
-              disabled={busy}
             >
               Slett
-            </button>
+            </Button>
           )}
-          <button onClick={onClose} className="btn btn-ghost" disabled={busy}>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
             Avbryt
-          </button>
-          <button
-            onClick={() => void saveMutation.mutate(undefined)}
-            className="btn btn-primary"
-            disabled={busy || !canSave}
-          >
+          </Button>
+          <Button onClick={() => void saveMutation.mutate(undefined)} disabled={busy || !canSave}>
             Lagre
-          </button>
+          </Button>
         </>
       }
     >
       <div className="space-y-3">
-        <div>
-          <label className="label">Navn</label>
-          <input
+        <Field>
+          <FieldLabel htmlFor="fund-name">Navn</FieldLabel>
+          <Input
+            id="fund-name"
             autoFocus
-            className="input"
             value={form.values.name}
             onChange={form.setField("name")}
           />
-        </div>
-        <div>
-          <label className="label">Målbeløp</label>
-          <input
-            className="input num"
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="fund-target">Målbeløp</FieldLabel>
+          <Input
+            id="fund-target"
+            className="tabular-nums"
             type="number"
             value={form.values.target}
             onChange={form.setField("target")}
           />
-        </div>
-        <div>
-          <label className="label">Månedlig bidrag</label>
-          <input
-            className="input num"
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="fund-monthly">Månedlig bidrag</FieldLabel>
+          <Input
+            id="fund-monthly"
+            className="tabular-nums"
             type="number"
             value={form.values.monthly}
             onChange={form.setField("monthly")}
           />
-        </div>
-        <div>
-          <label className="label">Farge</label>
-          <div className="flex gap-2 flex-wrap">
+        </Field>
+        <Field>
+          <FieldLabel>Farge</FieldLabel>
+          <div className="flex flex-wrap gap-2">
             {SINKING_COLORS.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => form.set("color", c)}
-                className={`w-7 h-7 rounded-full border-2 ${form.values.color === c ? "border-white" : "border-transparent"}`}
+                className={cn(
+                  "size-7 rounded-full border-2",
+                  form.values.color === c ? "border-foreground" : "border-transparent",
+                )}
                 style={{ background: c }}
+                aria-label={`Farge ${c}`}
               />
             ))}
           </div>
-        </div>
-        <div>
-          <label className="label">Notat (valgfritt)</label>
-          <input className="input" value={form.values.notes} onChange={form.setField("notes")} />
-        </div>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="fund-notes">Notat (valgfritt)</FieldLabel>
+          <Input id="fund-notes" value={form.values.notes} onChange={form.setField("notes")} />
+        </Field>
       </div>
     </Modal>
   );
