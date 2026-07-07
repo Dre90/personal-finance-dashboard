@@ -15,7 +15,7 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import { MoneyBarChart, MoneyLineChart } from "../../components/charts";
-import { getBudgetYear } from "../../server/api";
+import { getBudgetYear } from "~/features/budget/server";
 import { useDashboard } from "../../lib/dashboard-context";
 import { useQuery } from "../../lib/query";
 import { FLOW_COLORS } from "../../lib/colors";

@@ -7,7 +7,7 @@ import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Card, CardContent } from "../components/ui/card";
 import { Field, FieldLabel } from "../components/ui/field";
-import { createDashboard, getDashboard } from "../server/api";
+import { createDashboard, getDashboard } from "~/features/dashboard/server";
 import { setStoredDashboardId, getStoredDashboardId } from "../lib/auth";
 
 export const Route = createFileRoute("/")({

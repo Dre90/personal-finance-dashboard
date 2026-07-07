@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
 import type { Dashboard } from "../../db/schema";
-import { getDashboard } from "../server/api";
+import { getDashboard } from "~/features/dashboard/server";
 import { clearStoredDashboardId, getStoredDashboardId } from "./auth";
 import { clearQueryCache, useQuery } from "./query";
 

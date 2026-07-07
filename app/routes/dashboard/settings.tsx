@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../../components/ui/alert-dialog";
-import { deleteDashboard, exportDashboard, updateDashboard } from "../../server/api";
+import { deleteDashboard, exportDashboard, updateDashboard } from "~/features/dashboard/server";
 import { useDashboard } from "../../lib/dashboard-context";
 import { clearQueryCache, useMutation } from "../../lib/query";
 import { useToast } from "../../components/Toaster";

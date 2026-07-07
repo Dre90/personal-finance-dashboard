@@ -34,7 +34,7 @@ import {
   reorderSinkingFunds,
   updateSinkingFund,
   updateSinkingFundTransaction,
-} from "../../server/api";
+} from "~/features/sinking-funds/server";
 import { useDashboard } from "../../lib/dashboard-context";
 import { invalidateQueries, useMutation, useQuery } from "../../lib/query";
 import { useToast } from "../../components/Toaster";
