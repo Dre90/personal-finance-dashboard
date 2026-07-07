@@ -15,7 +15,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
-    "types": ["node", "vite-plus/client"],
+    "types": ["node", "vite/client"],
     "paths": {
       "~/*": ["./app/*"]
     }
