@@ -8,9 +8,20 @@ A private personal finance dashboard: budgets, sinking funds, assets, and loans.
 
 - **TanStack Start** (React 19 + TypeScript, SSR)
 - **Tailwind CSS v4**
-- **Recharts** for charts
+- **shadcn/ui** (base-ui variant, `base-mira` green preset) for components; `sonner` for toasts
+- **Recharts** for charts (wrapped in shadcn's `Chart` primitives)
 - **Netlify Database** (Postgres) with Drizzle ORM
 - **Netlify Functions** via TanStack `createServerFn`
+
+## Project structure
+
+Code is organised by feature. Route files under `app/routes/dashboard/` are thin
+`createFileRoute` wrappers; the real page components, their modals, and the
+server functions live in `app/features/<feature>/` (`budget`, `sinking-funds`,
+`assets`, `loans`, `recap`, `dashboard`). Shared UI primitives are in
+`app/components/ui/` (shadcn) and `app/components/`, cross-cutting utilities in
+`app/lib/`, and shared server helpers in `app/server/`. See `AGENTS.md` for the
+full layout.
 
 ## Features
 

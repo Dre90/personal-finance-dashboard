@@ -7,8 +7,9 @@ Instructions for AI coding agents working in this repo. Follow these or you will
 Personal finance dashboard (Norwegian) — budget, sinking funds, assets, loans, recap. Anonymous: each dashboard is a UUID the user stores; no accounts, no email.
 
 - **Framework:** TanStack Start (React 19, SSR) on Netlify Functions
-- **Styling:** Tailwind CSS 4 (via `@tailwindcss/vite`)
-- **Theming:** Light/dark/auto via CSS custom properties in `app/styles/app.css` + `app/lib/theme-context.tsx`; the toggle lives in Settings. Charts read colours from `app/lib/colors.ts`.
+- **Styling:** Tailwind CSS 4 (via `@tailwindcss/vite`).
+- **UI components:** shadcn/ui (the **base-ui** variant, not Radix — components use the `render` prop, NOT `asChild`). Preset `base-mira`, green theme. Primitives live in `app/components/ui/` (added via `npx shadcn@latest add`); toasts use `sonner`. The shadcn agent skill lives in `.agents/skills/shadcn/`.
+- **Theming:** Light/dark/auto. The resolved theme is applied as the `.dark` **class** on `<html>` (shadcn convention — bare `:root` is light, `.dark` is dark), set before first paint by `THEME_INIT_SCRIPT` and kept in sync by `app/lib/theme-context.tsx`; toggle lives in Settings. Colour tokens are shadcn's (`--background`, `--primary`, …) in `app/styles/app.css`; the app adds a `--app-gradient` page background + `--pos`/`--warn` finance colours (backing `text-success`/`text-warning`). Charts read hex palettes from `app/lib/colors.ts`.
 - **Data:** Netlify Database (Postgres) + Drizzle ORM
 - **Build/test/lint:** Plain Vite 7 + `@netlify/vite-plugin-tanstack-start`. Tooling: standalone `oxlint`, `oxfmt`, `tsc --noEmit`. (We previously tried Vite+ aka `vp` — it caused persistent `504 Outdated Optimize Dep` / `EPERM` issues on Windows. Do NOT migrate back.)
 - **Deploy:** Netlify (auto from `main`) — site id `2e0830d2-6e2f-47fd-b7d0-f111d5985ab8`, live at https://personal-finance-dashboard-dre90.netlify.app
@@ -74,20 +75,35 @@ If mojibake appears (`Ã¸` for `ø`, `Ã¥` for `å`, `Â·` for `·`): read UT
 - **`vite.config.ts` must use `@netlify/vite-plugin-tanstack-start` (NOT bare `@netlify/vite-plugin`).** The TanStack-specific wrapper sets `build.enabled: true` which is what makes Netlify Functions emit `server.mjs`. With plain `@tanstack/react-start/plugin/vite` you must also pass `srcDirectory: "app"` because our routes live in `app/`, not the default `src/`.
 - **Do NOT migrate back to Vite+ (`vp` / `vite-plus`).** It caused persistent `504 Outdated Optimize Dep` errors and `EPERM` on `.vite/deps` on Windows. Plain Vite 7 + standalone `oxlint`/`oxfmt`/`tsc` works cleanly and is what the official Netlify TanStack template uses.
 
-### 4. Recharts `<Tooltip>` typing
+### 4. shadcn/ui is the **base-ui** variant (not Radix)
 
-`app/components/charts.tsx` uses `const TT = Tooltip as any` — Recharts' internal generics don't infer from props. Don't try to "fix" the cast unless Recharts updates their types.
+Components in `app/components/ui/` use base-ui. Custom triggers/links use the
+`render` prop, NOT `asChild`. A shadcn `<Button>` that renders a `<Link>`
+(anchor) needs `nativeButton={false}`, or base-ui logs a dev warning. A base-ui
+`<Select>` needs `items={{ value: label }}` on the root for `<SelectValue>` to
+show the label instead of the raw value. Charts (`app/components/charts.tsx`)
+wrap shadcn's `<ChartContainer>` + `ChartTooltip`/`ChartLegend`; the thin
+`MoneyBarChart`/`MoneyLineChart`/`MoneyAreaChart`/`MoneyDonut` API is unchanged
+(`series={{ dataKey, name, color }}`).
 
 ## File layout
 
 ```
 app/
-  components/       Shared UI primitives (AppShell, charts, ui, Toaster, SnapshotModal)
-  lib/              Hooks + utilities (query, auth, forms, defaults, enums, colors, utils, assets, theme, theme-context, dashboard-context)
-  routes/           TanStack Router routes (file-based)
-    dashboard/      Nested dashboard pages
-  server/           Server functions (api.ts is the main one; _helpers.ts is shared)
-  styles/app.css    Tailwind entry + semantic CSS layer
+  components/       Shared app components (AppShell, charts, Toaster, SnapshotModal, ui.tsx)
+    ui/             shadcn/ui primitives (button, card, dialog, table, chart, sidebar, sonner, …)
+  features/         Feature code — routes are thin, features hold the real work
+    dashboard/      DashboardHome, SettingsPage, server.ts (identity + summary + export)
+    budget/         BudgetPage, YearlyBudgetPage, server.ts (categories + budget entries)
+    sinking-funds/  SinkingFundsPage, HistoryPage, server.ts (funds + transactions)
+    assets/         AssetsPage, stacked-series.ts, server.ts
+    loans/          LoansPage, server.ts
+    recap/          RecapPage
+  lib/              Cross-cutting hooks + utilities (query, auth, forms, defaults, enums, colors, utils, theme, theme-context, dashboard-context)
+  routes/           TanStack Router routes (file-based). Dashboard routes are THIN — each is a
+    dashboard/      ~6-line createFileRoute wrapper around a feature component (+ dashboard.tsx layout → AppShell)
+  server/           Shared server-only helpers: _db.ts (assertDashboardExists, randomUUID), _helpers.ts (Zod validators)
+  styles/app.css    Tailwind entry + shadcn tokens + app finance tokens (--app-gradient, --pos, --warn)
   routeTree.gen.ts  AUTO-GENERATED. Never edit.
 db/                 Drizzle schema + client
 netlify/database/   Generated migrations
@@ -106,23 +122,26 @@ codex/skills/       Netlify-specific reference docs (see codex/AGENTS.md)
 
 All money is `numeric(14, 2)` stored as strings — convert with `Number()` or the helpers in `app/lib/utils.ts`. Dates are `'YYYY-MM-DD'`, months `'YYYY-MM'`.
 
-## Pages (app/routes/dashboard/)
+## Pages
 
-| Route                              | File                         | Purpose                                              |
-| ---------------------------------- | ---------------------------- | ---------------------------------------------------- |
-| `/dashboard/`                      | `index.tsx`                  | Recap home: net worth, cash flow, asset/debt summary |
-| `/dashboard/budget`                | `budget.tsx`                 | Monthly budget editor, categories grouped            |
-| `/dashboard/budget/yearly`         | `budget_.yearly.tsx`         | Yearly aggregation                                   |
-| `/dashboard/assets`                | `assets.tsx`                 | Formue — tabbed by `kind`, stacked area charts       |
-| `/dashboard/sinking-funds`         | `sinking-funds.tsx`          | Savings goals tracker (allocate, deposit, withdraw)  |
-| `/dashboard/sinking-funds/history` | `sinking-funds_.history.tsx` | Global transaction log with filters                  |
-| `/dashboard/loans`                 | `loans.tsx`                  | Debt paydown                                         |
-| `/dashboard/recap`                 | `recap.tsx`                  | Cash-flow recap                                      |
-| `/dashboard/settings`              | `settings.tsx`               | Dashboard name + theme toggle                        |
+Each `app/routes/dashboard/<x>.tsx` is a thin `createFileRoute` wrapper; the
+actual page component (and its colocated modals/helpers) lives in the feature.
+
+| Route                              | Component (in `app/features/`)         | Purpose                                              |
+| ---------------------------------- | -------------------------------------- | ---------------------------------------------------- |
+| `/dashboard/`                      | `dashboard/DashboardHome.tsx`          | Recap home: net worth, cash flow, asset/debt summary |
+| `/dashboard/budget`                | `budget/BudgetPage.tsx`                | Monthly budget editor, categories grouped            |
+| `/dashboard/budget/yearly`         | `budget/YearlyBudgetPage.tsx`          | Yearly aggregation                                   |
+| `/dashboard/assets`                | `assets/AssetsPage.tsx`                | Formue — tabbed by `kind`, stacked area charts       |
+| `/dashboard/sinking-funds`         | `sinking-funds/SinkingFundsPage.tsx`   | Savings goals tracker (allocate, deposit, withdraw)  |
+| `/dashboard/sinking-funds/history` | `sinking-funds/HistoryPage.tsx`        | Global transaction log with filters                  |
+| `/dashboard/loans`                 | `loans/LoansPage.tsx`                  | Debt paydown                                         |
+| `/dashboard/recap`                 | `recap/RecapPage.tsx`                  | Cash-flow recap                                      |
+| `/dashboard/settings`              | `dashboard/SettingsPage.tsx`           | Dashboard name + theme toggle                        |
 
 Trailing underscore on a route filename segment (e.g. `budget_.yearly.tsx`) opts the route out of nesting under the same-named parent route. Without it TanStack nests the child and the parent must render an `<Outlet />`, which we don't want on flat dashboard pages.
 
-All server-side data ops live in `app/server/api.ts` (Zod-validated `createServerFn` handlers). Shared validators/helpers in `app/server/_helpers.ts`.
+All server-side data ops live in `app/features/<feature>/server.ts` (Zod-validated `createServerFn` handlers). Shared Zod validators are in `app/server/_helpers.ts`; shared server-only db helpers (that must not leak into the client bundle) in `app/server/_db.ts`. The landing/auth page and root layout stay in `app/routes/` (`index.tsx`, `__root.tsx`, `dashboard.tsx`).
 
 ## When in doubt
 
