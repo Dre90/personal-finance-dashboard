@@ -9,6 +9,8 @@
  */
 import * as React from "react";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -171,6 +173,55 @@ export function MoneyLineChart<T extends Record<string, unknown>>({
           />
         ))}
       </LineChart>
+    </ChartFrame>
+  );
+}
+
+export interface MoneyAreaSeries {
+  dataKey: string;
+  name: string;
+  color: string;
+}
+
+/**
+ * Stacked area chart. Each series is drawn as a filled layer sharing one
+ * `stackId`, so the top edge represents the summed total across all series.
+ */
+export function MoneyAreaChart<T extends Record<string, unknown>>({
+  data,
+  xKey,
+  series,
+  height = 260,
+  showLegend = true,
+  yWidth,
+}: {
+  data: ReadonlyArray<T>;
+  xKey: string;
+  series: ReadonlyArray<MoneyAreaSeries>;
+  height?: number;
+  showLegend?: boolean;
+  yWidth?: number;
+}) {
+  return (
+    <ChartFrame height={height}>
+      <AreaChart data={data as T[]} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <MoneyAxes xKey={xKey} yWidth={yWidth} />
+        <MoneyTooltip />
+        {showLegend && <Legend wrapperStyle={LEGEND_STYLE} />}
+        {series.map((s) => (
+          <Area
+            key={s.dataKey}
+            type="monotone"
+            dataKey={s.dataKey}
+            name={s.name}
+            stackId="stack"
+            stroke={s.color}
+            fill={s.color}
+            fillOpacity={0.25}
+            strokeWidth={2}
+          />
+        ))}
+      </AreaChart>
     </ChartFrame>
   );
 }
