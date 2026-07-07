@@ -1,6 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
+import { Plus } from "lucide-react";
 import { Empty, LoadingPlaceholder, Modal, PageHeader, StatCard } from "../../components/ui";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Card, CardContent } from "../../components/ui/card";
+import { Field, FieldGroup, FieldLabel } from "../../components/ui/field";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../components/ui/table";
 import { MoneyLineChart } from "../../components/charts";
 import { SnapshotModal } from "../../components/SnapshotModal";
 import {
@@ -75,19 +88,19 @@ function LoansPage() {
         title="Lån"
         subtitle="Oversikt over gjeld og nedbetaling"
         actions={
-          <button
+          <Button
             onClick={() => {
               setEditing(null);
               setOpenLoan(true);
             }}
-            className="btn btn-primary"
           >
-            + Nytt lån
-          </button>
+            <Plus />
+            Nytt lån
+          </Button>
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard label="Total gjeld" value={totalDebt} tone="warn" />
         <StatCard label="Opprinnelig" value={totalOriginal} />
         <StatCard label="Nedbetalt" value={paidDown} tone="positive" />
@@ -98,111 +111,120 @@ function LoansPage() {
         <Empty
           title="Ingen lån registrert"
           description="Legg til boliglån, billån eller andre lån for å følge nedbetalingen."
-          action={
-            <button onClick={() => setOpenLoan(true)} className="btn btn-primary">
-              Legg til lån
-            </button>
-          }
+          action={<Button onClick={() => setOpenLoan(true)}>Legg til lån</Button>}
         />
       ) : (
-        <div className="grid lg:grid-cols-2 gap-4">
+        <div className="grid gap-4 lg:grid-cols-2">
           {data.loans.map((loan) => {
             const snaps = data.snapshotsByLoan[loan.id] ?? [];
             const cur = toNumber(loan.currentBalance);
             const orig = toNumber(loan.originalPrincipal);
             const pctPaid = orig > 0 ? ((orig - cur) / orig) * 100 : 0;
             return (
-              <div key={loan.id} className="card">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-semibold text-lg">{loan.name}</h3>
-                    <div className="text-xs text-muted mt-1 space-x-3">
-                      <span>
-                        Rente:{" "}
-                        <span className="text-text">
-                          {Number(loan.interestRate).toFixed(2).replace(".", ",")} %
+              <Card key={loan.id}>
+                <CardContent className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold">{loan.name}</h3>
+                      <div className="text-muted-foreground mt-1 space-x-3 text-xs">
+                        <span>
+                          Rente:{" "}
+                          <span className="text-foreground">
+                            {Number(loan.interestRate).toFixed(2).replace(".", ",")} %
+                          </span>
                         </span>
-                      </span>
-                      <span>
-                        Mnd: <span className="text-text">{formatNOK(loan.monthlyPayment)}</span>
-                      </span>
+                        <span>
+                          Mnd:{" "}
+                          <span className="text-foreground">{formatNOK(loan.monthlyPayment)}</span>
+                        </span>
+                      </div>
+                      {loan.notes && (
+                        <p className="text-muted-foreground mt-1 text-xs">{loan.notes}</p>
+                      )}
                     </div>
-                    {loan.notes && <p className="text-xs text-muted mt-1">{loan.notes}</p>}
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-semibold num text-amber-400">
-                      {formatNOK(cur)}
+                    <div className="text-right">
+                      <div className="text-warning text-2xl font-semibold tabular-nums">
+                        {formatNOK(cur)}
+                      </div>
+                      <div className="text-muted-foreground text-xs">av {formatNOK(orig)}</div>
+                      <div className="text-success text-xs tabular-nums">
+                        {pctPaid.toFixed(1)} % nedbetalt
+                      </div>
                     </div>
-                    <div className="text-xs text-muted">av {formatNOK(orig)}</div>
-                    <div className="text-xs pos num">{pctPaid.toFixed(1)} % nedbetalt</div>
                   </div>
-                </div>
 
-                {snaps.length > 1 && (
-                  <MoneyLineChart
-                    data={snaps.map((s) => ({
-                      date: s.snapshotDate,
-                      balance: toNumber(s.balance),
-                    }))}
-                    xKey="date"
-                    height={140}
-                    yWidth={70}
-                    series={[{ dataKey: "balance", color: FLOW_COLORS.loan, strokeWidth: 2 }]}
-                  />
-                )}
+                  {snaps.length > 1 && (
+                    <MoneyLineChart
+                      data={snaps.map((s) => ({
+                        date: s.snapshotDate,
+                        balance: toNumber(s.balance),
+                      }))}
+                      xKey="date"
+                      height={140}
+                      yWidth={70}
+                      series={[{ dataKey: "balance", color: FLOW_COLORS.loan, strokeWidth: 2 }]}
+                    />
+                  )}
 
-                <div className="mt-3 flex gap-2 flex-wrap">
-                  <button onClick={() => setSnapshotFor(loan)} className="btn btn-primary text-xs">
-                    + Saldo i dag
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditing(loan);
-                      setOpenLoan(true);
-                    }}
-                    className="btn btn-ghost text-xs"
-                  >
-                    Endre
-                  </button>
-                </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" onClick={() => setSnapshotFor(loan)}>
+                      <Plus />
+                      Saldo i dag
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditing(loan);
+                        setOpenLoan(true);
+                      }}
+                    >
+                      Endre
+                    </Button>
+                  </div>
 
-                {snaps.length > 0 && (
-                  <details className="mt-3">
-                    <summary className="text-xs text-muted cursor-pointer">
-                      Historikk ({snaps.length} datapunkt)
-                    </summary>
-                    <table className="table mt-2">
-                      <thead>
-                        <tr>
-                          <th>Dato</th>
-                          <th className="text-right">Saldo</th>
-                          <th></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[...snaps].reverse().map((s) => (
-                          <tr key={s.id}>
-                            <td>{s.snapshotDate}</td>
-                            <td className="text-right num">{formatNOK(s.balance)}</td>
-                            <td className="text-right">
-                              <button
-                                onClick={() => {
-                                  if (confirm("Slette dette datapunktet?")) {
-                                    void deleteSnapshotMutation.mutate(s.id);
-                                  }
-                                }}
-                                className="text-xs text-red-400 hover:underline"
-                              >
-                                Slett
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </details>
-                )}
-              </div>
+                  {snaps.length > 0 && (
+                    <details>
+                      <summary className="text-muted-foreground cursor-pointer text-xs">
+                        Historikk ({snaps.length} datapunkt)
+                      </summary>
+                      <Table className="mt-2">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Dato</TableHead>
+                            <TableHead className="text-right">Saldo</TableHead>
+                            <TableHead />
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {[...snaps].reverse().map((s) => (
+                            <TableRow key={s.id}>
+                              <TableCell>{s.snapshotDate}</TableCell>
+                              <TableCell className="text-right tabular-nums">
+                                {formatNOK(s.balance)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive"
+                                  onClick={() => {
+                                    if (confirm("Slette dette datapunktet?")) {
+                                      void deleteSnapshotMutation.mutate(s.id);
+                                    }
+                                  }}
+                                >
+                                  Slett
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </details>
+                  )}
+                </CardContent>
+              </Card>
             );
           })}
         </div>
@@ -306,86 +328,87 @@ function LoanModal({
       footer={
         <>
           {loan && (
-            <button
+            <Button
+              variant="destructive"
+              className="mr-auto"
+              disabled={busy}
               onClick={() => {
                 if (confirm(`Slette lånet "${loan.name}"?`)) {
                   void deleteMutation.mutate(undefined);
                 }
               }}
-              className="btn btn-danger mr-auto"
-              disabled={busy}
             >
               Slett
-            </button>
+            </Button>
           )}
-          <button onClick={onClose} className="btn btn-ghost" disabled={busy}>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
             Avbryt
-          </button>
-          <button
-            onClick={() => void saveMutation.mutate(undefined)}
-            className="btn btn-primary"
-            disabled={busy || !canSave}
-          >
+          </Button>
+          <Button onClick={() => void saveMutation.mutate(undefined)} disabled={busy || !canSave}>
             Lagre
-          </button>
+          </Button>
         </>
       }
     >
-      <div className="space-y-3">
-        <div>
-          <label className="label">Navn</label>
-          <input
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="loan-name">Navn</FieldLabel>
+          <Input
+            id="loan-name"
             autoFocus
-            className="input"
             value={form.values.name}
             onChange={form.setField("name")}
             placeholder="F.eks. Boliglån DNB"
           />
-        </div>
+        </Field>
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label">Opprinnelig sum</label>
-            <input
-              className="input num"
+          <Field>
+            <FieldLabel htmlFor="loan-orig">Opprinnelig sum</FieldLabel>
+            <Input
+              id="loan-orig"
+              className="tabular-nums"
               type="number"
               value={form.values.orig}
               onChange={form.setField("orig")}
             />
-          </div>
-          <div>
-            <label className="label">Nåværende saldo</label>
-            <input
-              className="input num"
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="loan-cur">Nåværende saldo</FieldLabel>
+            <Input
+              id="loan-cur"
+              className="tabular-nums"
               type="number"
               value={form.values.cur}
               onChange={form.setField("cur")}
             />
-          </div>
-          <div>
-            <label className="label">Rente (%)</label>
-            <input
-              className="input num"
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="loan-rate">Rente (%)</FieldLabel>
+            <Input
+              id="loan-rate"
+              className="tabular-nums"
               type="number"
               step="0.01"
               value={form.values.rate}
               onChange={form.setField("rate")}
             />
-          </div>
-          <div>
-            <label className="label">Månedlig betaling</label>
-            <input
-              className="input num"
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="loan-monthly">Månedlig betaling</FieldLabel>
+            <Input
+              id="loan-monthly"
+              className="tabular-nums"
               type="number"
               value={form.values.monthly}
               onChange={form.setField("monthly")}
             />
-          </div>
+          </Field>
         </div>
-        <div>
-          <label className="label">Notat (valgfritt)</label>
-          <input className="input" value={form.values.notes} onChange={form.setField("notes")} />
-        </div>
-      </div>
+        <Field>
+          <FieldLabel htmlFor="loan-notes">Notat (valgfritt)</FieldLabel>
+          <Input id="loan-notes" value={form.values.notes} onChange={form.setField("notes")} />
+        </Field>
+      </FieldGroup>
     </Modal>
   );
 }

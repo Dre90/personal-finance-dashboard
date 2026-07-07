@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
+import { Plus } from "lucide-react";
 import {
   Empty,
   LoadingPlaceholder,
@@ -9,6 +10,27 @@ import {
   TabPanel,
   Tabs,
 } from "../../components/ui";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Badge } from "../../components/ui/badge";
+import { Card, CardContent } from "../../components/ui/card";
+import { Field, FieldGroup, FieldLabel } from "../../components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../components/ui/table";
 import { MoneyAreaChart, MoneyLineChart } from "../../components/charts";
 import { SnapshotModal } from "../../components/SnapshotModal";
 import {
@@ -107,12 +129,10 @@ function AssetsPage() {
         title="Formue"
         subtitle="ASK, pensjon, sparekontoer og andre verdier"
         actions={
-          <button
-            onClick={() => openNew(tab === "pension" ? "pension" : "ask")}
-            className="btn btn-primary"
-          >
-            + Ny eiendel
-          </button>
+          <Button onClick={() => openNew(tab === "pension" ? "pension" : "ask")}>
+            <Plus />
+            Ny eiendel
+          </Button>
         }
       />
 
@@ -153,11 +173,7 @@ function AssetsPage() {
               <Empty
                 title="Ingen eiendeler enda"
                 description="Legg til ASK, pensjon, sparekontoer eller andre verdier for å bygge formuesoversikten."
-                action={
-                  <button onClick={() => openNew("ask")} className="btn btn-primary">
-                    Legg til
-                  </button>
-                }
+                action={<Button onClick={() => openNew("ask")}>Legg til</Button>}
               />
             ) : (
               otherAssets.length > 0 && (
@@ -198,11 +214,7 @@ function AssetsPage() {
             <Empty
               title="Ingen ASK-kontoer enda"
               description="Legg til f.eks. Aksjer og Fond for å følge utviklingen hver for seg og samlet."
-              action={
-                <button onClick={() => openNew("ask")} className="btn btn-primary">
-                  Legg til ASK-konto
-                </button>
-              }
+              action={<Button onClick={() => openNew("ask")}>Legg til ASK-konto</Button>}
             />
           )}
         </TabPanel>
@@ -225,11 +237,7 @@ function AssetsPage() {
             <Empty
               title="Ingen pensjonskontoer enda"
               description="Legg til f.eks. Egen pensjonskonto, IPS og Pensjonssparekonto."
-              action={
-                <button onClick={() => openNew("pension")} className="btn btn-primary">
-                  Legg til pensjonskonto
-                </button>
-              }
+              action={<Button onClick={() => openNew("pension")}>Legg til pensjonskonto</Button>}
             />
           )}
         </TabPanel>
@@ -289,83 +297,96 @@ function AssetCard({
   const pctChange =
     first && toNumber(first.value) !== 0 ? (change / toNumber(first.value)) * 100 : 0;
   return (
-    <div className="card">
-      <div className="flex items-start justify-between">
-        <div>
-          {showKindBadge ? (
-            <span className="badge">{ASSET_KIND_LABEL[asset.kind as AssetKind] ?? asset.kind}</span>
-          ) : (
-            <span
-              className="inline-block w-2.5 h-2.5 rounded-full align-middle"
-              style={{ background: color }}
-            />
-          )}
-          <h3 className="font-semibold text-lg mt-2">{asset.name}</h3>
-          {asset.notes && <p className="text-xs text-muted mt-1">{asset.notes}</p>}
+    <Card>
+      <CardContent className="space-y-3">
+        <div className="flex items-start justify-between">
+          <div>
+            {showKindBadge ? (
+              <Badge variant="secondary">
+                {ASSET_KIND_LABEL[asset.kind as AssetKind] ?? asset.kind}
+              </Badge>
+            ) : (
+              <span
+                className="inline-block size-2.5 rounded-full align-middle"
+                style={{ background: color }}
+              />
+            )}
+            <h3 className="mt-2 text-lg font-semibold">{asset.name}</h3>
+            {asset.notes && <p className="text-muted-foreground mt-1 text-xs">{asset.notes}</p>}
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-semibold tabular-nums">{formatNOK(value)}</div>
+            {first && (
+              <div
+                className={
+                  change >= 0
+                    ? "text-success text-xs tabular-nums"
+                    : "text-destructive text-xs tabular-nums"
+                }
+              >
+                {change >= 0 ? "+" : ""}
+                {formatNOK(change)} ({pctChange.toFixed(1)} %)
+              </div>
+            )}
+          </div>
         </div>
-        <div className="text-right">
-          <div className="text-2xl font-semibold num">{formatNOK(value)}</div>
-          {first && (
-            <div className={`text-xs num ${change >= 0 ? "pos" : "neg"}`}>
-              {change >= 0 ? "+" : ""}
-              {formatNOK(change)} ({pctChange.toFixed(1)} %)
-            </div>
-          )}
+
+        {snaps.length > 1 && (
+          <MoneyLineChart
+            data={snaps.map((s) => ({ date: s.snapshotDate, value: toNumber(s.value) }))}
+            xKey="date"
+            height={140}
+            yWidth={70}
+            series={[{ dataKey: "value", color, strokeWidth: 2 }]}
+          />
+        )}
+
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={onSnapshot}>
+            <Plus />
+            Verdi i dag
+          </Button>
+          <Button variant="outline" size="sm" onClick={onEdit}>
+            Endre
+          </Button>
         </div>
-      </div>
 
-      {snaps.length > 1 && (
-        <MoneyLineChart
-          data={snaps.map((s) => ({ date: s.snapshotDate, value: toNumber(s.value) }))}
-          xKey="date"
-          height={140}
-          yWidth={70}
-          series={[{ dataKey: "value", color, strokeWidth: 2 }]}
-        />
-      )}
-
-      <div className="mt-3 flex gap-2 flex-wrap">
-        <button onClick={onSnapshot} className="btn btn-primary text-xs">
-          + Verdi i dag
-        </button>
-        <button onClick={onEdit} className="btn btn-ghost text-xs">
-          Endre
-        </button>
-      </div>
-
-      {snaps.length > 0 && (
-        <details className="mt-3">
-          <summary className="text-xs text-muted cursor-pointer">
-            Historikk ({snaps.length} verdier)
-          </summary>
-          <table className="table mt-2">
-            <thead>
-              <tr>
-                <th>Dato</th>
-                <th className="text-right">Verdi</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...snaps].reverse().map((s) => (
-                <tr key={s.id}>
-                  <td>{s.snapshotDate}</td>
-                  <td className="text-right num">{formatNOK(s.value)}</td>
-                  <td className="text-right">
-                    <button
-                      onClick={() => onDeleteSnapshot(s.id)}
-                      className="text-xs text-red-400 hover:underline"
-                    >
-                      Slett
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </details>
-      )}
-    </div>
+        {snaps.length > 0 && (
+          <details>
+            <summary className="text-muted-foreground cursor-pointer text-xs">
+              Historikk ({snaps.length} verdier)
+            </summary>
+            <Table className="mt-2">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Dato</TableHead>
+                  <TableHead className="text-right">Verdi</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[...snaps].reverse().map((s) => (
+                  <TableRow key={s.id}>
+                    <TableCell>{s.snapshotDate}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatNOK(s.value)}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive"
+                        onClick={() => onDeleteSnapshot(s.id)}
+                      >
+                        Slett
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </details>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -402,13 +423,19 @@ function AssetGroupSection({
     <section className="space-y-4">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="font-semibold text-xl">{title}</h2>
-          <p className="text-xs text-muted">{subtitle}</p>
+          <h2 className="text-xl font-semibold">{title}</h2>
+          <p className="text-muted-foreground text-xs">{subtitle}</p>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-semibold num">{formatNOK(total)}</div>
+          <div className="text-2xl font-semibold tabular-nums">{formatNOK(total)}</div>
           {rows.length > 1 && (
-            <div className={`text-xs num ${change >= 0 ? "pos" : "neg"}`}>
+            <div
+              className={
+                change >= 0
+                  ? "text-success text-xs tabular-nums"
+                  : "text-destructive text-xs tabular-nums"
+              }
+            >
               {change >= 0 ? "+" : ""}
               {formatNOK(change)} ({pctChange.toFixed(1)} %)
             </div>
@@ -417,18 +444,20 @@ function AssetGroupSection({
       </div>
 
       {rows.length > 1 && (
-        <div className="card">
-          <MoneyAreaChart
-            data={rows}
-            xKey="date"
-            height={240}
-            yWidth={70}
-            series={series.map((s) => ({ dataKey: s.key, name: s.name, color: s.color }))}
-          />
-        </div>
+        <Card>
+          <CardContent>
+            <MoneyAreaChart
+              data={rows}
+              xKey="date"
+              height={240}
+              yWidth={70}
+              series={series.map((s) => ({ dataKey: s.key, name: s.name, color: s.color }))}
+            />
+          </CardContent>
+        </Card>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid gap-4 lg:grid-cols-2">
         {assets.map((asset) => (
           <AssetCard
             key={asset.id}
@@ -523,73 +552,78 @@ function AssetModal({
       footer={
         <>
           {asset && (
-            <button
+            <Button
+              variant="destructive"
+              className="mr-auto"
+              disabled={busy}
               onClick={() => {
                 if (confirm(`Slette "${asset.name}" og all historikk?`)) {
                   void deleteMutation.mutate(undefined);
                 }
               }}
-              className="btn btn-danger mr-auto"
-              disabled={busy}
             >
               Slett
-            </button>
+            </Button>
           )}
-          <button onClick={onClose} className="btn btn-ghost" disabled={busy}>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
             Avbryt
-          </button>
-          <button
-            onClick={() => void saveMutation.mutate(undefined)}
-            className="btn btn-primary"
-            disabled={busy || !canSave}
-          >
+          </Button>
+          <Button onClick={() => void saveMutation.mutate(undefined)} disabled={busy || !canSave}>
             Lagre
-          </button>
+          </Button>
         </>
       }
     >
-      <div className="space-y-3">
-        <div>
-          <label className="label">Navn</label>
-          <input
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="asset-name">Navn</FieldLabel>
+          <Input
+            id="asset-name"
             autoFocus
-            className="input"
             value={form.values.name}
             onChange={form.setField("name")}
             placeholder="F.eks. Nordnet ASK"
           />
-        </div>
-        <div>
-          <label className="label">Type</label>
-          <select
-            className="input"
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="asset-kind">Type</FieldLabel>
+          <Select
+            items={ASSET_KIND_LABEL}
             value={form.values.kind}
-            onChange={form.setField("kind", (raw) => raw as AssetKind)}
+            onValueChange={(v) => form.set("kind", v as AssetKind)}
           >
-            {ASSET_KINDS.map((k) => (
-              <option key={k} value={k}>
-                {ASSET_KIND_LABEL[k]}
-              </option>
-            ))}
-          </select>
-        </div>
+            <SelectTrigger id="asset-kind" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {ASSET_KINDS.map((k) => (
+                  <SelectItem key={k} value={k}>
+                    {ASSET_KIND_LABEL[k]}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </Field>
         {!asset && (
-          <div>
-            <label className="label">Nåværende verdi (valgfritt)</label>
-            <input
-              className="input num"
+          <Field>
+            <FieldLabel htmlFor="asset-initial">Nåværende verdi (valgfritt)</FieldLabel>
+            <Input
+              id="asset-initial"
+              className="tabular-nums"
               type="number"
               value={form.values.initialValue}
               onChange={form.setField("initialValue")}
               placeholder="0"
             />
-          </div>
+          </Field>
         )}
-        <div>
-          <label className="label">Notat (valgfritt)</label>
-          <input className="input" value={form.values.notes} onChange={form.setField("notes")} />
-        </div>
-      </div>
+        <Field>
+          <FieldLabel htmlFor="asset-notes">Notat (valgfritt)</FieldLabel>
+          <Input id="asset-notes" value={form.values.notes} onChange={form.setField("notes")} />
+        </Field>
+      </FieldGroup>
     </Modal>
   );
 }
