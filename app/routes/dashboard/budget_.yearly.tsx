@@ -8,7 +8,7 @@ import { useQuery } from "../../lib/query";
 import { FLOW_COLORS } from "../../lib/colors";
 import { formatNOK, monthsInYear, shortMonthLabel, toNumber } from "../../lib/utils";
 
-export const Route = createFileRoute("/dashboard/budget/yearly")({
+export const Route = createFileRoute("/dashboard/budget_/yearly")({
   component: YearlyBudgetPage,
 });
 
