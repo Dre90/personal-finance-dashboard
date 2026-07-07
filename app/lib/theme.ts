@@ -5,7 +5,8 @@
  * per-device in localStorage. From that we derive a *resolved* theme
  * (`light` | `dark`) — `auto` follows the OS via `prefers-color-scheme`.
  *
- * The resolved theme is exposed to CSS as `data-theme` on <html>, and
+ * The resolved theme is exposed to CSS as the `dark` class on <html> (shadcn
+ * convention — bare `:root` is light, `.dark` is dark), and
  * `THEME_INIT_SCRIPT` applies it before first paint to avoid a flash of the
  * wrong theme on load.
  */
@@ -49,14 +50,14 @@ export function resolveTheme(pref: ThemePreference): ResolvedTheme {
 
 export function applyTheme(resolved: ResolvedTheme): void {
   if (typeof document === "undefined") return;
-  document.documentElement.dataset.theme = resolved;
+  document.documentElement.classList.toggle("dark", resolved === "dark");
 }
 
 /**
- * Self-executing script injected into <head> so `data-theme` is set on <html>
- * before the stylesheet paints. Kept dependency-free and stringified because it
- * must run synchronously during SSR hydration, ahead of React.
+ * Self-executing script injected into <head> so the `dark` class is set on
+ * <html> before the stylesheet paints. Kept dependency-free and stringified
+ * because it must run synchronously during SSR hydration, ahead of React.
  */
 export const THEME_INIT_SCRIPT = `(function(){try{var p=localStorage.getItem(${JSON.stringify(
   THEME_KEY,
-)});var r=(p==="light"||p==="dark")?p:(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=r;}catch(e){document.documentElement.dataset.theme="dark";}})();`;
+)});var d=(p==="light")?false:(p==="dark")?true:(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(d)document.documentElement.classList.add("dark");}catch(e){document.documentElement.classList.add("dark");}})();`;

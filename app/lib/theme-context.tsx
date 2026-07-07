@@ -19,11 +19,11 @@ interface ThemeContextValue {
 const ThemeContext = React.createContext<ThemeContextValue | null>(null);
 
 /**
- * Holds the theme preference, keeps the `data-theme` attribute in sync, and —
+ * Holds the theme preference, keeps the `dark` class on <html> in sync, and —
  * while the preference is `auto` — tracks OS changes live via matchMedia.
  *
- * The pre-paint script in __root.tsx has already set `data-theme` before React
- * mounts; this provider takes over once hydrated.
+ * The pre-paint script in __root.tsx has already set the `dark` class before
+ * React mounts; this provider takes over once hydrated.
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [preference, setPreferenceState] = React.useState<ThemePreference>("auto");
