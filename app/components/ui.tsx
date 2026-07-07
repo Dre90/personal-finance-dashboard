@@ -53,6 +53,89 @@ export function PageHeader({
   );
 }
 
+export function Tabs<T extends string>({
+  value,
+  onChange,
+  tabs,
+  idPrefix = "tabs",
+}: {
+  value: T;
+  onChange: (value: T) => void;
+  tabs: ReadonlyArray<{ value: T; label: string }>;
+  /** Prefix used to build stable tab/panel ids; pass a unique value if the page renders more than one `Tabs`. */
+  idPrefix?: string;
+}) {
+  const buttonRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    e.preventDefault();
+    const next =
+      e.key === "ArrowRight" ? (index + 1) % tabs.length : (index - 1 + tabs.length) % tabs.length;
+    onChange(tabs[next]!.value);
+    buttonRefs.current[next]?.focus();
+  };
+
+  return (
+    <div className="flex gap-1 border-b border-app" role="tablist">
+      {tabs.map((t, i) => {
+        const active = t.value === value;
+        return (
+          <button
+            key={t.value}
+            ref={(el) => {
+              buttonRefs.current[i] = el;
+            }}
+            id={`${idPrefix}-tab-${t.value}`}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            // Panels are only mounted for the active tab (see callers), so only the
+            // active tab should point at one via aria-controls — pointing an inactive
+            // tab at an unmounted element would be an invalid ARIA relationship.
+            aria-controls={active ? `${idPrefix}-panel-${t.value}` : undefined}
+            tabIndex={active ? 0 : -1}
+            onClick={() => onChange(t.value)}
+            onKeyDown={(e) => onKeyDown(e, i)}
+            className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 whitespace-nowrap transition-colors ${
+              active
+                ? "border-[color:var(--color-primary)] text-text"
+                : "border-transparent text-muted hover:text-text"
+            }`}
+          >
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Wraps the content for one `Tabs` tab in a `role="tabpanel"` region whose id/
+ * `aria-labelledby` match the `id`/`aria-controls` that `Tabs` generates for the
+ * same `value` + `idPrefix`, so assistive tech gets the full tab/panel relationship.
+ */
+export function TabPanel({
+  value,
+  idPrefix = "tabs",
+  children,
+}: {
+  value: string;
+  idPrefix?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      id={`${idPrefix}-panel-${value}`}
+      role="tabpanel"
+      aria-labelledby={`${idPrefix}-tab-${value}`}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function Empty({
   title,
   description,
