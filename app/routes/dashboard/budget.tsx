@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
   Empty,
   LoadingPlaceholder,
@@ -8,6 +9,20 @@ import {
   ProgressBar,
   StatCard,
 } from "../../components/ui";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Badge } from "../../components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Field, FieldLabel } from "../../components/ui/field";
+import { ToggleGroup, ToggleGroupItem } from "../../components/ui/toggle-group";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../components/ui/table";
 import { MoneyDonut } from "../../components/charts";
 import {
   createCategory,
@@ -76,48 +91,52 @@ function BudgetPage() {
         subtitle={monthLabel(yearMonth)}
         actions={
           <>
-            <button
+            <Button
+              variant="outline"
+              size="icon"
               onClick={() => setYearMonth(previousYearMonth(yearMonth))}
-              className="btn btn-ghost"
             >
-              ← Forrige
-            </button>
-            <input
+              <ChevronLeft />
+            </Button>
+            <Input
               type="month"
               value={yearMonth}
               onChange={(e) => setYearMonth(e.target.value)}
-              className="input max-w-[170px]"
+              className="max-w-[170px]"
             />
-            <button
+            <Button
+              variant="outline"
+              size="icon"
               onClick={() => setYearMonth(nextYearMonth(yearMonth))}
-              className="btn btn-ghost"
             >
-              Neste →
-            </button>
-            <button
+              <ChevronRight />
+            </Button>
+            <Button
               onClick={() => {
                 setEditingCategory(null);
                 setShowCategoryModal(true);
               }}
-              className="btn btn-primary"
             >
-              + Kategori
-            </button>
+              <Plus />
+              Kategori
+            </Button>
           </>
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard label="Inntekt budsjett" value={totals.incomeBudget} />
         <StatCard label="Inntekt faktisk" value={totals.incomeActual} tone="positive" />
         <StatCard label="Utgift budsjett" value={totals.expenseBudget} />
         <StatCard label="Utgift faktisk" value={totals.expenseActual} tone="warn" />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4">
-        <div className="card">
-          <h3 className="font-semibold mb-3">Resultat</h3>
-          <div className="space-y-2 text-sm">
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>Resultat</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
             <Row
               label="Budsjett (inntekt - utgift)"
               value={totals.incomeBudget - totals.expenseBudget}
@@ -135,120 +154,136 @@ function BudgetPage() {
                 (totals.incomeBudget - totals.expenseBudget)
               }
             />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="card lg:col-span-2">
-          <h3 className="font-semibold mb-3">Utgiftsfordeling (faktisk)</h3>
-          <ExpenseDonut categories={data.categories} entries={data.entries} />
-        </div>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Utgiftsfordeling (faktisk)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ExpenseDonut categories={data.categories} entries={data.entries} />
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="card">
-        <h3 className="font-semibold mb-3">Detaljer</h3>
-        {groups.length === 0 && (
-          <Empty
-            title="Ingen kategorier"
-            description="Legg til kategorier for å begynne å budsjettere."
-          />
-        )}
-        {groups.map(({ groupName, items, kind }) => {
-          const groupBudget = items.reduce(
-            (s, c) => s + toNumber(entryByCategoryId.get(c.id)?.budgeted),
-            0,
-          );
-          const groupActual = items.reduce(
-            (s, c) => s + toNumber(entryByCategoryId.get(c.id)?.actual),
-            0,
-          );
-          return (
-            <div key={`${kind}-${groupName}`} className="mb-6 last:mb-0">
-              <div className="flex justify-between items-baseline mb-2">
-                <h4 className="font-semibold text-sm uppercase tracking-wider text-muted">
-                  {groupName} <span className="ml-2 badge">{CATEGORY_KIND_LABEL[kind]}</span>
-                </h4>
-                <div className="text-xs text-muted num">
-                  {formatNOK(groupActual)} / {formatNOK(groupBudget)}
+      <Card>
+        <CardHeader>
+          <CardTitle>Detaljer</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {groups.length === 0 && (
+            <Empty
+              title="Ingen kategorier"
+              description="Legg til kategorier for å begynne å budsjettere."
+            />
+          )}
+          {groups.map(({ groupName, items, kind }) => {
+            const groupBudget = items.reduce(
+              (s, c) => s + toNumber(entryByCategoryId.get(c.id)?.budgeted),
+              0,
+            );
+            const groupActual = items.reduce(
+              (s, c) => s + toNumber(entryByCategoryId.get(c.id)?.actual),
+              0,
+            );
+            return (
+              <div key={`${kind}-${groupName}`} className="mb-6 last:mb-0">
+                <div className="mb-2 flex items-baseline justify-between">
+                  <h4 className="text-muted-foreground flex items-center gap-2 text-sm font-semibold tracking-wider uppercase">
+                    {groupName}
+                    <Badge variant="secondary">{CATEGORY_KIND_LABEL[kind]}</Badge>
+                  </h4>
+                  <div className="text-muted-foreground text-xs tabular-nums">
+                    {formatNOK(groupActual)} / {formatNOK(groupBudget)}
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[40%]">Kategori</TableHead>
+                        <TableHead className="text-right">Budsjett</TableHead>
+                        <TableHead className="text-right">Faktisk</TableHead>
+                        <TableHead className="text-right">Avvik</TableHead>
+                        <TableHead />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {items.map((cat) => {
+                        const entry = entryByCategoryId.get(cat.id);
+                        const budgeted = toNumber(entry?.budgeted);
+                        const actual = toNumber(entry?.actual);
+                        const diff = kind === "income" ? actual - budgeted : budgeted - actual;
+                        return (
+                          <TableRow key={cat.id}>
+                            <TableCell>{cat.name}</TableCell>
+                            <TableCell className="text-right">
+                              <Input
+                                type="number"
+                                step="1"
+                                defaultValue={budgeted || ""}
+                                onBlur={(e) =>
+                                  upsertEntry.mutate({
+                                    categoryId: cat.id,
+                                    field: "budgeted",
+                                    value: toNumber(e.target.value),
+                                  })
+                                }
+                                className="ml-auto w-32 text-right tabular-nums"
+                                placeholder="0"
+                              />
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Input
+                                type="number"
+                                step="1"
+                                defaultValue={actual || ""}
+                                onBlur={(e) =>
+                                  upsertEntry.mutate({
+                                    categoryId: cat.id,
+                                    field: "actual",
+                                    value: toNumber(e.target.value),
+                                  })
+                                }
+                                className="ml-auto w-32 text-right tabular-nums"
+                                placeholder="0"
+                              />
+                            </TableCell>
+                            <TableCell
+                              className={
+                                diff < 0
+                                  ? "text-destructive text-right tabular-nums"
+                                  : diff > 0
+                                    ? "text-success text-right tabular-nums"
+                                    : "text-right tabular-nums"
+                              }
+                            >
+                              {formatNOK(diff)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingCategory(cat);
+                                  setShowCategoryModal(true);
+                                }}
+                              >
+                                Endre
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th className="w-[40%]">Kategori</th>
-                      <th className="text-right">Budsjett</th>
-                      <th className="text-right">Faktisk</th>
-                      <th className="text-right">Avvik</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((cat) => {
-                      const entry = entryByCategoryId.get(cat.id);
-                      const budgeted = toNumber(entry?.budgeted);
-                      const actual = toNumber(entry?.actual);
-                      const diff = kind === "income" ? actual - budgeted : budgeted - actual;
-                      return (
-                        <tr key={cat.id}>
-                          <td>{cat.name}</td>
-                          <td className="text-right">
-                            <input
-                              type="number"
-                              step="1"
-                              defaultValue={budgeted || ""}
-                              onBlur={(e) =>
-                                upsertEntry.mutate({
-                                  categoryId: cat.id,
-                                  field: "budgeted",
-                                  value: toNumber(e.target.value),
-                                })
-                              }
-                              className="input text-right num w-32 ml-auto"
-                              placeholder="0"
-                            />
-                          </td>
-                          <td className="text-right">
-                            <input
-                              type="number"
-                              step="1"
-                              defaultValue={actual || ""}
-                              onBlur={(e) =>
-                                upsertEntry.mutate({
-                                  categoryId: cat.id,
-                                  field: "actual",
-                                  value: toNumber(e.target.value),
-                                })
-                              }
-                              className="input text-right num w-32 ml-auto"
-                              placeholder="0"
-                            />
-                          </td>
-                          <td
-                            className={`text-right num ${diff < 0 ? "neg" : diff > 0 ? "pos" : ""}`}
-                          >
-                            {formatNOK(diff)}
-                          </td>
-                          <td className="text-right">
-                            <button
-                              onClick={() => {
-                                setEditingCategory(cat);
-                                setShowCategoryModal(true);
-                              }}
-                              className="text-xs text-muted hover:text-text"
-                            >
-                              Endre
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </CardContent>
+      </Card>
 
       <CategoryModal
         open={showCategoryModal}
@@ -269,9 +304,15 @@ function BudgetPage() {
 function Row({ label, value, positive }: { label: string; value: number; positive?: boolean }) {
   return (
     <div className="flex justify-between">
-      <span className="text-muted">{label}</span>
+      <span className="text-muted-foreground">{label}</span>
       <span
-        className={`num font-semibold ${value < 0 ? "neg" : positive && value > 0 ? "pos" : ""}`}
+        className={
+          value < 0
+            ? "text-destructive font-semibold tabular-nums"
+            : positive && value > 0
+              ? "text-success font-semibold tabular-nums"
+              : "font-semibold tabular-nums"
+        }
       >
         {formatNOK(value)}
       </span>
@@ -335,23 +376,23 @@ function ExpenseDonut({
     color: pickColor(i),
   }));
   if (data.length === 0) {
-    return <p className="text-sm text-muted">Ingen faktiske utgifter enda.</p>;
+    return <p className="text-muted-foreground text-sm">Ingen faktiske utgifter enda.</p>;
   }
   const total = data.reduce((s, x) => s + x.value, 0);
   return (
-    <div className="grid md:grid-cols-2 gap-4 items-center">
+    <div className="grid items-center gap-4 md:grid-cols-2">
       <MoneyDonut data={data} height={220} />
       <div className="space-y-1.5">
         {data.map((d) => {
           const pct = total > 0 ? (d.value / total) * 100 : 0;
           return (
             <div key={d.name}>
-              <div className="flex justify-between text-xs mb-1">
+              <div className="mb-1 flex justify-between text-xs">
                 <span className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
+                  <span className="size-2.5 rounded-full" style={{ background: d.color }} />
                   {d.name}
                 </span>
-                <span className="num">
+                <span className="tabular-nums">
                   {formatNOK(d.value)} ({pct.toFixed(0)} %)
                 </span>
               </div>
@@ -422,57 +463,57 @@ function CategoryModal({
       footer={
         <>
           {category && (
-            <button
+            <Button
+              variant="destructive"
+              className="mr-auto"
+              disabled={busy}
               onClick={() => {
                 if (confirm(`Slette "${category.name}"? Alle budsjettlinjer forsvinner også.`)) {
                   void deleteMutation.mutate(undefined);
                 }
               }}
-              className="btn btn-danger mr-auto"
-              disabled={busy}
             >
               Slett
-            </button>
+            </Button>
           )}
-          <button onClick={onClose} className="btn btn-ghost" disabled={busy}>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
             Avbryt
-          </button>
-          <button
-            onClick={() => void saveMutation.mutate(undefined)}
-            className="btn btn-primary"
-            disabled={busy || !canSave}
-          >
+          </Button>
+          <Button onClick={() => void saveMutation.mutate(undefined)} disabled={busy || !canSave}>
             Lagre
-          </button>
+          </Button>
         </>
       }
     >
       <div className="space-y-3">
-        <div>
-          <label className="label">Navn</label>
-          <input
+        <Field>
+          <FieldLabel htmlFor="cat-name">Navn</FieldLabel>
+          <Input
+            id="cat-name"
             autoFocus
-            className="input"
             value={form.values.name}
             onChange={form.setField("name")}
           />
-        </div>
+        </Field>
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label">Type</label>
-            <select
-              className="input"
-              value={form.values.kind}
-              onChange={form.setField("kind", (raw) => raw as CategoryKind)}
+          <Field>
+            <FieldLabel>Type</FieldLabel>
+            <ToggleGroup
+              variant="outline"
+              value={[form.values.kind]}
+              onValueChange={(vals) => {
+                const v = vals[0] as CategoryKind | undefined;
+                if (v) form.set("kind", v);
+              }}
             >
-              <option value="income">Inntekt</option>
-              <option value="expense">Utgift</option>
-            </select>
-          </div>
-          <div>
-            <label className="label">Gruppe</label>
-            <input
-              className="input"
+              <ToggleGroupItem value="income">Inntekt</ToggleGroupItem>
+              <ToggleGroupItem value="expense">Utgift</ToggleGroupItem>
+            </ToggleGroup>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="cat-group">Gruppe</FieldLabel>
+            <Input
+              id="cat-group"
               value={form.values.groupName}
               onChange={form.setField("groupName")}
               list="grp"
@@ -484,7 +525,7 @@ function CategoryModal({
               <option value="Sparing" />
               <option value="Annet" />
             </datalist>
-          </div>
+          </Field>
         </div>
       </div>
     </Modal>
