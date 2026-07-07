@@ -1,6 +1,29 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import * as React from "react";
+import { Check, Copy, Download, Trash2 } from "lucide-react";
 import { PageHeader } from "../../components/ui";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import { Field, FieldLabel } from "../../components/ui/field";
+import { ToggleGroup, ToggleGroupItem } from "../../components/ui/toggle-group";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../../components/ui/alert-dialog";
 import { deleteDashboard, exportDashboard, updateDashboard } from "../../server/api";
 import { useDashboard } from "../../lib/dashboard-context";
 import { clearQueryCache, useMutation } from "../../lib/query";
@@ -26,6 +49,7 @@ function SettingsPage() {
   const { preference, setPreference } = useTheme();
   const [name, setName] = React.useState(dashboard.name);
   const [copied, setCopied] = React.useState(false);
+  const [deleteConfirm, setDeleteConfirm] = React.useState("");
 
   React.useEffect(() => {
     setName(dashboard.name);
@@ -75,91 +99,134 @@ function SettingsPage() {
     }
   }
 
-  function confirmDelete() {
-    const v = prompt("Dette sletter ALT permanent. Skriv 'SLETT' for å bekrefte:");
-    if (v === "SLETT") void deleteMutation.mutate(undefined);
-  }
-
   const canRename = name.trim().length > 0 && name.trim() !== dashboard.name;
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="max-w-2xl space-y-6">
       <PageHeader title="Innstillinger" />
 
-      <div className="card space-y-3">
-        <h3 className="font-semibold">Dashboard-ID</h3>
-        <p className="text-sm text-muted">
-          Denne ID-en er din eneste nøkkel. Lagre den et trygt sted — det finnes ingen recovery.
-        </p>
-        <div className="card-soft font-mono text-sm break-all">{id}</div>
-        <button onClick={copyId} className="btn btn-ghost text-xs">
-          {copied ? "✓ Kopiert" : "Kopier ID"}
-        </button>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Dashboard-ID</CardTitle>
+          <CardDescription>
+            Denne ID-en er din eneste nøkkel. Lagre den et trygt sted — det finnes ingen recovery.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="bg-muted/40 rounded-lg border p-3 font-mono text-sm break-all">{id}</div>
+          <Button variant="outline" size="sm" onClick={copyId}>
+            {copied ? <Check /> : <Copy />}
+            {copied ? "Kopiert" : "Kopier ID"}
+          </Button>
+        </CardContent>
+      </Card>
 
-      <div className="card space-y-3">
-        <h3 className="font-semibold">Navn</h3>
-        <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
-        <div>
-          <button
+      <Card>
+        <CardHeader>
+          <CardTitle>Navn</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Field>
+            <FieldLabel htmlFor="dashboard-name">Navn på dashboardet</FieldLabel>
+            <Input id="dashboard-name" value={name} onChange={(e) => setName(e.target.value)} />
+          </Field>
+          <Button
             onClick={() => void renameMutation.mutate(undefined)}
             disabled={renameMutation.loading || !canRename}
-            className="btn btn-primary"
           >
             {renameMutation.loading ? "Lagrer…" : "Lagre navn"}
-          </button>
-        </div>
-      </div>
+          </Button>
+        </CardContent>
+      </Card>
 
-      <div className="card space-y-3">
-        <h3 className="font-semibold">Utseende</h3>
-        <p className="text-sm text-muted">
-          Velg tema. «Auto» følger systeminnstillingen din. Lagres på denne enheten.
-        </p>
-        <div className="inline-flex rounded-[10px] border border-app bg-soft p-1 gap-1">
-          {THEME_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setPreference(opt.value)}
-              aria-pressed={preference === opt.value}
-              className={
-                "btn text-sm px-4 py-1.5 " +
-                (preference === opt.value ? "btn-primary" : "btn-ghost border-transparent")
+      <Card>
+        <CardHeader>
+          <CardTitle>Utseende</CardTitle>
+          <CardDescription>
+            Velg tema. «Auto» følger systeminnstillingen din. Lagres på denne enheten.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ToggleGroup
+            variant="outline"
+            value={[preference]}
+            onValueChange={(vals) => {
+              const v = vals[0] as ThemePreference | undefined;
+              if (v) setPreference(v);
+            }}
+          >
+            {THEME_OPTIONS.map((opt) => (
+              <ToggleGroupItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Eksporter data</CardTitle>
+          <CardDescription>
+            Last ned alle dataene som JSON. God idé å gjøre dette med jevne mellomrom som backup.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            onClick={() => void exportMutation.mutate(undefined)}
+            disabled={exportMutation.loading}
+          >
+            <Download />
+            {exportMutation.loading ? "Eksporterer…" : "Last ned JSON"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="border-destructive/40">
+        <CardHeader>
+          <CardTitle className="text-destructive">Faresone</CardTitle>
+          <CardDescription>
+            Slett hele dashboardet og alle dataene permanent. Kan ikke angres.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AlertDialog onOpenChange={() => setDeleteConfirm("")}>
+            <AlertDialogTrigger
+              render={
+                <Button variant="destructive">
+                  <Trash2 />
+                  Slett dashboard for alltid
+                </Button>
               }
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="card space-y-3">
-        <h3 className="font-semibold">Eksporter data</h3>
-        <p className="text-sm text-muted">
-          Last ned alle dataene som JSON. God idé å gjøre dette med jevne mellomrom som backup.
-        </p>
-        <button
-          onClick={() => void exportMutation.mutate(undefined)}
-          disabled={exportMutation.loading}
-          className="btn btn-primary"
-        >
-          {exportMutation.loading ? "Eksporterer…" : "Last ned JSON"}
-        </button>
-      </div>
-
-      <div className="card space-y-3 border-red-900/50">
-        <h3 className="font-semibold text-red-400">Faresone</h3>
-        <p className="text-sm text-muted">
-          Slett hele dashboardet og alle dataene permanent. Kan ikke angres.
-        </p>
-        <button
-          onClick={confirmDelete}
-          className="btn btn-danger"
-          disabled={deleteMutation.loading}
-        >
-          {deleteMutation.loading ? "Sletter…" : "Slett dashboard for alltid"}
-        </button>
-      </div>
+            />
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Slette dashboardet permanent?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Dette sletter ALT permanent og kan ikke angres. Skriv <strong>SLETT</strong> for å
+                  bekrefte.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <Input
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                placeholder="SLETT"
+                autoFocus
+              />
+              <AlertDialogFooter>
+                <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  disabled={deleteConfirm !== "SLETT" || deleteMutation.loading}
+                  onClick={() => void deleteMutation.mutate(undefined)}
+                >
+                  {deleteMutation.loading ? "Sletter…" : "Slett for alltid"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardContent>
+      </Card>
     </div>
   );
 }

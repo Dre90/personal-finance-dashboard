@@ -19,8 +19,6 @@
   --color-border: #dce2ee;
   --color-text: #0f1830;
   --color-muted: #5b647d;
-  --color-primary: #6366f1;
-  --color-primary-2: #818cf8;
   --color-accent: #059669;
   --color-warn: #d97706;
   --color-danger: #dc2626;
@@ -30,6 +28,9 @@
    core --color-* tokens come from @theme above. */
 :root {
   color-scheme: light;
+  /* Brand/primary follows shadcn's green --primary token (theme-aware). Emitted
+     as a real variable so legacy `var(--color-primary)` refs still resolve. */
+  --color-primary: var(--primary);
   --app-gradient: linear-gradient(180deg, #f5f7fb 0%, #eaeef7 100%);
   --color-scrollbar: #cbd3e3;
   --color-scrollbar-hover: #b3bdd4;
@@ -41,9 +42,9 @@
   --color-neg: #dc2626;
 }
 
-/* Dark theme — activated by the `.dark` class on <html>. Overrides both the
-   core --color-* tokens (--color-primary/-primary-2 are identical in both
-   themes so they aren't repeated) and the extra themeable variables. */
+/* Dark theme — activated by the `.dark` class on <html>. Overrides the core
+   --color-* tokens and the extra themeable variables. (--color-primary follows
+   shadcn's --primary and isn't repeated here.) */
 .dark {
   color-scheme: dark;
   --color-bg: #0b1020;
@@ -278,14 +279,13 @@
   }
 }
 
-/* shadcn-generated tokens. NOTE: --color-border, --color-primary, --color-muted
-   and --color-accent are deliberately NOT remapped here (unlike the rest of
-   shadcn's tokens) because those names are already registered above in our
-   own @theme block with different (theme-switching, data-theme driven)
-   values. Remapping them to shadcn's --border/--primary/--muted/--accent
-   silently overrode our app's colours (dark mode in particular became
-   unreadable). Leave the app's own tokens in charge of those four; shadcn
-   components will simply inherit our brand colours for them. */
+/* shadcn-generated tokens. NOTE: --color-border, --color-muted and --color-accent
+   are deliberately NOT remapped here (unlike --color-primary and the rest of
+   shadcn's tokens): the app registers those names in its own @theme block with
+   DIFFERENT semantics — e.g. --color-muted is a muted *text* colour whereas
+   shadcn's --muted is a muted *background*. Remapping them silently broke the
+   app's colours (dark mode became unreadable). --color-primary IS remapped to
+   shadcn's green --primary because the semantics match (brand/primary action). */
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: "Inter Variable", sans-serif;
@@ -309,6 +309,7 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
+  --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);

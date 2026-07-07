@@ -1,6 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Empty, LoadingPlaceholder, PageHeader, StatCard } from "../../components/ui";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../components/ui/table";
 import { MoneyBarChart } from "../../components/charts";
 import { getBudgetYear } from "../../server/api";
 import { useDashboard } from "../../lib/dashboard-context";
@@ -67,18 +79,18 @@ function RecapPage() {
         subtitle={`Oppsummering ${year}`}
         actions={
           <>
-            <button onClick={() => setYear(year - 1)} className="btn btn-ghost">
-              ←
-            </button>
-            <input
+            <Button variant="outline" size="icon" onClick={() => setYear(year - 1)}>
+              <ChevronLeft />
+            </Button>
+            <Input
               type="number"
               value={year}
               onChange={(e) => setYear(parseInt(e.target.value, 10))}
-              className="input w-28 text-center num"
+              className="w-24 text-center tabular-nums"
             />
-            <button onClick={() => setYear(year + 1)} className="btn btn-ghost">
-              →
-            </button>
+            <Button variant="outline" size="icon" onClick={() => setYear(year + 1)}>
+              <ChevronRight />
+            </Button>
           </>
         }
       />
@@ -90,7 +102,7 @@ function RecapPage() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <StatCard label="Total inntekt" value={incomeTotal} tone="positive" />
             <StatCard label="Total utgift" value={expenseTotal} tone="warn" />
             <StatCard
@@ -101,77 +113,108 @@ function RecapPage() {
             <StatCard label="Sparerate" value={`${savingsRate.toFixed(1)} %`} isCurrency={false} />
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-4">
-            <div className="card">
-              <h3 className="font-semibold mb-3">Beste måned</h3>
-              {bestMonth ? (
-                <>
-                  <div className="text-3xl font-semibold">{bestMonth.month}</div>
-                  <div className="text-sm text-muted mt-1">
-                    Sparte <span className="pos num">{formatNOK(bestMonth.savings)}</span>
-                  </div>
-                </>
-              ) : (
-                <p className="text-sm">—</p>
-              )}
-            </div>
-            <div className="card">
-              <h3 className="font-semibold mb-3">Tøffeste måned</h3>
-              {worstMonth ? (
-                <>
-                  <div className="text-3xl font-semibold">{worstMonth.month}</div>
-                  <div className="text-sm text-muted mt-1">
-                    {worstMonth.savings < 0 ? "Brukte" : "Sparte"}{" "}
-                    <span className={`num ${worstMonth.savings < 0 ? "neg" : "pos"}`}>
-                      {formatNOK(Math.abs(worstMonth.savings))}
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <p className="text-sm">—</p>
-              )}
-            </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Beste måned</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {bestMonth ? (
+                  <>
+                    <div className="text-3xl font-semibold">{bestMonth.month}</div>
+                    <div className="text-muted-foreground mt-1 text-sm">
+                      Sparte{" "}
+                      <span className="text-success tabular-nums">
+                        {formatNOK(bestMonth.savings)}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm">—</p>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Tøffeste måned</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {worstMonth ? (
+                  <>
+                    <div className="text-3xl font-semibold">{worstMonth.month}</div>
+                    <div className="text-muted-foreground mt-1 text-sm">
+                      {worstMonth.savings < 0 ? "Brukte" : "Sparte"}{" "}
+                      <span
+                        className={
+                          worstMonth.savings < 0
+                            ? "text-destructive tabular-nums"
+                            : "text-success tabular-nums"
+                        }
+                      >
+                        {formatNOK(Math.abs(worstMonth.savings))}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm">—</p>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="card">
-            <h3 className="font-semibold mb-3">Per måned</h3>
-            <MoneyBarChart
-              data={monthData}
-              xKey="month"
-              height={320}
-              series={[
-                { dataKey: "income", name: "Inntekt", color: FLOW_COLORS.income },
-                { dataKey: "expense", name: "Utgift", color: FLOW_COLORS.expense },
-                { dataKey: "savings", name: "Sparing", color: FLOW_COLORS.savings },
-              ]}
-            />
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Per måned</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MoneyBarChart
+                data={monthData}
+                xKey="month"
+                height={320}
+                series={[
+                  { dataKey: "income", name: "Inntekt", color: FLOW_COLORS.income },
+                  { dataKey: "expense", name: "Utgift", color: FLOW_COLORS.expense },
+                  { dataKey: "savings", name: "Sparing", color: FLOW_COLORS.savings },
+                ]}
+              />
+            </CardContent>
+          </Card>
 
-          <div className="card">
-            <h3 className="font-semibold mb-3">Største utgiftsposter</h3>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Kategori</th>
-                  <th className="text-right">Totalt</th>
-                  <th className="text-right">Snitt/mnd</th>
-                  <th className="text-right">Andel</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topExpenses.map((c) => (
-                  <tr key={c.name}>
-                    <td>{c.name}</td>
-                    <td className="text-right num">{formatNOK(c.value)}</td>
-                    <td className="text-right num text-muted">{formatNOK(c.value / 12)}</td>
-                    <td className="text-right num text-muted">
-                      {expenseTotal > 0 ? `${((c.value / expenseTotal) * 100).toFixed(1)} %` : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Største utgiftsposter</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Kategori</TableHead>
+                    <TableHead className="text-right">Totalt</TableHead>
+                    <TableHead className="text-right">Snitt/mnd</TableHead>
+                    <TableHead className="text-right">Andel</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {topExpenses.map((c) => (
+                    <TableRow key={c.name}>
+                      <TableCell>{c.name}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatNOK(c.value)}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-right tabular-nums">
+                        {formatNOK(c.value / 12)}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-right tabular-nums">
+                        {expenseTotal > 0
+                          ? `${((c.value / expenseTotal) * 100).toFixed(1)} %`
+                          : "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
