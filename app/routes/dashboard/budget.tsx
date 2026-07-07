@@ -220,6 +220,7 @@ function BudgetPage() {
                             <TableCell>{cat.name}</TableCell>
                             <TableCell className="text-right">
                               <Input
+                                key={`budgeted-${cat.id}-${budgeted}`}
                                 type="number"
                                 step="1"
                                 defaultValue={budgeted || ""}
@@ -236,6 +237,7 @@ function BudgetPage() {
                             </TableCell>
                             <TableCell className="text-right">
                               <Input
+                                key={`actual-${cat.id}-${actual}`}
                                 type="number"
                                 step="1"
                                 defaultValue={actual || ""}

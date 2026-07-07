@@ -1,11 +1,10 @@
 /**
- * Centralised Recharts wrappers. Every chart in the app shares the same
- * dark-theme axis styling, money formatter, and tooltip — having these
- * inline in every page was the biggest source of repetition.
+ * Centralised chart wrappers built on shadcn's <ChartContainer> (which themes
+ * Recharts axes/grid/cursor via CSS and injects per-series `--color-*` vars from
+ * a ChartConfig). Every chart shares the same money formatter and tooltip.
  *
- * Components are intentionally thin: they pass-through Recharts props so
- * page-level customisation (e.g. extra <Bar>s, custom dataKeys) is still
- * possible without rewriting them.
+ * The wrappers keep a thin, page-friendly API (`series={[{ dataKey, name, color }]}`)
+ * so pages don't deal with ChartConfig directly.
  */
 import * as React from "react";
 import {
@@ -15,75 +14,58 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
   Line,
   LineChart,
   Pie,
   PieChart,
-  ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
-  type TooltipProps,
 } from "recharts";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "./ui/chart";
 import { formatNOK } from "../lib/utils";
 
-const AXIS_COLOR = "var(--color-muted)";
-const GRID_COLOR = "var(--color-border)";
-const TOOLTIP_STYLE: React.CSSProperties = {
-  background: "var(--color-surface)",
-  border: "1px solid var(--color-border)",
-  borderRadius: 8,
-  fontSize: 12,
-};
-const LEGEND_STYLE: React.CSSProperties = { fontSize: 12 };
-
-interface ChartFrameProps {
-  height?: number;
-  children: React.ReactElement;
+interface SeriesLike {
+  dataKey: string;
+  name?: string;
+  color: string;
 }
 
-function ChartFrame({ height = 260, children }: ChartFrameProps) {
-  return (
-    <ResponsiveContainer width="100%" height={height}>
-      {children}
-    </ResponsiveContainer>
+/** Build a shadcn ChartConfig (label + colour per series) from a series list. */
+function toConfig(series: ReadonlyArray<SeriesLike>): ChartConfig {
+  return Object.fromEntries(
+    series.map((s) => [s.dataKey, { label: s.name ?? s.dataKey, color: s.color }]),
   );
 }
 
-interface AxisChildrenProps {
-  /** dataKey for XAxis */
-  xKey: string;
-  /** Tick formatter — defaults to NOK. */
-  yFormatter?: (v: number) => string;
-  /** Width reserved for Y axis labels. */
-  yWidth?: number;
-}
+const yTickFormatter = (v: number | string) => formatNOK(Number(v));
 
-/** Renders the standard X + Y axis pair with our theming. */
-export function MoneyAxes({ xKey, yFormatter = (v) => formatNOK(v), yWidth }: AxisChildrenProps) {
+/**
+ * Tooltip row renderer: coloured indicator + series label + NOK-formatted value.
+ * Passed to <ChartTooltipContent formatter>, replacing its default number format.
+ */
+function moneyItemFormatter(
+  value: unknown,
+  name: unknown,
+  item: { color?: string; payload?: { fill?: string } },
+) {
+  const color = item?.color ?? item?.payload?.fill;
   return (
     <>
-      <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} />
-      <XAxis dataKey={xKey} stroke={AXIS_COLOR} tick={{ fontSize: 11 }} />
-      <YAxis
-        stroke={AXIS_COLOR}
-        tick={{ fontSize: 11 }}
-        tickFormatter={yFormatter}
-        width={yWidth}
-      />
+      <span className="size-2.5 shrink-0 rounded-[2px]" style={{ backgroundColor: color }} />
+      <div className="flex flex-1 items-center justify-between gap-3 leading-none">
+        <span className="text-muted-foreground">{name as React.ReactNode}</span>
+        <span className="text-foreground font-mono font-medium tabular-nums">
+          {formatNOK(Number(value))}
+        </span>
+      </div>
     </>
-  );
-}
-
-/** Tooltip that formats values as NOK. Pass a custom `formatter` to override. */
-export function MoneyTooltip(props: Partial<TooltipProps<number, string>> = {}) {
-  // Recharts' Tooltip uses internal ValueType/NameType generics that don't
-  // infer from props, so we untype the wrapper to keep the call site clean.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const TT = Tooltip as any;
-  return (
-    <TT contentStyle={TOOLTIP_STYLE} formatter={(v: unknown) => formatNOK(Number(v))} {...props} />
   );
 }
 
@@ -111,22 +93,35 @@ export function MoneyBarChart<T extends Record<string, unknown>>({
   showLegend?: boolean;
 }) {
   return (
-    <ChartFrame height={height}>
+    <ChartContainer config={toConfig(series)} className="aspect-auto w-full" style={{ height }}>
       <BarChart data={data as T[]} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-        <MoneyAxes xKey={xKey} />
-        <MoneyTooltip />
-        {showLegend && <Legend wrapperStyle={LEGEND_STYLE} />}
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey={xKey}
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          tick={{ fontSize: 11 }}
+        />
+        <YAxis
+          tickFormatter={yTickFormatter}
+          tickLine={false}
+          axisLine={false}
+          tick={{ fontSize: 11 }}
+        />
+        <ChartTooltip content={<ChartTooltipContent formatter={moneyItemFormatter} />} />
+        {showLegend && <ChartLegend content={<ChartLegendContent />} />}
         {series.map((s) => (
           <Bar
             key={s.dataKey}
             dataKey={s.dataKey}
             name={s.name}
-            fill={s.color}
+            fill={`var(--color-${s.dataKey})`}
             radius={[4, 4, 0, 0]}
           />
         ))}
       </BarChart>
-    </ChartFrame>
+    </ChartContainer>
   );
 }
 
@@ -155,25 +150,39 @@ export function MoneyLineChart<T extends Record<string, unknown>>({
   yWidth?: number;
 }) {
   return (
-    <ChartFrame height={height}>
+    <ChartContainer config={toConfig(series)} className="aspect-auto w-full" style={{ height }}>
       <LineChart data={data as T[]} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-        <MoneyAxes xKey={xKey} yWidth={yWidth} />
-        <MoneyTooltip />
-        {showLegend && <Legend wrapperStyle={LEGEND_STYLE} />}
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey={xKey}
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          tick={{ fontSize: 11 }}
+        />
+        <YAxis
+          width={yWidth}
+          tickFormatter={yTickFormatter}
+          tickLine={false}
+          axisLine={false}
+          tick={{ fontSize: 11 }}
+        />
+        <ChartTooltip content={<ChartTooltipContent formatter={moneyItemFormatter} />} />
+        {showLegend && <ChartLegend content={<ChartLegendContent />} />}
         {series.map((s) => (
           <Line
             key={s.dataKey}
             type="monotone"
             dataKey={s.dataKey}
             name={s.name}
-            stroke={s.color}
+            stroke={`var(--color-${s.dataKey})`}
             strokeWidth={s.strokeWidth ?? 2}
             strokeDasharray={s.strokeDasharray}
             dot={s.dot ?? { r: 2 }}
           />
         ))}
       </LineChart>
-    </ChartFrame>
+    </ChartContainer>
   );
 }
 
@@ -203,11 +212,25 @@ export function MoneyAreaChart<T extends Record<string, unknown>>({
   yWidth?: number;
 }) {
   return (
-    <ChartFrame height={height}>
+    <ChartContainer config={toConfig(series)} className="aspect-auto w-full" style={{ height }}>
       <AreaChart data={data as T[]} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-        <MoneyAxes xKey={xKey} yWidth={yWidth} />
-        <MoneyTooltip />
-        {showLegend && <Legend wrapperStyle={LEGEND_STYLE} />}
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey={xKey}
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          tick={{ fontSize: 11 }}
+        />
+        <YAxis
+          width={yWidth}
+          tickFormatter={yTickFormatter}
+          tickLine={false}
+          axisLine={false}
+          tick={{ fontSize: 11 }}
+        />
+        <ChartTooltip content={<ChartTooltipContent formatter={moneyItemFormatter} />} />
+        {showLegend && <ChartLegend content={<ChartLegendContent />} />}
         {series.map((s) => (
           <Area
             key={s.dataKey}
@@ -215,14 +238,14 @@ export function MoneyAreaChart<T extends Record<string, unknown>>({
             dataKey={s.dataKey}
             name={s.name}
             stackId="stack"
-            stroke={s.color}
-            fill={s.color}
+            stroke={`var(--color-${s.dataKey})`}
+            fill={`var(--color-${s.dataKey})`}
             fillOpacity={0.25}
             strokeWidth={2}
           />
         ))}
       </AreaChart>
-    </ChartFrame>
+    </ChartContainer>
   );
 }
 
@@ -245,9 +268,15 @@ export function MoneyDonut({
   outerRadius?: number;
   paddingAngle?: number;
 }) {
+  const config: ChartConfig = Object.fromEntries(
+    data.map((d) => [d.name, { label: d.name, color: d.color }]),
+  );
   return (
-    <ChartFrame height={height}>
+    <ChartContainer config={config} className="aspect-auto w-full" style={{ height }}>
       <PieChart>
+        <ChartTooltip
+          content={<ChartTooltipContent nameKey="name" hideLabel formatter={moneyItemFormatter} />}
+        />
         <Pie
           data={data as DonutDatum[]}
           dataKey="value"
@@ -262,8 +291,7 @@ export function MoneyDonut({
             <Cell key={i} fill={d.color} />
           ))}
         </Pie>
-        <MoneyTooltip />
       </PieChart>
-    </ChartFrame>
+    </ChartContainer>
   );
 }
