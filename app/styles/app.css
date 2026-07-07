@@ -5,74 +5,34 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@theme {
-  /* App semantic colour tokens registered so Tailwind emits the matching
-     `.bg-*` / `.text-*` / `.border-*` utilities. The values here are the LIGHT
-     theme, so bare `:root` renders light (matching shadcn's convention); the
-     `.dark` block below overrides them for dark mode. The theme is toggled by
-     adding the `.dark` class to <html> (see app/lib/theme.ts), NOT a
-     `data-theme` attribute. */
-  --color-bg: #f5f7fb;
-  --color-bg-soft: #eef1f8;
-  --color-surface: #ffffff;
-  --color-surface-2: #eef2f9;
-  --color-border: #dce2ee;
-  --color-text: #0f1830;
-  --color-muted: #5b647d;
-  --color-accent: #059669;
-  --color-warn: #d97706;
-  --color-danger: #dc2626;
-}
-
-/* Light theme (default). Holds the extra (non-token) themeable variables; the
-   core --color-* tokens come from @theme above. */
+/* App-specific themeable variables: the page background gradient, custom
+   scrollbar colours, and the finance success/warning source colours. Everything
+   else is driven by shadcn's own tokens (the :root / .dark blocks further down).
+   Theme is toggled by adding the `.dark` class to <html> (see app/lib/theme.ts),
+   NOT a `data-theme` attribute. */
 :root {
   color-scheme: light;
-  /* Brand/primary follows shadcn's green --primary token (theme-aware). Emitted
-     as a real variable so legacy `var(--color-primary)` refs still resolve. */
-  --color-primary: var(--primary);
   --app-gradient: linear-gradient(180deg, #f5f7fb 0%, #eaeef7 100%);
   --color-scrollbar: #cbd3e3;
   --color-scrollbar-hover: #b3bdd4;
-  --btn-danger-bg: #fdecec;
-  --btn-danger-fg: #b91c1c;
-  --btn-danger-border: #f3c0c0;
-  --btn-danger-bg-hover: #fbdcdc;
-  --color-pos: #059669;
-  --color-neg: #dc2626;
+  --pos: #059669;
+  --warn: #d97706;
 }
 
-/* Dark theme — activated by the `.dark` class on <html>. Overrides the core
-   --color-* tokens and the extra themeable variables. (--color-primary follows
-   shadcn's --primary and isn't repeated here.) */
 .dark {
   color-scheme: dark;
-  --color-bg: #0b1020;
-  --color-bg-soft: #111933;
-  --color-surface: #161f3d;
-  --color-surface-2: #1d2950;
-  --color-border: #2a3760;
-  --color-text: #e8ecf6;
-  --color-muted: #9aa6c7;
-  --color-accent: #10b981;
-  --color-warn: #f59e0b;
-  --color-danger: #ef4444;
   --app-gradient: linear-gradient(180deg, #0b1020 0%, #0e1428 100%);
   --color-scrollbar: #2a3760;
   --color-scrollbar-hover: #3a4880;
-  --btn-danger-bg: #2a1320;
-  --btn-danger-fg: #fca5a5;
-  --btn-danger-border: #5b1d29;
-  --btn-danger-bg-hover: #3a1a2c;
-  --color-pos: #34d399;
-  --color-neg: #fca5a5;
+  --pos: #34d399;
+  --warn: #f59e0b;
 }
 
 @layer base {
   html,
   body {
     background: var(--app-gradient);
-    color: var(--color-text);
+    color: var(--foreground);
     min-height: 100vh;
     font-family:
       ui-sans-serif,
@@ -104,191 +64,22 @@
   }
 }
 
-@layer components {
-  .card {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 14px;
-    padding: 20px;
-    box-shadow:
-      0 1px 0 0 rgba(255, 255, 255, 0.03) inset,
-      0 8px 24px rgba(0, 0, 0, 0.25);
-  }
-  .card-soft {
-    background: var(--color-bg-soft);
-    border: 1px solid var(--color-border);
-    border-radius: 14px;
-    padding: 20px;
-  }
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 9px 16px;
-    border-radius: 10px;
-    font-weight: 500;
-    font-size: 14px;
-    transition: all 150ms ease;
-    cursor: pointer;
-    border: 1px solid transparent;
-    user-select: none;
-  }
-  .btn-primary {
-    background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
-    color: white;
-  }
-  .btn-primary:hover {
-    filter: brightness(1.08);
-    transform: translateY(-1px);
-  }
-  .btn-ghost {
-    background: transparent;
-    color: var(--color-text);
-    border: 1px solid var(--color-border);
-  }
-  .btn-ghost:hover {
-    background: var(--color-surface-2);
-  }
-  .btn-danger {
-    background: var(--btn-danger-bg);
-    color: var(--btn-danger-fg);
-    border: 1px solid var(--btn-danger-border);
-  }
-  .btn-danger:hover {
-    background: var(--btn-danger-bg-hover);
-  }
-  .input {
-    width: 100%;
-    padding: 9px 12px;
-    background: var(--color-bg-soft);
-    border: 1px solid var(--color-border);
-    border-radius: 9px;
-    color: var(--color-text);
-    font-size: 14px;
-    outline: none;
-    transition:
-      border-color 120ms ease,
-      box-shadow 120ms ease;
-  }
-  .input:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-  }
-  .label {
-    display: block;
-    font-size: 12px;
-    color: var(--color-muted);
-    margin-bottom: 6px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-  }
-  .badge {
-    display: inline-flex;
-    padding: 3px 9px;
-    font-size: 11px;
-    font-weight: 600;
-    border-radius: 999px;
-    background: var(--color-surface-2);
-    color: var(--color-muted);
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-  }
-  .table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 14px;
-  }
-  .table th {
-    text-align: left;
-    font-weight: 600;
-    color: var(--color-muted);
-    padding: 12px 10px;
-    border-bottom: 1px solid var(--color-border);
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-  .table td {
-    padding: 10px;
-    border-bottom: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
-  }
-  .table tr:last-child td {
-    border-bottom: none;
-  }
-  .table tr:hover td {
-    background: color-mix(in srgb, var(--color-surface-2) 50%, transparent);
-  }
-  .num {
-    font-variant-numeric: tabular-nums;
-  }
-  .pos {
-    color: var(--color-pos);
-  }
-  .neg {
-    color: var(--color-neg);
-  }
-}
-
-@layer utilities {
-  /* Semantic colour utilities so pages don't need to spell out
-     `text-[color:var(--color-muted)]` over and over. */
-  .text-muted {
-    color: var(--color-muted);
-  }
-  .text-text {
-    color: var(--color-text);
-  }
-  .text-positive {
-    color: var(--color-accent);
-  }
-  .text-warn {
-    color: var(--color-warn);
-  }
-  .text-danger {
-    color: var(--color-danger);
-  }
-  .bg-surface {
-    background: var(--color-surface);
-  }
-  .bg-surface-2 {
-    background: var(--color-surface-2);
-  }
-  .bg-soft {
-    background: var(--color-bg-soft);
-  }
-  .border-app {
-    border-color: var(--color-border);
-  }
-
-  /* Toast slide-in animation */
-  @keyframes toast-in {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  .animate-toast-in {
-    animation: toast-in 180ms ease-out;
-  }
-}
-
-/* shadcn-generated tokens. NOTE: --color-border, --color-muted and --color-accent
-   are deliberately NOT remapped here (unlike --color-primary and the rest of
-   shadcn's tokens): the app registers those names in its own @theme block with
-   DIFFERENT semantics — e.g. --color-muted is a muted *text* colour whereas
-   shadcn's --muted is a muted *background*. Remapping them silently broke the
-   app's colours (dark mode became unreadable). --color-primary IS remapped to
-   shadcn's green --primary because the semantics match (brand/primary action). */
+/* shadcn-generated tokens. The four "shared name" tokens the app also uses —
+   --color-border, --color-muted, --color-accent and --color-primary — are
+   remapped to shadcn's equivalents here so every component (and our own
+   utilities) resolve to the shadcn theme. --color-success / --color-warning
+   bridge to the app's finance --pos / --warn source colours. */
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: "Inter Variable", sans-serif;
+  --color-primary: var(--primary);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-success: var(--pos);
+  --color-success-foreground: #ffffff;
+  --color-warning: var(--warn);
+  --color-warning-foreground: #1c1400;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -309,7 +100,6 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
-  --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
@@ -317,13 +107,6 @@
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
-  /* Finance semantic tokens — bridged to the app's own theme-aware colours so
-     `bg-success` / `text-success` / `text-warning` follow light/dark. Negative
-     amounts use the existing `text-destructive` / `.neg`. */
-  --color-success: var(--color-pos);
-  --color-success-foreground: #ffffff;
-  --color-warning: var(--color-warn);
-  --color-warning-foreground: #1c1400;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);

@@ -83,5 +83,9 @@ export function useDashboard(): DashboardContextValue {
 }
 
 function FullPageLoader() {
-  return <div className="min-h-screen flex items-center justify-center text-muted">Laster…</div>;
+  return (
+    <div className="text-muted-foreground flex min-h-screen items-center justify-center">
+      Laster…
+    </div>
+  );
 }
