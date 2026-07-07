@@ -1,7 +1,9 @@
-/// <reference types="vite-plus/client" />
+/// <reference types="vite/client" />
 import { Outlet, Scripts, HeadContent, createRootRoute } from "@tanstack/react-router";
 import * as React from "react";
 import appCss from "../styles/app.css?url";
+import { ThemeProvider } from "../lib/theme-context";
+import { THEME_INIT_SCRIPT } from "../lib/theme";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -29,15 +31,19 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <RootDocument>
-      <Outlet />
+      <ThemeProvider>
+        <Outlet />
+      </ThemeProvider>
     </RootDocument>
   );
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="nb">
+    <html lang="nb" suppressHydrationWarning>
       <head>
+        {/* Set the theme before first paint to avoid a flash of the wrong theme. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
       <body>

@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 @theme {
+  /* Token registration for Tailwind. Values here are the dark defaults; the
+     theme-specific blocks below override them based on the `data-theme`
+     attribute set on <html> by the pre-paint script. */
   --color-bg: #0b1020;
   --color-bg-soft: #111933;
   --color-surface: #161f3d;
@@ -15,10 +18,52 @@
   --color-danger: #ef4444;
 }
 
+/* Dark is the default theme — also the fallback when JS is disabled and no
+   `data-theme` attribute is present. Holds the extra (non-token) themeable
+   variables; the core --color-* tokens come from @theme above. */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --app-gradient: linear-gradient(180deg, #0b1020 0%, #0e1428 100%);
+  --color-scrollbar: #2a3760;
+  --color-scrollbar-hover: #3a4880;
+  --btn-danger-bg: #2a1320;
+  --btn-danger-fg: #fca5a5;
+  --btn-danger-border: #5b1d29;
+  --btn-danger-bg-hover: #3a1a2c;
+  --color-pos: #34d399;
+  --color-neg: #fca5a5;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #f5f7fb;
+  --color-bg-soft: #eef1f8;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef2f9;
+  --color-border: #dce2ee;
+  --color-text: #0f1830;
+  --color-muted: #5b647d;
+  --color-primary: #6366f1;
+  --color-primary-2: #818cf8;
+  --color-accent: #059669;
+  --color-warn: #d97706;
+  --color-danger: #dc2626;
+  --app-gradient: linear-gradient(180deg, #f5f7fb 0%, #eaeef7 100%);
+  --color-scrollbar: #cbd3e3;
+  --color-scrollbar-hover: #b3bdd4;
+  --btn-danger-bg: #fdecec;
+  --btn-danger-fg: #b91c1c;
+  --btn-danger-border: #f3c0c0;
+  --btn-danger-bg-hover: #fbdcdc;
+  --color-pos: #059669;
+  --color-neg: #dc2626;
+}
+
 @layer base {
   html,
   body {
-    background: linear-gradient(180deg, #0b1020 0%, #0e1428 100%);
+    background: var(--app-gradient);
     color: var(--color-text);
     min-height: 100vh;
     font-family:
@@ -40,11 +85,11 @@
     background: transparent;
   }
   *::-webkit-scrollbar-thumb {
-    background: #2a3760;
+    background: var(--color-scrollbar);
     border-radius: 8px;
   }
   *::-webkit-scrollbar-thumb:hover {
-    background: #3a4880;
+    background: var(--color-scrollbar-hover);
   }
 }
 
@@ -95,12 +140,12 @@
     background: var(--color-surface-2);
   }
   .btn-danger {
-    background: #2a1320;
-    color: #fca5a5;
-    border: 1px solid #5b1d29;
+    background: var(--btn-danger-bg);
+    color: var(--btn-danger-fg);
+    border: 1px solid var(--btn-danger-border);
   }
   .btn-danger:hover {
-    background: #3a1a2c;
+    background: var(--btn-danger-bg-hover);
   }
   .input {
     width: 100%;
@@ -169,10 +214,10 @@
     font-variant-numeric: tabular-nums;
   }
   .pos {
-    color: #34d399;
+    color: var(--color-pos);
   }
   .neg {
-    color: #fca5a5;
+    color: var(--color-neg);
   }
 }
 
