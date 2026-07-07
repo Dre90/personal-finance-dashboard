@@ -1,6 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { LoadingPlaceholder, PageHeader, StatCard } from "../../components/ui";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../components/ui/table";
 import { MoneyBarChart, MoneyLineChart } from "../../components/charts";
 import { getBudgetYear } from "../../server/api";
 import { useDashboard } from "../../lib/dashboard-context";
@@ -74,25 +87,25 @@ function YearlyBudgetPage() {
         subtitle={`Budsjett ${year}`}
         actions={
           <>
-            <button onClick={() => setYear(year - 1)} className="btn btn-ghost">
-              ←
-            </button>
-            <input
+            <Button variant="outline" size="icon" onClick={() => setYear(year - 1)}>
+              <ChevronLeft />
+            </Button>
+            <Input
               type="number"
               value={year}
               onChange={(e) =>
                 setYear(parseInt(e.target.value || `${new Date().getFullYear()}`, 10))
               }
-              className="input w-28 text-center num"
+              className="w-24 text-center tabular-nums"
             />
-            <button onClick={() => setYear(year + 1)} className="btn btn-ghost">
-              →
-            </button>
+            <Button variant="outline" size="icon" onClick={() => setYear(year + 1)}>
+              <ChevronRight />
+            </Button>
           </>
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard label="Inntekt (faktisk)" value={totals.incomeA} tone="positive" />
         <StatCard label="Utgift (faktisk)" value={totals.expA} tone="warn" />
         <StatCard
@@ -103,84 +116,114 @@ function YearlyBudgetPage() {
         <StatCard label="Sparerate" value={`${savingsRate.toFixed(1)} %`} isCurrency={false} />
       </div>
 
-      <div className="card">
-        <h3 className="font-semibold mb-3">Inntekt vs utgift per måned (faktisk)</h3>
-        <MoneyBarChart
-          data={perMonth}
-          xKey="month"
-          height={320}
-          series={[
-            { dataKey: "incomeA", name: "Inntekt", color: FLOW_COLORS.income },
-            { dataKey: "expA", name: "Utgift", color: FLOW_COLORS.expense },
-          ]}
-        />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Inntekt vs utgift per måned (faktisk)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <MoneyBarChart
+            data={perMonth}
+            xKey="month"
+            height={320}
+            series={[
+              { dataKey: "incomeA", name: "Inntekt", color: FLOW_COLORS.income },
+              { dataKey: "expA", name: "Utgift", color: FLOW_COLORS.expense },
+            ]}
+          />
+        </CardContent>
+      </Card>
 
-      <div className="card">
-        <h3 className="font-semibold mb-3">Sparing per måned</h3>
-        <MoneyLineChart
-          data={perMonth}
-          xKey="month"
-          showLegend
-          series={[
-            {
-              dataKey: "savingsB",
-              name: "Budsjett",
-              color: FLOW_COLORS.budgeted,
-              strokeDasharray: "4 4",
-              dot: false,
-            },
-            {
-              dataKey: "savingsA",
-              name: "Faktisk",
-              color: FLOW_COLORS.savings,
-              strokeWidth: 2.5,
-              dot: { r: 3 },
-            },
-          ]}
-        />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Sparing per måned</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <MoneyLineChart
+            data={perMonth}
+            xKey="month"
+            showLegend
+            series={[
+              {
+                dataKey: "savingsB",
+                name: "Budsjett",
+                color: FLOW_COLORS.budgeted,
+                strokeDasharray: "4 4",
+                dot: false,
+              },
+              {
+                dataKey: "savingsA",
+                name: "Faktisk",
+                color: FLOW_COLORS.savings,
+                strokeWidth: 2.5,
+                dot: { r: 3 },
+              },
+            ]}
+          />
+        </CardContent>
+      </Card>
 
-      <div className="card overflow-x-auto">
-        <h3 className="font-semibold mb-3">Tabell</h3>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Måned</th>
-              <th className="text-right">Inntekt</th>
-              <th className="text-right">Utgift</th>
-              <th className="text-right">Sparing</th>
-              <th className="text-right">Sparerate</th>
-            </tr>
-          </thead>
-          <tbody>
-            {perMonth.map((m) => (
-              <tr key={m.yearMonth}>
-                <td>{m.month}</td>
-                <td className="text-right num pos">{formatNOK(m.incomeA)}</td>
-                <td className="text-right num">{formatNOK(m.expA)}</td>
-                <td className={`text-right num ${m.savingsA < 0 ? "neg" : "pos"}`}>
-                  {formatNOK(m.savingsA)}
-                </td>
-                <td className="text-right num text-muted">
-                  {m.incomeA > 0 ? `${((m.savingsA / m.incomeA) * 100).toFixed(0)} %` : "—"}
-                </td>
-              </tr>
-            ))}
-            <tr className="font-semibold">
-              <td>Sum</td>
-              <td className="text-right num pos">{formatNOK(totals.incomeA)}</td>
-              <td className="text-right num">{formatNOK(totals.expA)}</td>
-              <td className={`text-right num ${savings < 0 ? "neg" : "pos"}`}>
-                {formatNOK(savings)}
-              </td>
-              <td className="text-right num text-muted">
-                {totals.incomeA > 0 ? `${savingsRate.toFixed(0)} %` : "—"}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Tabell</CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Måned</TableHead>
+                <TableHead className="text-right">Inntekt</TableHead>
+                <TableHead className="text-right">Utgift</TableHead>
+                <TableHead className="text-right">Sparing</TableHead>
+                <TableHead className="text-right">Sparerate</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {perMonth.map((m) => (
+                <TableRow key={m.yearMonth}>
+                  <TableCell>{m.month}</TableCell>
+                  <TableCell className="text-success text-right tabular-nums">
+                    {formatNOK(m.incomeA)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">{formatNOK(m.expA)}</TableCell>
+                  <TableCell
+                    className={
+                      m.savingsA < 0
+                        ? "text-destructive text-right tabular-nums"
+                        : "text-success text-right tabular-nums"
+                    }
+                  >
+                    {formatNOK(m.savingsA)}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-right tabular-nums">
+                    {m.incomeA > 0 ? `${((m.savingsA / m.incomeA) * 100).toFixed(0)} %` : "—"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+            <TableFooter>
+              <TableRow className="font-semibold">
+                <TableCell>Sum</TableCell>
+                <TableCell className="text-success text-right tabular-nums">
+                  {formatNOK(totals.incomeA)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">{formatNOK(totals.expA)}</TableCell>
+                <TableCell
+                  className={
+                    savings < 0
+                      ? "text-destructive text-right tabular-nums"
+                      : "text-success text-right tabular-nums"
+                  }
+                >
+                  {formatNOK(savings)}
+                </TableCell>
+                <TableCell className="text-muted-foreground text-right tabular-nums">
+                  {totals.incomeA > 0 ? `${savingsRate.toFixed(0)} %` : "—"}
+                </TableCell>
+              </TableRow>
+            </TableFooter>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
