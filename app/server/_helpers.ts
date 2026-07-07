@@ -1,6 +1,4 @@
 import { z } from "zod";
-import { eq } from "drizzle-orm";
-import { db, schema } from "../../db";
 
 /** UUID validator used by every server function that takes a dashboardId. */
 export const uuidSchema = z.string().uuid();
@@ -43,19 +41,6 @@ export function buildPartialUpdate<
     out[key as string] = coercer ? coercer(value as NonNullable<TInput[typeof key]>) : value;
   }
   return out;
-}
-
-/**
- * Throws if no dashboard exists with the given id. Use before any seeding mutation
- * to fail fast with a friendly message instead of bubbling a foreign-key error.
- */
-export async function assertDashboardExists(dashboardId: string): Promise<void> {
-  const [row] = await db
-    .select({ id: schema.dashboards.id })
-    .from(schema.dashboards)
-    .where(eq(schema.dashboards.id, dashboardId))
-    .limit(1);
-  if (!row) throw new Error("Ugyldig dashboard-ID");
 }
 
 /**

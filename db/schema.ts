@@ -10,6 +10,7 @@ import {
   timestamp,
   unique,
   index,
+  foreignKey,
 } from "drizzle-orm/pg-core";
 
 // -- Dashboards -------------------------------------------------------------
@@ -82,7 +83,45 @@ export const sinkingFunds = pgTable(
     sortOrder: integer("sort_order").notNull().default(0),
     notes: text(),
   },
-  (t) => [index("sinking_funds_dashboard_idx").on(t.dashboardId)],
+  (t) => [
+    index("sinking_funds_dashboard_idx").on(t.dashboardId),
+    // Lets sinking_fund_transactions enforce (fund, dashboard) consistency via a
+    // composite FK below — otherwise a transaction row could reference a fund
+    // belonging to a different dashboard than the one on the transaction.
+    unique("sinking_funds_id_dashboard_unique").on(t.id, t.dashboardId),
+  ],
+);
+
+export const sinkingFundTransactions = pgTable(
+  "sinking_fund_transactions",
+  {
+    id: serial().primaryKey(),
+    sinkingFundId: integer("sinking_fund_id")
+      .notNull()
+      .references(() => sinkingFunds.id, { onDelete: "cascade" }),
+    dashboardId: uuid("dashboard_id")
+      .notNull()
+      .references(() => dashboards.id, { onDelete: "cascade" }),
+    occurredAt: date("occurred_at").notNull(),
+    amount: numeric({ precision: 14, scale: 2 }).notNull(),
+    kind: text().notNull(), // 'deposit' | 'withdrawal' | 'adjustment' | 'opening'
+    note: text(),
+    allocationGroupId: uuid("allocation_group_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("sinking_fund_txns_fund_idx").on(t.sinkingFundId, t.occurredAt),
+    index("sinking_fund_txns_dashboard_idx").on(t.dashboardId, t.occurredAt),
+    index("sinking_fund_txns_allocation_idx").on(t.allocationGroupId),
+    // Composite FK to sinking_funds(id, dashboard_id) — not just sinking_fund_id
+    // alone — so a transaction can't reference a fund that belongs to a
+    // different dashboard than the one recorded on the transaction row.
+    foreignKey({
+      columns: [t.sinkingFundId, t.dashboardId],
+      foreignColumns: [sinkingFunds.id, sinkingFunds.dashboardId],
+      name: "sinking_fund_txns_fund_dashboard_fk",
+    }).onDelete("cascade"),
+  ],
 );
 
 // -- Assets (ASK, Pensjon, Other) -------------------------------------------
@@ -162,6 +201,8 @@ export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type BudgetEntry = typeof budgetEntries.$inferSelect;
 export type SinkingFund = typeof sinkingFunds.$inferSelect;
+export type SinkingFundTransaction = typeof sinkingFundTransactions.$inferSelect;
+export type NewSinkingFundTransaction = typeof sinkingFundTransactions.$inferInsert;
 export type Asset = typeof assets.$inferSelect;
 export type AssetSnapshot = typeof assetSnapshots.$inferSelect;
 export type Loan = typeof loans.$inferSelect;

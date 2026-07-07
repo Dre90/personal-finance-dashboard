@@ -1,0 +1,2 @@
+ALTER TABLE "sinking_funds" ADD CONSTRAINT "sinking_funds_id_dashboard_unique" UNIQUE("id","dashboard_id");--> statement-breakpoint
+ALTER TABLE "sinking_fund_transactions" ADD CONSTRAINT "sinking_fund_txns_fund_dashboard_fk" FOREIGN KEY ("sinking_fund_id","dashboard_id") REFERENCES "sinking_funds"("id","dashboard_id") ON DELETE CASCADE;
