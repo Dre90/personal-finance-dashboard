@@ -4,6 +4,9 @@
  */
 import * as React from "react";
 import { Modal } from "./ui";
+import { Button } from "./ui/button";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "./ui/field";
+import { Input } from "./ui/input";
 import { useFormState } from "../lib/forms";
 import { todayISO, toNumber } from "../lib/utils";
 
@@ -51,37 +54,38 @@ export function SnapshotModal({
       title={title}
       footer={
         <>
-          <button onClick={onClose} className="btn btn-ghost" disabled={busy}>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
             Avbryt
-          </button>
-          <button onClick={save} className="btn btn-primary" disabled={busy || !form.values.value}>
+          </Button>
+          <Button onClick={save} disabled={busy || !form.values.value}>
             Lagre
-          </button>
+          </Button>
         </>
       }
     >
-      <div className="space-y-3">
-        <div>
-          <label className="label">Dato</label>
-          <input
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="snapshot-date">Dato</FieldLabel>
+          <Input
+            id="snapshot-date"
             type="date"
-            className="input"
             value={form.values.date}
             onChange={form.setField("date")}
           />
-        </div>
-        <div>
-          <label className="label">{valueLabel}</label>
-          <input
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="snapshot-value">{valueLabel}</FieldLabel>
+          <Input
+            id="snapshot-value"
             autoFocus
             type="number"
-            className="input num"
+            className="tabular-nums"
             value={form.values.value}
             onChange={form.setField("value")}
           />
-        </div>
-        {helperText && <p className="text-xs text-muted">{helperText}</p>}
-      </div>
+          {helperText && <FieldDescription>{helperText}</FieldDescription>}
+        </Field>
+      </FieldGroup>
     </Modal>
   );
 }
