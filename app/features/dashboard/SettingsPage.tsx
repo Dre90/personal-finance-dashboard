@@ -110,7 +110,7 @@ export function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="bg-muted/40 rounded-lg border p-3 font-mono text-sm break-all">{id}</div>
-          <Button variant="outline" size="sm" onClick={copyId}>
+          <Button variant="outline" onClick={copyId}>
             {copied ? <Check /> : <Copy />}
             {copied ? "Kopiert" : "Kopier ID"}
           </Button>

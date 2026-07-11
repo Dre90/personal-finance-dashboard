@@ -117,7 +117,6 @@ export function SinkingFundsPage() {
         <div className="flex justify-end">
           <Button
             variant="ghost"
-            size="sm"
             onClick={() => setModal({ kind: "reorder" })}
             title="Endre rekkefølge på fond"
           >
@@ -161,7 +160,6 @@ export function SinkingFundsPage() {
                     </div>
                     <Button
                       variant="ghost"
-                      size="sm"
                       onClick={() => setModal({ kind: "edit-fund", fund: f })}
                     >
                       Endre
@@ -186,7 +184,6 @@ export function SinkingFundsPage() {
                   <div className="mt-4 grid grid-cols-3 gap-2">
                     <Button
                       variant="outline"
-                      size="sm"
                       onClick={() => setModal({ kind: "single-txn", fund: f, txnKind: "deposit" })}
                     >
                       <Plus />
@@ -194,7 +191,6 @@ export function SinkingFundsPage() {
                     </Button>
                     <Button
                       variant="outline"
-                      size="sm"
                       disabled={cur <= 0}
                       onClick={() =>
                         setModal({ kind: "single-txn", fund: f, txnKind: "withdrawal" })
@@ -205,7 +201,6 @@ export function SinkingFundsPage() {
                     </Button>
                     <Button
                       variant="outline"
-                      size="sm"
                       onClick={() => setModal({ kind: "history", fund: f })}
                     >
                       Historikk
@@ -426,7 +421,7 @@ function AllocateDepositModal({
 
         <div className="flex items-center justify-between pt-2">
           <span className="text-muted-foreground text-xs">Fordeling per fond</span>
-          <Button type="button" variant="ghost" size="sm" onClick={fillFromMonthly}>
+          <Button type="button" variant="ghost" onClick={fillFromMonthly}>
             Bruk månedlig bidrag
           </Button>
         </div>
