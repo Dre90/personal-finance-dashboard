@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Plus } from "lucide-react";
+import { Pencil, Plus, X } from "lucide-react";
 import {
   Empty,
   LoadingPlaceholder,
@@ -31,6 +31,7 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import { MoneyAreaChart, MoneyLineChart } from "../../components/charts";
+import { HistoryModal } from "../../components/HistoryModal";
 import { SnapshotModal } from "../../components/SnapshotModal";
 import {
   createAsset,
@@ -56,6 +57,11 @@ export function AssetsPage() {
   const [openAsset, setOpenAsset] = React.useState(false);
   const [editing, setEditing] = React.useState<Asset | null>(null);
   const [snapshotFor, setSnapshotFor] = React.useState<Asset | null>(null);
+  const [historyFor, setHistoryFor] = React.useState<Asset | null>(null);
+  const [editingSnapshot, setEditingSnapshot] = React.useState<{
+    asset: Asset;
+    snapshot: AssetSnapshot;
+  } | null>(null);
   const [tab, setTab] = React.useState<"overview" | "ask" | "pension">("overview");
   const [newKind, setNewKind] = React.useState<AssetKind>("ask");
 
@@ -182,7 +188,7 @@ export function AssetsPage() {
                       color={ASSET_KIND_COLOR[asset.kind as AssetKind] ?? FLOW_COLORS.savings}
                       onSnapshot={() => setSnapshotFor(asset)}
                       onEdit={() => handleEdit(asset)}
-                      onDeleteSnapshot={handleDeleteSnapshot}
+                      onShowHistory={() => setHistoryFor(asset)}
                     />
                   ))}
                 </div>
@@ -203,7 +209,7 @@ export function AssetsPage() {
               valuePerAsset={valuePerAsset}
               onSnapshot={setSnapshotFor}
               onEdit={handleEdit}
-              onDeleteSnapshot={handleDeleteSnapshot}
+              onShowHistory={setHistoryFor}
             />
           ) : (
             <Empty
@@ -226,7 +232,7 @@ export function AssetsPage() {
               valuePerAsset={valuePerAsset}
               onSnapshot={setSnapshotFor}
               onEdit={handleEdit}
-              onDeleteSnapshot={handleDeleteSnapshot}
+              onShowHistory={setHistoryFor}
             />
           ) : (
             <Empty
@@ -264,6 +270,35 @@ export function AssetsPage() {
           setSnapshotFor(null);
         }}
       />
+
+      <SnapshotModal
+        open={editingSnapshot !== null}
+        onClose={() => setEditingSnapshot(null)}
+        title={editingSnapshot ? `Endre verdi: ${editingSnapshot.asset.name}` : ""}
+        valueLabel="Verdi (NOK)"
+        initialDate={editingSnapshot?.snapshot.snapshotDate}
+        initialValue={editingSnapshot?.snapshot.value}
+        dateDisabled
+        helperText="Datoen kan ikke endres her."
+        onSubmit={async ({ snapshotDate, value }) => {
+          if (!editingSnapshot) return;
+          await snapshotMutation.mutate({
+            assetId: editingSnapshot.asset.id,
+            snapshotDate,
+            value,
+          });
+          setEditingSnapshot(null);
+        }}
+      />
+
+      <AssetHistoryModal
+        open={historyFor !== null}
+        onClose={() => setHistoryFor(null)}
+        asset={historyFor}
+        snapshots={historyFor ? (data.snapshotsByAsset[historyFor.id] ?? []) : []}
+        onEdit={(asset, snapshot) => setEditingSnapshot({ asset, snapshot })}
+        onDelete={handleDeleteSnapshot}
+      />
     </div>
   );
 }
@@ -276,7 +311,7 @@ function AssetCard({
   showKindBadge = true,
   onSnapshot,
   onEdit,
-  onDeleteSnapshot,
+  onShowHistory,
 }: {
   asset: Asset;
   snaps: AssetSnapshot[];
@@ -285,7 +320,7 @@ function AssetCard({
   showKindBadge?: boolean;
   onSnapshot: () => void;
   onEdit: () => void;
-  onDeleteSnapshot: (id: number) => void;
+  onShowHistory: () => void;
 }) {
   const first = snaps[0];
   const change = first ? value - toNumber(first.value) : 0;
@@ -344,43 +379,75 @@ function AssetCard({
           <Button variant="outline" onClick={onEdit}>
             Endre
           </Button>
+          {snaps.length > 0 && (
+            <Button variant="outline" onClick={onShowHistory}>
+              Historikk ({snaps.length})
+            </Button>
+          )}
         </div>
-
-        {snaps.length > 0 && (
-          <details>
-            <summary className="text-muted-foreground cursor-pointer text-xs">
-              Historikk ({snaps.length} verdier)
-            </summary>
-            <Table className="mt-2">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Dato</TableHead>
-                  <TableHead className="text-right">Verdi</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {[...snaps].reverse().map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell>{s.snapshotDate}</TableCell>
-                    <TableCell className="text-right tabular-nums">{formatNOK(s.value)}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        className="text-destructive"
-                        onClick={() => onDeleteSnapshot(s.id)}
-                      >
-                        Slett
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </details>
-        )}
       </CardContent>
     </Card>
+  );
+}
+
+function AssetHistoryModal({
+  open,
+  onClose,
+  asset,
+  snapshots,
+  onEdit,
+  onDelete,
+}: {
+  open: boolean;
+  onClose: () => void;
+  asset: Asset | null;
+  snapshots: AssetSnapshot[];
+  onEdit: (asset: Asset, snapshot: AssetSnapshot) => void;
+  onDelete: (id: number) => void;
+}) {
+  if (!asset) return null;
+
+  return (
+    <HistoryModal open={open} onClose={onClose} title={`Historikk — ${asset.name}`}>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Dato</TableHead>
+            <TableHead className="text-right">Verdi</TableHead>
+            <TableHead className="w-28" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {[...snapshots].reverse().map((snapshot) => (
+            <TableRow key={snapshot.id}>
+              <TableCell>{snapshot.snapshotDate}</TableCell>
+              <TableCell className="text-right tabular-nums">{formatNOK(snapshot.value)}</TableCell>
+              <TableCell className="flex justify-end gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => onEdit(asset, snapshot)}
+                  aria-label="Endre verdi"
+                  title="Endre verdi"
+                >
+                  <Pencil />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="hover:text-destructive"
+                  onClick={() => onDelete(snapshot.id)}
+                  aria-label="Slett datapunkt"
+                  title="Slett datapunkt"
+                >
+                  <X />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </HistoryModal>
   );
 }
 
@@ -392,7 +459,7 @@ function AssetGroupSection({
   valuePerAsset,
   onSnapshot,
   onEdit,
-  onDeleteSnapshot,
+  onShowHistory,
 }: {
   title: string;
   subtitle: string;
@@ -401,7 +468,7 @@ function AssetGroupSection({
   valuePerAsset: Map<number, number>;
   onSnapshot: (asset: Asset) => void;
   onEdit: (asset: Asset) => void;
-  onDeleteSnapshot: (id: number) => void;
+  onShowHistory: (asset: Asset) => void;
 }) {
   const { rows, series } = buildStackedSeries(assets, snapshotsByAsset);
   const colorByAsset = new Map(series.map((s) => [s.assetId, s.color]));
@@ -462,7 +529,7 @@ function AssetGroupSection({
             showKindBadge={false}
             onSnapshot={() => onSnapshot(asset)}
             onEdit={() => onEdit(asset)}
-            onDeleteSnapshot={onDeleteSnapshot}
+            onShowHistory={() => onShowHistory(asset)}
           />
         ))}
       </div>

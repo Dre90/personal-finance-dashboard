@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Plus } from "lucide-react";
+import { Pencil, Plus, X } from "lucide-react";
 import { Empty, LoadingPlaceholder, Modal, PageHeader, StatCard } from "../../components/ui";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import { MoneyLineChart } from "../../components/charts";
+import { HistoryModal } from "../../components/HistoryModal";
 import { SnapshotModal } from "../../components/SnapshotModal";
 import {
   createLoan,
@@ -29,7 +30,7 @@ import { useToast } from "../../components/Toaster";
 import { useFormState } from "../../lib/forms";
 import { FLOW_COLORS } from "../../lib/colors";
 import { formatNOK, toNumber } from "../../lib/utils";
-import type { Loan } from "../../../db/schema";
+import type { Loan, LoanSnapshot } from "../../../db/schema";
 
 export function LoansPage() {
   const { id: dashboardId } = useDashboard();
@@ -37,6 +38,11 @@ export function LoansPage() {
   const [openLoan, setOpenLoan] = React.useState(false);
   const [editing, setEditing] = React.useState<Loan | null>(null);
   const [snapshotFor, setSnapshotFor] = React.useState<Loan | null>(null);
+  const [historyFor, setHistoryFor] = React.useState<Loan | null>(null);
+  const [editingSnapshot, setEditingSnapshot] = React.useState<{
+    loan: Loan;
+    snapshot: LoanSnapshot;
+  } | null>(null);
 
   const { data, isInitialLoading, refetch } = useQuery({
     key: ["loans", dashboardId],
@@ -175,47 +181,12 @@ export function LoansPage() {
                     >
                       Endre
                     </Button>
+                    {snaps.length > 0 && (
+                      <Button variant="outline" onClick={() => setHistoryFor(loan)}>
+                        Historikk ({snaps.length})
+                      </Button>
+                    )}
                   </div>
-
-                  {snaps.length > 0 && (
-                    <details>
-                      <summary className="text-muted-foreground cursor-pointer text-xs">
-                        Historikk ({snaps.length} datapunkt)
-                      </summary>
-                      <Table className="mt-2">
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Dato</TableHead>
-                            <TableHead className="text-right">Saldo</TableHead>
-                            <TableHead />
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {[...snaps].reverse().map((s) => (
-                            <TableRow key={s.id}>
-                              <TableCell>{s.snapshotDate}</TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                {formatNOK(s.balance)}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Button
-                                  variant="ghost"
-                                  className="text-destructive"
-                                  onClick={() => {
-                                    if (confirm("Slette dette datapunktet?")) {
-                                      void deleteSnapshotMutation.mutate(s.id);
-                                    }
-                                  }}
-                                >
-                                  Slett
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </details>
-                  )}
                 </CardContent>
               </Card>
             );
@@ -250,7 +221,103 @@ export function LoansPage() {
           setSnapshotFor(null);
         }}
       />
+
+      <SnapshotModal
+        open={editingSnapshot !== null}
+        onClose={() => setEditingSnapshot(null)}
+        title={editingSnapshot ? `Endre saldo: ${editingSnapshot.loan.name}` : ""}
+        valueLabel="Saldo (NOK)"
+        initialDate={editingSnapshot?.snapshot.snapshotDate}
+        initialValue={editingSnapshot?.snapshot.balance}
+        dateDisabled
+        helperText="Datoen kan ikke endres her."
+        onSubmit={async ({ snapshotDate, value }) => {
+          if (!editingSnapshot) return;
+          await snapshotMutation.mutate({
+            loanId: editingSnapshot.loan.id,
+            snapshotDate,
+            value,
+          });
+          setEditingSnapshot(null);
+        }}
+      />
+
+      <LoanHistoryModal
+        open={historyFor !== null}
+        onClose={() => setHistoryFor(null)}
+        loan={historyFor}
+        snapshots={historyFor ? (data.snapshotsByLoan[historyFor.id] ?? []) : []}
+        onEdit={(loan, snapshot) => setEditingSnapshot({ loan, snapshot })}
+        onDelete={(id) => {
+          if (confirm("Slette dette datapunktet?")) {
+            void deleteSnapshotMutation.mutate(id);
+          }
+        }}
+      />
     </div>
+  );
+}
+
+function LoanHistoryModal({
+  open,
+  onClose,
+  loan,
+  snapshots,
+  onEdit,
+  onDelete,
+}: {
+  open: boolean;
+  onClose: () => void;
+  loan: Loan | null;
+  snapshots: LoanSnapshot[];
+  onEdit: (loan: Loan, snapshot: LoanSnapshot) => void;
+  onDelete: (id: number) => void;
+}) {
+  if (!loan) return null;
+
+  return (
+    <HistoryModal open={open} onClose={onClose} title={`Historikk — ${loan.name}`}>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Dato</TableHead>
+            <TableHead className="text-right">Saldo</TableHead>
+            <TableHead className="w-28" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {[...snapshots].reverse().map((snapshot) => (
+            <TableRow key={snapshot.id}>
+              <TableCell>{snapshot.snapshotDate}</TableCell>
+              <TableCell className="text-right tabular-nums">
+                {formatNOK(snapshot.balance)}
+              </TableCell>
+              <TableCell className="flex justify-end gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => onEdit(loan, snapshot)}
+                  aria-label="Endre saldo"
+                  title="Endre saldo"
+                >
+                  <Pencil />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="hover:text-destructive"
+                  onClick={() => onDelete(snapshot.id)}
+                  aria-label="Slett datapunkt"
+                  title="Slett datapunkt"
+                >
+                  <X />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </HistoryModal>
   );
 }
 
