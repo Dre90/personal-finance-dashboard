@@ -12,7 +12,13 @@ import {
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Badge } from "../../components/ui/badge";
-import { Card, CardContent } from "../../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "../../components/ui/field";
 import {
   Select,
@@ -31,6 +37,12 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import { MoneyAreaChart, MoneyLineChart } from "../../components/charts";
+import {
+  ChartPeriodSelector,
+  filterByChartDateRange,
+  type ChartDateRange,
+  type ChartPeriod,
+} from "../../components/ChartPeriodSelector";
 import { HistoryModal } from "../../components/HistoryModal";
 import { SnapshotModal } from "../../components/SnapshotModal";
 import {
@@ -62,6 +74,11 @@ export function AssetsPage() {
     asset: Asset;
     snapshot: AssetSnapshot;
   } | null>(null);
+  const [chartDateRange, setChartDateRange] = React.useState<ChartDateRange>({
+    start: null,
+    end: null,
+  });
+  const [chartPeriod, setChartPeriod] = React.useState<ChartPeriod>("ytd");
   const [tab, setTab] = React.useState<"overview" | "ask" | "pension">("overview");
   const [newKind, setNewKind] = React.useState<AssetKind>("ask");
 
@@ -108,6 +125,13 @@ export function AssetsPage() {
   const askAssets = data.assets.filter((a) => a.kind === "ask");
   const pensionAssets = data.assets.filter((a) => a.kind === "pension");
   const otherAssets = data.assets.filter((a) => a.kind !== "ask" && a.kind !== "pension");
+  const earliestSnapshotDate = Object.values(data.snapshotsByAsset)
+    .flat()
+    .reduce<string | undefined>(
+      (earliest, snapshot) =>
+        !earliest || snapshot.snapshotDate < earliest ? snapshot.snapshotDate : earliest,
+      undefined,
+    );
 
   const handleEdit = (asset: Asset) => {
     setEditing(asset);
@@ -170,6 +194,40 @@ export function AssetsPage() {
               <StatCard label="Kontanter/sparing" value={totalsByKind.cash ?? 0} />
             </div>
 
+            <ChartPeriodSelector
+              earliestDate={earliestSnapshotDate}
+              onRangeChange={setChartDateRange}
+              value={chartPeriod}
+              onValueChange={setChartPeriod}
+            />
+
+            {(askAssets.length > 0 || pensionAssets.length > 0) && (
+              <div className="grid gap-4 lg:grid-cols-2">
+                {askAssets.length > 0 && (
+                  <AssetGroupOverviewCard
+                    title="ASK"
+                    description="Samlet utvikling for aksjesparekontoene dine"
+                    assets={askAssets}
+                    snapshotsByAsset={data.snapshotsByAsset}
+                    valuePerAsset={valuePerAsset}
+                    chartDateRange={chartDateRange}
+                    onOpen={() => setTab("ask")}
+                  />
+                )}
+                {pensionAssets.length > 0 && (
+                  <AssetGroupOverviewCard
+                    title="Pensjon"
+                    description="Samlet utvikling for pensjonskontoene dine"
+                    assets={pensionAssets}
+                    snapshotsByAsset={data.snapshotsByAsset}
+                    valuePerAsset={valuePerAsset}
+                    chartDateRange={chartDateRange}
+                    onOpen={() => setTab("pension")}
+                  />
+                )}
+              </div>
+            )}
+
             {data.assets.length === 0 ? (
               <Empty
                 title="Ingen eiendeler enda"
@@ -189,6 +247,7 @@ export function AssetsPage() {
                       onSnapshot={() => setSnapshotFor(asset)}
                       onEdit={() => handleEdit(asset)}
                       onShowHistory={() => setHistoryFor(asset)}
+                      chartDateRange={chartDateRange}
                     />
                   ))}
                 </div>
@@ -200,47 +259,65 @@ export function AssetsPage() {
 
       {tab === "ask" && (
         <TabPanel value="ask" idPrefix="assets">
-          {askAssets.length > 0 ? (
-            <AssetGroupSection
-              title="ASK"
-              subtitle="Samlet utvikling for aksjesparekontoen din"
-              assets={askAssets}
-              snapshotsByAsset={data.snapshotsByAsset}
-              valuePerAsset={valuePerAsset}
-              onSnapshot={setSnapshotFor}
-              onEdit={handleEdit}
-              onShowHistory={setHistoryFor}
+          <div className="space-y-6">
+            <ChartPeriodSelector
+              earliestDate={earliestSnapshotDate}
+              onRangeChange={setChartDateRange}
+              value={chartPeriod}
+              onValueChange={setChartPeriod}
             />
-          ) : (
-            <Empty
-              title="Ingen ASK-kontoer enda"
-              description="Legg til f.eks. Aksjer og Fond for å følge utviklingen hver for seg og samlet."
-              action={<Button onClick={() => openNew("ask")}>Legg til ASK-konto</Button>}
-            />
-          )}
+            {askAssets.length > 0 ? (
+              <AssetGroupSection
+                title="ASK"
+                subtitle="Samlet utvikling for aksjesparekontoen din"
+                assets={askAssets}
+                snapshotsByAsset={data.snapshotsByAsset}
+                valuePerAsset={valuePerAsset}
+                onSnapshot={setSnapshotFor}
+                onEdit={handleEdit}
+                onShowHistory={setHistoryFor}
+                chartDateRange={chartDateRange}
+              />
+            ) : (
+              <Empty
+                title="Ingen ASK-kontoer enda"
+                description="Legg til f.eks. Aksjer og Fond for å følge utviklingen hver for seg og samlet."
+                action={<Button onClick={() => openNew("ask")}>Legg til ASK-konto</Button>}
+              />
+            )}
+          </div>
         </TabPanel>
       )}
 
       {tab === "pension" && (
         <TabPanel value="pension" idPrefix="assets">
-          {pensionAssets.length > 0 ? (
-            <AssetGroupSection
-              title="Pensjon"
-              subtitle="Samlet utvikling for pensjonskontoene dine"
-              assets={pensionAssets}
-              snapshotsByAsset={data.snapshotsByAsset}
-              valuePerAsset={valuePerAsset}
-              onSnapshot={setSnapshotFor}
-              onEdit={handleEdit}
-              onShowHistory={setHistoryFor}
+          <div className="space-y-6">
+            <ChartPeriodSelector
+              earliestDate={earliestSnapshotDate}
+              onRangeChange={setChartDateRange}
+              value={chartPeriod}
+              onValueChange={setChartPeriod}
             />
-          ) : (
-            <Empty
-              title="Ingen pensjonskontoer enda"
-              description="Legg til f.eks. Egen pensjonskonto, IPS og Pensjonssparekonto."
-              action={<Button onClick={() => openNew("pension")}>Legg til pensjonskonto</Button>}
-            />
-          )}
+            {pensionAssets.length > 0 ? (
+              <AssetGroupSection
+                title="Pensjon"
+                subtitle="Samlet utvikling for pensjonskontoene dine"
+                assets={pensionAssets}
+                snapshotsByAsset={data.snapshotsByAsset}
+                valuePerAsset={valuePerAsset}
+                onSnapshot={setSnapshotFor}
+                onEdit={handleEdit}
+                onShowHistory={setHistoryFor}
+                chartDateRange={chartDateRange}
+              />
+            ) : (
+              <Empty
+                title="Ingen pensjonskontoer enda"
+                description="Legg til f.eks. Egen pensjonskonto, IPS og Pensjonssparekonto."
+                action={<Button onClick={() => openNew("pension")}>Legg til pensjonskonto</Button>}
+              />
+            )}
+          </div>
         </TabPanel>
       )}
 
@@ -312,6 +389,7 @@ function AssetCard({
   onSnapshot,
   onEdit,
   onShowHistory,
+  chartDateRange,
 }: {
   asset: Asset;
   snaps: AssetSnapshot[];
@@ -321,9 +399,12 @@ function AssetCard({
   onSnapshot: () => void;
   onEdit: () => void;
   onShowHistory: () => void;
+  chartDateRange: ChartDateRange;
 }) {
-  const first = snaps[0];
-  const change = first ? value - toNumber(first.value) : 0;
+  const chartSnaps = filterByChartDateRange(snaps, chartDateRange);
+  const periodValue = toNumber(chartSnaps.at(-1)?.value ?? value);
+  const first = chartSnaps[0];
+  const change = first ? periodValue - toNumber(first.value) : 0;
   const pctChange =
     first && toNumber(first.value) !== 0 ? (change / toNumber(first.value)) * 100 : 0;
   return (
@@ -345,7 +426,7 @@ function AssetCard({
             {asset.notes && <p className="text-muted-foreground mt-1 text-xs">{asset.notes}</p>}
           </div>
           <div className="text-right">
-            <div className="text-2xl font-semibold tabular-nums">{formatNOK(value)}</div>
+            <div className="text-2xl font-semibold tabular-nums">{formatNOK(periodValue)}</div>
             {first && (
               <div
                 className={
@@ -361,9 +442,9 @@ function AssetCard({
           </div>
         </div>
 
-        {snaps.length > 1 && (
+        {chartSnaps.length > 1 && (
           <MoneyLineChart
-            data={snaps.map((s) => ({ date: s.snapshotDate, value: toNumber(s.value) }))}
+            data={chartSnaps.map((s) => ({ date: s.snapshotDate, value: toNumber(s.value) }))}
             xKey="date"
             height={140}
             yWidth={70}
@@ -451,6 +532,88 @@ function AssetHistoryModal({
   );
 }
 
+function AssetGroupOverviewCard({
+  title,
+  description,
+  assets,
+  snapshotsByAsset,
+  valuePerAsset,
+  chartDateRange,
+  onOpen,
+}: {
+  title: string;
+  description: string;
+  assets: Asset[];
+  snapshotsByAsset: Record<number, AssetSnapshot[]>;
+  valuePerAsset: Map<number, number>;
+  chartDateRange: ChartDateRange;
+  onOpen: () => void;
+}) {
+  const chartSnapshotsByAsset = Object.fromEntries(
+    Object.entries(snapshotsByAsset).map(([assetId, snapshots]) => [
+      assetId,
+      filterByChartDateRange(snapshots, chartDateRange),
+    ]),
+  ) as Record<number, AssetSnapshot[]>;
+  const { rows, series } = buildStackedSeries(assets, chartSnapshotsByAsset);
+  const total = assets.reduce((sum, asset) => {
+    const latestSnapshot = chartSnapshotsByAsset[asset.id]?.at(-1);
+    return sum + toNumber(latestSnapshot?.value ?? valuePerAsset.get(asset.id));
+  }, 0);
+  const firstTotal = rows[0]
+    ? series.reduce((sum, item) => sum + Number(rows[0]![item.key] ?? 0), 0)
+    : 0;
+  const change = total - firstTotal;
+  const pctChange = firstTotal !== 0 ? (change / firstTotal) * 100 : 0;
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-semibold tabular-nums">{formatNOK(total)}</div>
+            {rows.length > 1 && (
+              <div
+                className={
+                  change >= 0
+                    ? "text-success text-xs tabular-nums"
+                    : "text-destructive text-xs tabular-nums"
+                }
+              >
+                {change >= 0 ? "+" : ""}
+                {formatNOK(change)} ({pctChange.toFixed(1)} %)
+              </div>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        {rows.length > 1 && (
+          <MoneyAreaChart
+            data={rows}
+            xKey="date"
+            height={180}
+            yWidth={70}
+            showLegend={false}
+            series={series.map((item) => ({
+              dataKey: item.key,
+              name: item.name,
+              color: item.color,
+            }))}
+          />
+        )}
+        <Button variant="outline" onClick={onOpen}>
+          Se inndeling
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 function AssetGroupSection({
   title,
   subtitle,
@@ -460,6 +623,7 @@ function AssetGroupSection({
   onSnapshot,
   onEdit,
   onShowHistory,
+  chartDateRange,
 }: {
   title: string;
   subtitle: string;
@@ -469,11 +633,21 @@ function AssetGroupSection({
   onSnapshot: (asset: Asset) => void;
   onEdit: (asset: Asset) => void;
   onShowHistory: (asset: Asset) => void;
+  chartDateRange: ChartDateRange;
 }) {
-  const { rows, series } = buildStackedSeries(assets, snapshotsByAsset);
+  const chartSnapshotsByAsset = Object.fromEntries(
+    Object.entries(snapshotsByAsset).map(([assetId, snapshots]) => [
+      assetId,
+      filterByChartDateRange(snapshots, chartDateRange),
+    ]),
+  ) as Record<number, AssetSnapshot[]>;
+  const { rows, series } = buildStackedSeries(assets, chartSnapshotsByAsset);
   const colorByAsset = new Map(series.map((s) => [s.assetId, s.color]));
 
-  const total = assets.reduce((s, a) => s + (valuePerAsset.get(a.id) ?? 0), 0);
+  const total = assets.reduce((sum, asset) => {
+    const latestSnapshot = chartSnapshotsByAsset[asset.id]?.at(-1);
+    return sum + toNumber(latestSnapshot?.value ?? valuePerAsset.get(asset.id));
+  }, 0);
   const sumRow = (row: Record<string, number | string> | undefined) =>
     row ? series.reduce((s, ser) => s + Number(row[ser.key] ?? 0), 0) : 0;
   const firstTotal = sumRow(rows[0]);
@@ -530,6 +704,7 @@ function AssetGroupSection({
             onSnapshot={() => onSnapshot(asset)}
             onEdit={() => onEdit(asset)}
             onShowHistory={() => onShowHistory(asset)}
+            chartDateRange={chartDateRange}
           />
         ))}
       </div>
