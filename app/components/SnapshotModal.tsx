@@ -18,6 +18,10 @@ export interface SnapshotModalProps {
   valueLabel: string;
   /** Pre-fill the value input — typically the previous snapshot value. */
   initialValue?: string;
+  /** Pre-fill the date input — typically an existing snapshot's date. */
+  initialDate?: string;
+  /** Keep an existing snapshot associated with its original date when editing. */
+  dateDisabled?: boolean;
   helperText?: string;
   onSubmit: (input: { snapshotDate: string; value: number }) => Promise<unknown>;
 }
@@ -28,10 +32,15 @@ export function SnapshotModal({
   title,
   valueLabel,
   initialValue = "",
+  initialDate = todayISO(),
+  dateDisabled = false,
   helperText,
   onSubmit,
 }: SnapshotModalProps) {
-  const form = useFormState({ date: todayISO(), value: initialValue }, { resetWhen: open });
+  const form = useFormState(
+    { date: initialDate, value: initialValue },
+    { resetWhen: open ? `${initialDate}-${initialValue}` : null },
+  );
   const [busy, setBusy] = React.useState(false);
 
   async function save() {
@@ -71,6 +80,7 @@ export function SnapshotModal({
             type="date"
             value={form.values.date}
             onChange={form.setField("date")}
+            disabled={dateDisabled}
           />
         </Field>
         <Field>

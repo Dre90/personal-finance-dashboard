@@ -19,6 +19,7 @@ import {
   ProgressBar,
   StatCard,
 } from "../../components/ui";
+import { HistoryModal } from "../../components/HistoryModal";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Field, FieldLabel } from "../../components/ui/field";
@@ -49,13 +50,13 @@ type ModalState =
   | { kind: "allocate" }
   | { kind: "reorder" }
   | { kind: "single-txn"; fund: SinkingFund; txnKind: "deposit" | "withdrawal" }
-  | { kind: "edit-txn"; fund: SinkingFund; txn: SinkingFundTransaction }
-  | { kind: "history"; fund: SinkingFund };
+  | { kind: "edit-txn"; fund: SinkingFund; txn: SinkingFundTransaction };
 
 export function SinkingFundsPage() {
   const { id: dashboardId } = useDashboard();
   const toast = useToast();
   const [modal, setModal] = React.useState<ModalState>({ kind: "none" });
+  const [historyFor, setHistoryFor] = React.useState<SinkingFund | null>(null);
 
   const { data, isInitialLoading, refetch } = useQuery({
     key: ["sinking-funds", dashboardId],
@@ -199,10 +200,7 @@ export function SinkingFundsPage() {
                       <Minus />
                       Uttak
                     </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setModal({ kind: "history", fund: f })}
-                    >
+                    <Button variant="outline" onClick={() => setHistoryFor(f)}>
                       Historikk
                     </Button>
                   </div>
@@ -270,10 +268,10 @@ export function SinkingFundsPage() {
       />
 
       <FundHistoryModal
-        open={modal.kind === "history"}
-        onClose={() => setModal({ kind: "none" })}
+        open={historyFor !== null}
+        onClose={() => setHistoryFor(null)}
         dashboardId={dashboardId}
-        fund={modal.kind === "history" ? modal.fund : null}
+        fund={historyFor ? (data.find((fund) => fund.id === historyFor.id) ?? historyFor) : null}
         onEdit={(txn, fund) => setModal({ kind: "edit-txn", fund, txn })}
         onDeleted={async () => {
           await afterMutation("Transaksjon slettet");
@@ -811,43 +809,38 @@ function FundHistoryModal({
   const balance = toNumber(fund.currentAmount);
 
   return (
-    <Modal
+    <HistoryModal
       open={open}
       onClose={onClose}
       title={`Historikk — ${fund.name}`}
-      footer={
-        <Button variant="outline" onClick={onClose}>
-          Lukk
-        </Button>
-      }
-    >
-      <div className="space-y-3">
+      summary={
         <div className="text-muted-foreground text-sm">
           Saldo nå:{" "}
           <span className="text-foreground font-semibold tabular-nums">{formatNOK(balance)}</span>
         </div>
-        {isInitialLoading ? (
-          <LoadingPlaceholder />
-        ) : !data || data.length === 0 ? (
-          <p className="text-muted-foreground text-sm">Ingen transaksjoner enda.</p>
-        ) : (
-          <ul className="max-h-96 divide-y divide-border overflow-auto">
-            {data.map((t) => (
-              <TxnRow
-                key={t.id}
-                txn={t}
-                onEdit={() => onEdit(t, fund)}
-                onDelete={() => {
-                  if (confirm("Slette denne transaksjonen?")) {
-                    void deleteMutation.mutate(t.id);
-                  }
-                }}
-              />
-            ))}
-          </ul>
-        )}
-      </div>
-    </Modal>
+      }
+    >
+      {isInitialLoading ? (
+        <LoadingPlaceholder />
+      ) : !data || data.length === 0 ? (
+        <p className="text-muted-foreground text-sm">Ingen transaksjoner enda.</p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {data.map((t) => (
+            <TxnRow
+              key={t.id}
+              txn={t}
+              onEdit={() => onEdit(t, fund)}
+              onDelete={() => {
+                if (confirm("Slette denne transaksjonen?")) {
+                  void deleteMutation.mutate(t.id);
+                }
+              }}
+            />
+          ))}
+        </ul>
+      )}
+    </HistoryModal>
   );
 }
 

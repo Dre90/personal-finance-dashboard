@@ -185,12 +185,14 @@ export function Modal({
   title,
   children,
   footer,
+  contentClassName,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  contentClassName?: string;
 }) {
   return (
     <Dialog
@@ -199,7 +201,7 @@ export function Modal({
         if (!next) onClose();
       }}
     >
-      <DialogContent>
+      <DialogContent className={contentClassName}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
