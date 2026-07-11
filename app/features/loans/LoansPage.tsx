@@ -162,13 +162,12 @@ export function LoansPage() {
                   )}
 
                   <div className="flex flex-wrap gap-2">
-                    <Button size="sm" onClick={() => setSnapshotFor(loan)}>
+                    <Button onClick={() => setSnapshotFor(loan)}>
                       <Plus />
-                      Saldo i dag
+                      Registrer saldo
                     </Button>
                     <Button
                       variant="outline"
-                      size="sm"
                       onClick={() => {
                         setEditing(loan);
                         setOpenLoan(true);
@@ -201,7 +200,6 @@ export function LoansPage() {
                               <TableCell className="text-right">
                                 <Button
                                   variant="ghost"
-                                  size="sm"
                                   className="text-destructive"
                                   onClick={() => {
                                     if (confirm("Slette dette datapunktet?")) {

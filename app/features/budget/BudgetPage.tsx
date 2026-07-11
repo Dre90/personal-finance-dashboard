@@ -261,7 +261,6 @@ export function BudgetPage() {
                             <TableCell className="text-right">
                               <Button
                                 variant="ghost"
-                                size="sm"
                                 onClick={() => {
                                   setEditingCategory(cat);
                                   setShowCategoryModal(true);

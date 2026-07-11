@@ -220,12 +220,7 @@ function LandingPage() {
                   </p>
                   <div className="bg-muted/40 rounded-lg border p-3">
                     <div className="font-mono text-sm break-all">{createdId}</div>
-                    <Button
-                      variant="outline"
-                      className="mt-3 w-full"
-                      size="sm"
-                      onClick={copyCreatedId}
-                    >
+                    <Button variant="outline" className="mt-3 w-full" onClick={copyCreatedId}>
                       {copied ? <Check /> : <Copy />}
                       {copied ? "Kopiert" : "Kopier ID"}
                     </Button>

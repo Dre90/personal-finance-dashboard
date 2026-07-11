@@ -337,11 +337,11 @@ function AssetCard({
         )}
 
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" onClick={onSnapshot}>
+          <Button onClick={onSnapshot}>
             <Plus />
-            Verdi i dag
+            Registrer verdi
           </Button>
-          <Button variant="outline" size="sm" onClick={onEdit}>
+          <Button variant="outline" onClick={onEdit}>
             Endre
           </Button>
         </div>
@@ -367,7 +367,6 @@ function AssetCard({
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
-                        size="sm"
                         className="text-destructive"
                         onClick={() => onDeleteSnapshot(s.id)}
                       >
