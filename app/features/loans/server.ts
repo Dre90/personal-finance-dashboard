@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "../../../db";
 import {
@@ -39,9 +39,31 @@ export const listLoans = createServerFn({ method: "GET" })
       for (const s of snaps) {
         (snapshotsByLoan[s.loanId] ??= []).push(s);
       }
-      return { loans, snapshotsByLoan };
+
+      // Snapshots are the source of truth for a loan's current balance. Reading
+      // the latest one here also corrects balances saved before this invariant
+      // was enforced.
+      const loansWithLatestBalance = loans.map((loan) => {
+        const latestSnapshot = snapshotsByLoan[loan.id]?.at(-1);
+        return latestSnapshot ? { ...loan, currentBalance: latestSnapshot.balance } : loan;
+      });
+      return { loans: loansWithLatestBalance, snapshotsByLoan };
     }),
   );
+
+async function syncLoanCurrentBalance(loanId: number) {
+  const [latestSnapshot] = await db
+    .select({ balance: schema.loanSnapshots.balance })
+    .from(schema.loanSnapshots)
+    .where(eq(schema.loanSnapshots.loanId, loanId))
+    .orderBy(desc(schema.loanSnapshots.snapshotDate))
+    .limit(1);
+
+  await db
+    .update(schema.loans)
+    .set({ currentBalance: latestSnapshot?.balance ?? "0" })
+    .where(eq(schema.loans.id, loanId));
+}
 
 const loanFieldsSchema = z.object({
   name: z.string().min(1).max(120),
@@ -151,11 +173,7 @@ export const upsertLoanSnapshot = createServerFn({ method: "POST" })
           target: [schema.loanSnapshots.loanId, schema.loanSnapshots.snapshotDate],
           set: { balance: data.balance },
         });
-      // Keep the loan row's denormalised currentBalance in sync.
-      await db
-        .update(schema.loans)
-        .set({ currentBalance: data.balance })
-        .where(eq(schema.loans.id, data.loanId));
+      await syncLoanCurrentBalance(data.loanId);
       return { ok: true as const };
     }),
   );
@@ -166,7 +184,7 @@ export const deleteLoanSnapshot = createServerFn({ method: "POST" })
   )
   .handler(
     safeHandler(async ({ data }) => {
-      await db
+      const [deleted] = await db
         .delete(schema.loanSnapshots)
         .where(
           and(
@@ -179,7 +197,9 @@ export const deleteLoanSnapshot = createServerFn({ method: "POST" })
                 .where(eq(schema.loans.dashboardId, data.dashboardId)),
             ),
           ),
-        );
+        )
+        .returning({ loanId: schema.loanSnapshots.loanId });
+      if (deleted) await syncLoanCurrentBalance(deleted.loanId);
       return { ok: true as const };
     }),
   );

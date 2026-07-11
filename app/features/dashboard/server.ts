@@ -121,12 +121,32 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
       }));
       const totalAssets = assets.reduce((sum, a) => sum + a.currentValue, 0);
 
-      // Loans (denormalised currentBalance is kept in sync by upsertLoanSnapshot)
+      // Loans + latest snapshot per loan. The snapshot is the source of truth,
+      // while currentBalance remains a cache for loans without snapshots.
       const loans = await db
         .select()
         .from(schema.loans)
         .where(eq(schema.loans.dashboardId, dashboardId));
-      const totalDebt = loans.reduce((s, l) => s + Number(l.currentBalance), 0);
+      const latestBalanceByLoanId = new Map<number, number>();
+      if (loans.length > 0) {
+        const snaps = await db
+          .select()
+          .from(schema.loanSnapshots)
+          .where(
+            inArray(
+              schema.loanSnapshots.loanId,
+              loans.map((loan) => loan.id),
+            ),
+          )
+          .orderBy(asc(schema.loanSnapshots.snapshotDate));
+        for (const snapshot of snaps) {
+          latestBalanceByLoanId.set(snapshot.loanId, Number(snapshot.balance));
+        }
+      }
+      const totalDebt = loans.reduce(
+        (sum, loan) => sum + (latestBalanceByLoanId.get(loan.id) ?? Number(loan.currentBalance)),
+        0,
+      );
 
       // Sinking funds
       const sinkingFunds = await db
