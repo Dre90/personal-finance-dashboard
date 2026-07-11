@@ -14,6 +14,11 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import { MoneyLineChart } from "../../components/charts";
+import {
+  ChartPeriodSelector,
+  filterByChartDateRange,
+  type ChartDateRange,
+} from "../../components/ChartPeriodSelector";
 import { HistoryModal } from "../../components/HistoryModal";
 import { SnapshotModal } from "../../components/SnapshotModal";
 import {
@@ -43,6 +48,10 @@ export function LoansPage() {
     loan: Loan;
     snapshot: LoanSnapshot;
   } | null>(null);
+  const [chartDateRange, setChartDateRange] = React.useState<ChartDateRange>({
+    start: null,
+    end: null,
+  });
 
   const { data, isInitialLoading, refetch } = useQuery({
     key: ["loans", dashboardId],
@@ -82,6 +91,13 @@ export function LoansPage() {
   const totalOriginal = data.loans.reduce((s, l) => s + toNumber(l.originalPrincipal), 0);
   const totalMonthly = data.loans.reduce((s, l) => s + toNumber(l.monthlyPayment), 0);
   const paidDown = totalOriginal - totalDebt;
+  const earliestSnapshotDate = Object.values(data.snapshotsByLoan)
+    .flat()
+    .reduce<string | undefined>(
+      (earliest, snapshot) =>
+        !earliest || snapshot.snapshotDate < earliest ? snapshot.snapshotDate : earliest,
+      undefined,
+    );
 
   return (
     <div className="space-y-6">
@@ -108,6 +124,8 @@ export function LoansPage() {
         <StatCard label="Mnd. betaling" value={totalMonthly} />
       </div>
 
+      <ChartPeriodSelector earliestDate={earliestSnapshotDate} onRangeChange={setChartDateRange} />
+
       {data.loans.length === 0 ? (
         <Empty
           title="Ingen lån registrert"
@@ -118,7 +136,8 @@ export function LoansPage() {
         <div className="grid gap-4 lg:grid-cols-2">
           {data.loans.map((loan) => {
             const snaps = data.snapshotsByLoan[loan.id] ?? [];
-            const cur = toNumber(loan.currentBalance);
+            const chartSnaps = filterByChartDateRange(snaps, chartDateRange);
+            const cur = toNumber(chartSnaps.at(-1)?.balance ?? loan.currentBalance);
             const orig = toNumber(loan.originalPrincipal);
             const pctPaid = orig > 0 ? ((orig - cur) / orig) * 100 : 0;
             return (
@@ -154,9 +173,9 @@ export function LoansPage() {
                     </div>
                   </div>
 
-                  {snaps.length > 1 && (
+                  {chartSnaps.length > 1 && (
                     <MoneyLineChart
-                      data={snaps.map((s) => ({
+                      data={chartSnaps.map((s) => ({
                         date: s.snapshotDate,
                         balance: toNumber(s.balance),
                       }))}
