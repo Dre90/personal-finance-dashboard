@@ -127,17 +127,17 @@ All money is `numeric(14, 2)` stored as strings — convert with `Number()` or t
 Each `app/routes/dashboard/<x>.tsx` is a thin `createFileRoute` wrapper; the
 actual page component (and its colocated modals/helpers) lives in the feature.
 
-| Route                              | Component (in `app/features/`)         | Purpose                                              |
-| ---------------------------------- | -------------------------------------- | ---------------------------------------------------- |
-| `/dashboard/`                      | `dashboard/DashboardHome.tsx`          | Recap home: net worth, cash flow, asset/debt summary |
-| `/dashboard/budget`                | `budget/BudgetPage.tsx`                | Monthly budget editor, categories grouped            |
-| `/dashboard/budget/yearly`         | `budget/YearlyBudgetPage.tsx`          | Yearly aggregation                                   |
-| `/dashboard/assets`                | `assets/AssetsPage.tsx`                | Formue — tabbed by `kind`, stacked area charts       |
-| `/dashboard/sinking-funds`         | `sinking-funds/SinkingFundsPage.tsx`   | Savings goals tracker (allocate, deposit, withdraw)  |
-| `/dashboard/sinking-funds/history` | `sinking-funds/HistoryPage.tsx`        | Global transaction log with filters                  |
-| `/dashboard/loans`                 | `loans/LoansPage.tsx`                  | Debt paydown                                         |
-| `/dashboard/recap`                 | `recap/RecapPage.tsx`                  | Cash-flow recap                                      |
-| `/dashboard/settings`              | `dashboard/SettingsPage.tsx`           | Dashboard name + theme toggle                        |
+| Route                              | Component (in `app/features/`)       | Purpose                                              |
+| ---------------------------------- | ------------------------------------ | ---------------------------------------------------- |
+| `/dashboard/`                      | `dashboard/DashboardHome.tsx`        | Recap home: net worth, cash flow, asset/debt summary |
+| `/dashboard/budget`                | `budget/BudgetPage.tsx`              | Monthly budget editor, categories grouped            |
+| `/dashboard/budget/yearly`         | `budget/YearlyBudgetPage.tsx`        | Yearly aggregation                                   |
+| `/dashboard/assets`                | `assets/AssetsPage.tsx`              | Formue — tabbed by `kind`, stacked area charts       |
+| `/dashboard/sinking-funds`         | `sinking-funds/SinkingFundsPage.tsx` | Savings goals tracker (allocate, deposit, withdraw)  |
+| `/dashboard/sinking-funds/history` | `sinking-funds/HistoryPage.tsx`      | Global transaction log with filters                  |
+| `/dashboard/loans`                 | `loans/LoansPage.tsx`                | Debt paydown                                         |
+| `/dashboard/recap`                 | `recap/RecapPage.tsx`                | Cash-flow recap                                      |
+| `/dashboard/settings`              | `dashboard/SettingsPage.tsx`         | Dashboard name + theme toggle                        |
 
 Trailing underscore on a route filename segment (e.g. `budget_.yearly.tsx`) opts the route out of nesting under the same-named parent route. Without it TanStack nests the child and the parent must render an `<Outlet />`, which we don't want on flat dashboard pages.
 
