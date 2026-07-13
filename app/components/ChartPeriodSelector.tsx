@@ -96,9 +96,9 @@ export function ChartPeriodSelector({
             aria-pressed={period === option.value}
             onClick={() => {
               setPeriod(option.value);
-              onRangeChange(
-                option.value === "custom" ? { start, end } : rangeForPeriod(option.value),
-              );
+              if (option.value === "custom") {
+                onRangeChange({ start: start || null, end: end || null });
+              }
             }}
           >
             {option.label}
