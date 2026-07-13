@@ -311,26 +311,28 @@ function LoanHistoryModal({
               <TableCell className="text-right tabular-nums">
                 {formatNOK(snapshot.balance)}
               </TableCell>
-              <TableCell className="flex justify-end gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => onEdit(loan, snapshot)}
-                  aria-label="Endre saldo"
-                  title="Endre saldo"
-                >
-                  <Pencil />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="hover:text-destructive"
-                  onClick={() => onDelete(snapshot.id)}
-                  aria-label="Slett datapunkt"
-                  title="Slett datapunkt"
-                >
-                  <X />
-                </Button>
+              <TableCell>
+                <div className="flex justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => onEdit(loan, snapshot)}
+                    aria-label="Endre saldo"
+                    title="Endre saldo"
+                  >
+                    <Pencil />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="hover:text-destructive"
+                    onClick={() => onDelete(snapshot.id)}
+                    aria-label="Slett datapunkt"
+                    title="Slett datapunkt"
+                  >
+                    <X />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}

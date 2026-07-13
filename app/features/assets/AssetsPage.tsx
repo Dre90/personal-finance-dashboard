@@ -503,26 +503,28 @@ function AssetHistoryModal({
             <TableRow key={snapshot.id}>
               <TableCell>{snapshot.snapshotDate}</TableCell>
               <TableCell className="text-right tabular-nums">{formatNOK(snapshot.value)}</TableCell>
-              <TableCell className="flex justify-end gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => onEdit(asset, snapshot)}
-                  aria-label="Endre verdi"
-                  title="Endre verdi"
-                >
-                  <Pencil />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="hover:text-destructive"
-                  onClick={() => onDelete(snapshot.id)}
-                  aria-label="Slett datapunkt"
-                  title="Slett datapunkt"
-                >
-                  <X />
-                </Button>
+              <TableCell>
+                <div className="flex justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => onEdit(asset, snapshot)}
+                    aria-label="Endre verdi"
+                    title="Endre verdi"
+                  >
+                    <Pencil />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="hover:text-destructive"
+                    onClick={() => onDelete(snapshot.id)}
+                    aria-label="Slett datapunkt"
+                    title="Slett datapunkt"
+                  >
+                    <X />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}

@@ -59,9 +59,11 @@ async function syncLoanCurrentBalance(loanId: number) {
     .orderBy(desc(schema.loanSnapshots.snapshotDate))
     .limit(1);
 
+  if (!latestSnapshot) return;
+
   await db
     .update(schema.loans)
-    .set({ currentBalance: latestSnapshot?.balance ?? "0" })
+    .set({ currentBalance: latestSnapshot.balance })
     .where(eq(schema.loans.id, loanId));
 }
 
