@@ -197,6 +197,7 @@ export function AssetsPage() {
             <ChartPeriodSelector
               earliestDate={earliestSnapshotDate}
               onRangeChange={setChartDateRange}
+              range={chartDateRange}
               value={chartPeriod}
               onValueChange={setChartPeriod}
             />
@@ -263,6 +264,7 @@ export function AssetsPage() {
             <ChartPeriodSelector
               earliestDate={earliestSnapshotDate}
               onRangeChange={setChartDateRange}
+              range={chartDateRange}
               value={chartPeriod}
               onValueChange={setChartPeriod}
             />
@@ -295,6 +297,7 @@ export function AssetsPage() {
             <ChartPeriodSelector
               earliestDate={earliestSnapshotDate}
               onRangeChange={setChartDateRange}
+              range={chartDateRange}
               value={chartPeriod}
               onValueChange={setChartPeriod}
             />
