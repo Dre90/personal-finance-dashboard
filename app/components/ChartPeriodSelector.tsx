@@ -23,9 +23,14 @@ const PERIODS: ReadonlyArray<{ value: ChartPeriod; label: string }> = [
 ];
 
 function monthsAgoISO(months: number) {
-  const date = new Date();
-  date.setMonth(date.getMonth() - months);
-  return date.toISOString().slice(0, 10);
+  const now = new Date();
+  const targetMonth = now.getUTCMonth() - months;
+  const targetYear = now.getUTCFullYear() + Math.floor(targetMonth / 12);
+  const normalizedMonth = ((targetMonth % 12) + 12) % 12;
+  const lastDayOfTargetMonth = new Date(Date.UTC(targetYear, normalizedMonth + 1, 0)).getUTCDate();
+  const day = Math.min(now.getUTCDate(), lastDayOfTargetMonth);
+
+  return new Date(Date.UTC(targetYear, normalizedMonth, day)).toISOString().slice(0, 10);
 }
 
 function rangeForPeriod(period: Exclude<ChartPeriod, "custom">): ChartDateRange {
