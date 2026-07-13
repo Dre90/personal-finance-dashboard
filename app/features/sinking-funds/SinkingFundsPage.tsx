@@ -272,7 +272,10 @@ export function SinkingFundsPage() {
         onClose={() => setHistoryFor(null)}
         dashboardId={dashboardId}
         fund={historyFor ? (data.find((fund) => fund.id === historyFor.id) ?? historyFor) : null}
-        onEdit={(txn, fund) => setModal({ kind: "edit-txn", fund, txn })}
+        onEdit={(txn, fund) => {
+          setHistoryFor(null);
+          setModal({ kind: "edit-txn", fund, txn });
+        }}
         onDeleted={async () => {
           await afterMutation("Transaksjon slettet");
         }}

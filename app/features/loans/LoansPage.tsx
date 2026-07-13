@@ -124,7 +124,11 @@ export function LoansPage() {
         <StatCard label="Mnd. betaling" value={totalMonthly} />
       </div>
 
-      <ChartPeriodSelector earliestDate={earliestSnapshotDate} onRangeChange={setChartDateRange} />
+      <ChartPeriodSelector
+        earliestDate={earliestSnapshotDate}
+        onRangeChange={setChartDateRange}
+        range={chartDateRange}
+      />
 
       {data.loans.length === 0 ? (
         <Empty
@@ -266,7 +270,10 @@ export function LoansPage() {
         onClose={() => setHistoryFor(null)}
         loan={historyFor}
         snapshots={historyFor ? (data.snapshotsByLoan[historyFor.id] ?? []) : []}
-        onEdit={(loan, snapshot) => setEditingSnapshot({ loan, snapshot })}
+        onEdit={(loan, snapshot) => {
+          setHistoryFor(null);
+          setEditingSnapshot({ loan, snapshot });
+        }}
         onDelete={(id) => {
           if (confirm("Slette dette datapunktet?")) {
             void deleteSnapshotMutation.mutate(id);

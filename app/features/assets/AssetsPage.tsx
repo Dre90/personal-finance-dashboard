@@ -376,7 +376,10 @@ export function AssetsPage() {
         onClose={() => setHistoryFor(null)}
         asset={historyFor}
         snapshots={historyFor ? (data.snapshotsByAsset[historyFor.id] ?? []) : []}
-        onEdit={(asset, snapshot) => setEditingSnapshot({ asset, snapshot })}
+        onEdit={(asset, snapshot) => {
+          setHistoryFor(null);
+          setEditingSnapshot({ asset, snapshot });
+        }}
         onDelete={handleDeleteSnapshot}
       />
     </div>
