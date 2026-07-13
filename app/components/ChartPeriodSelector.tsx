@@ -36,7 +36,7 @@ function monthsAgoISO(months: number) {
 function rangeForPeriod(period: Exclude<ChartPeriod, "custom">): ChartDateRange {
   if (period === "all") return { start: null, end: null };
   if (period === "ytd") {
-    return { start: `${new Date().getFullYear()}-01-01`, end: todayISO() };
+    return { start: `${new Date().getUTCFullYear()}-01-01`, end: todayISO() };
   }
   return {
     start: monthsAgoISO(period === "1y" ? 12 : Number.parseInt(period, 10)),
@@ -58,18 +58,23 @@ export function filterByChartDateRange<T extends { snapshotDate: string }>(
 export function ChartPeriodSelector({
   earliestDate,
   onRangeChange,
+  range,
   value,
   onValueChange,
 }: {
   earliestDate?: string;
   onRangeChange: (range: ChartDateRange) => void;
+  range?: ChartDateRange;
   value?: ChartPeriod;
   onValueChange?: (period: ChartPeriod) => void;
 }) {
   const [uncontrolledPeriod, setUncontrolledPeriod] = React.useState<ChartPeriod>("ytd");
   const period = value ?? uncontrolledPeriod;
-  const [start, setStart] = React.useState(earliestDate ?? todayISO());
-  const [end, setEnd] = React.useState(todayISO());
+  const [uncontrolledRange, setUncontrolledRange] = React.useState<ChartDateRange>({
+    start: earliestDate ?? todayISO(),
+    end: todayISO(),
+  });
+  const currentRange = range ?? uncontrolledRange;
 
   React.useEffect(() => {
     if (period !== "custom") onRangeChange(rangeForPeriod(period));
@@ -80,13 +85,9 @@ export function ChartPeriodSelector({
     onValueChange?.(next);
   };
 
-  const setCustomStart = (next: string) => {
-    setStart(next);
-    onRangeChange({ start: next || null, end: end || null });
-  };
-  const setCustomEnd = (next: string) => {
-    setEnd(next);
-    onRangeChange({ start: start || null, end: next || null });
+  const setCustomRange = (next: ChartDateRange) => {
+    if (range === undefined) setUncontrolledRange(next);
+    onRangeChange(next);
   };
 
   return (
@@ -102,7 +103,7 @@ export function ChartPeriodSelector({
             onClick={() => {
               setPeriod(option.value);
               if (option.value === "custom") {
-                onRangeChange({ start: start || null, end: end || null });
+                setCustomRange(currentRange);
               }
             }}
           >
@@ -118,9 +119,11 @@ export function ChartPeriodSelector({
             <Input
               id="chart-period-start"
               type="date"
-              value={start}
-              max={end || undefined}
-              onChange={(event) => setCustomStart(event.target.value)}
+              value={currentRange.start ?? ""}
+              max={currentRange.end ?? undefined}
+              onChange={(event) =>
+                setCustomRange({ start: event.target.value || null, end: currentRange.end })
+              }
             />
           </Field>
           <Field>
@@ -128,10 +131,12 @@ export function ChartPeriodSelector({
             <Input
               id="chart-period-end"
               type="date"
-              value={end}
-              min={start || undefined}
+              value={currentRange.end ?? ""}
+              min={currentRange.start ?? undefined}
               max={todayISO()}
-              onChange={(event) => setCustomEnd(event.target.value)}
+              onChange={(event) =>
+                setCustomRange({ start: currentRange.start, end: event.target.value || null })
+              }
             />
           </Field>
         </FieldGroup>
