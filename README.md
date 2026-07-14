@@ -25,7 +25,16 @@ full layout.
 
 ## Features
 
-- **Budget** with monthly tracking and a yearly overview
+- **Zero-based budget** — build reusable templates with income and expense
+  groups, then create immutable budget periods from a template. Each period
+  tracks expected, actual, and remaining amounts per line item. A dedicated
+  purchase list records spending for consumption groups, and positive balances
+  can carry into the following period. Budget periods follow the configurable
+  payday (the 25th by default), rather than calendar months. A payday change
+  creates a bridging period, so historical periods remain unchanged.
+- **Budget templates and annual overview** — create, edit, and reorder recurring
+  income/expense plans from **Budget → Maler**, then analyse expected or actual
+  spending by group in the annual overview.
 - **Sinking funds** for savings goals, with a transaction log: split a salary
   lump sum across several funds in one action, register withdrawals, and browse
   the full deposit/withdrawal history per fund or globally
@@ -36,12 +45,21 @@ full layout.
 - **Loans** with balance paydown over time
 - **Light/dark theme** that can follow the system automatically (toggle in Settings)
 
+Destructive actions use a confirmation dialog. Deleting a dashboard is stricter:
+the user must explicitly type `SLETT`.
+
 ## Auth model
 
 No user accounts. When you create a dashboard you get a unique ID (UUID).
 **Keep it safe** — it is your only key to your data.
 
 ## Local development
+
+This project includes a [Dev Container](https://containers.dev/) for a
+reproducible Node.js and Netlify CLI environment. Install Docker Desktop with
+WSL2 integration and the VS Code Dev Containers extension, then run **Dev
+Containers: Reopen in Container** from the Command Palette. Dependencies and
+the Netlify CLI are installed automatically when the container is created.
 
 ```bash
 npm install
@@ -52,8 +70,13 @@ First time on a machine (or whenever the SSR log complains about `NETLIFY_DB_URL
 
 ```bash
 netlify database migrations apply   # apply pending migrations
+npm run db:generate                  # only after changing db/schema.ts
+npm run db:migrate                   # apply a newly generated migration locally
 npm run db:seed-from-prod           # optional: copy prod data into the local DB
 ```
+
+`netlify database connect --query "SELECT 1"` starts the local database process
+when the Vite/Netlify emulation cannot connect to it.
 
 `npm run check` runs `oxfmt` + `oxlint` + `tsc --noEmit` (use `check:fix` to
 auto-fix). See `AGENTS.md` for the full workflow and gotchas.

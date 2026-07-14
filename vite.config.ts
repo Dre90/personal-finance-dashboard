@@ -49,6 +49,7 @@ export default defineConfig({
     ],
   },
   server: {
+    host: process.env.DEV_SERVER_HOST === "0.0.0.0" ? "0.0.0.0" : "localhost",
     watch: {
       ignored: ["**/.netlify/**", "**/dist/**", "**/.vite/**"],
     },

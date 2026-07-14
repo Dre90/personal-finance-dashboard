@@ -19,9 +19,27 @@ export const dashboards = pgTable("dashboards", {
   id: uuid().primaryKey().defaultRandom(),
   name: text().notNull().default("Mitt dashboard"),
   currency: text().notNull().default("NOK"),
+  payday: integer().notNull().default(25),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const budgetPaydayRules = pgTable(
+  "budget_payday_rules",
+  {
+    id: serial().primaryKey(),
+    dashboardId: uuid("dashboard_id")
+      .notNull()
+      .references(() => dashboards.id, { onDelete: "cascade" }),
+    payday: integer().notNull(),
+    effectiveFrom: date("effective_from").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    unique("budget_payday_rules_dashboard_effective_unique").on(t.dashboardId, t.effectiveFrom),
+    index("budget_payday_rules_dashboard_effective_idx").on(t.dashboardId, t.effectiveFrom),
+  ],
+);
 
 // -- Categories (budget) ----------------------------------------------------
 
@@ -61,6 +79,127 @@ export const budgetEntries = pgTable(
   (t) => [
     unique("budget_entries_cat_month_unique").on(t.categoryId, t.yearMonth),
     index("budget_entries_dashboard_month_idx").on(t.dashboardId, t.yearMonth),
+  ],
+);
+
+// -- Zero-based budget ------------------------------------------------------
+// Templates describe recurring planned spending. A period gets its own snapshot
+// of this structure, so changing a template never mutates budget history.
+
+export const budgetTemplates = pgTable(
+  "budget_templates",
+  {
+    id: serial().primaryKey(),
+    dashboardId: uuid("dashboard_id")
+      .notNull()
+      .references(() => dashboards.id, { onDelete: "cascade" }),
+    name: text().notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("budget_templates_dashboard_idx").on(t.dashboardId)],
+);
+
+export const budgetTemplateGroups = pgTable(
+  "budget_template_groups",
+  {
+    id: serial().primaryKey(),
+    templateId: integer("template_id")
+      .notNull()
+      .references(() => budgetTemplates.id, { onDelete: "cascade" }),
+    name: text().notNull(),
+    kind: text().notNull(), // 'income' | 'expense'
+    isConsumption: boolean("is_consumption").notNull().default(false),
+    color: text().notNull().default("#6366f1"),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (t) => [index("budget_template_groups_template_idx").on(t.templateId)],
+);
+
+export const budgetTemplateItems = pgTable(
+  "budget_template_items",
+  {
+    id: serial().primaryKey(),
+    groupId: integer("group_id")
+      .notNull()
+      .references(() => budgetTemplateGroups.id, { onDelete: "cascade" }),
+    name: text().notNull(),
+    expected: numeric({ precision: 14, scale: 2 }).notNull().default("0"),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (t) => [index("budget_template_items_group_idx").on(t.groupId)],
+);
+
+export const budgetPeriods = pgTable(
+  "budget_periods",
+  {
+    id: serial().primaryKey(),
+    dashboardId: uuid("dashboard_id")
+      .notNull()
+      .references(() => dashboards.id, { onDelete: "cascade" }),
+    templateId: integer("template_id").references(() => budgetTemplates.id, {
+      onDelete: "set null",
+    }),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    unique("budget_periods_dashboard_start_unique").on(t.dashboardId, t.startDate),
+    index("budget_periods_dashboard_start_idx").on(t.dashboardId, t.startDate),
+  ],
+);
+
+export const budgetPeriodGroups = pgTable(
+  "budget_period_groups",
+  {
+    id: serial().primaryKey(),
+    periodId: integer("period_id")
+      .notNull()
+      .references(() => budgetPeriods.id, { onDelete: "cascade" }),
+    name: text().notNull(),
+    kind: text().notNull(), // 'income' | 'expense'
+    isConsumption: boolean("is_consumption").notNull().default(false),
+    color: text().notNull().default("#6366f1"),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (t) => [index("budget_period_groups_period_idx").on(t.periodId)],
+);
+
+export const budgetPeriodItems = pgTable(
+  "budget_period_items",
+  {
+    id: serial().primaryKey(),
+    groupId: integer("group_id")
+      .notNull()
+      .references(() => budgetPeriodGroups.id, { onDelete: "cascade" }),
+    name: text().notNull(),
+    expected: numeric({ precision: 14, scale: 2 }).notNull().default("0"),
+    actual: numeric({ precision: 14, scale: 2 }).notNull().default("0"),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (t) => [index("budget_period_items_group_idx").on(t.groupId)],
+);
+
+export const budgetPurchases = pgTable(
+  "budget_purchases",
+  {
+    id: serial().primaryKey(),
+    periodId: integer("period_id")
+      .notNull()
+      .references(() => budgetPeriods.id, { onDelete: "cascade" }),
+    itemId: integer("item_id")
+      .notNull()
+      .references(() => budgetPeriodItems.id, { onDelete: "cascade" }),
+    occurredAt: date("occurred_at").notNull(),
+    description: text().notNull(),
+    amount: numeric({ precision: 14, scale: 2 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("budget_purchases_period_date_idx").on(t.periodId, t.occurredAt),
+    index("budget_purchases_item_idx").on(t.itemId),
   ],
 );
 
@@ -197,9 +336,17 @@ export const loanSnapshots = pgTable(
 
 // Inferred types
 export type Dashboard = typeof dashboards.$inferSelect;
+export type BudgetPaydayRule = typeof budgetPaydayRules.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type BudgetEntry = typeof budgetEntries.$inferSelect;
+export type BudgetTemplate = typeof budgetTemplates.$inferSelect;
+export type BudgetTemplateGroup = typeof budgetTemplateGroups.$inferSelect;
+export type BudgetTemplateItem = typeof budgetTemplateItems.$inferSelect;
+export type BudgetPeriod = typeof budgetPeriods.$inferSelect;
+export type BudgetPeriodGroup = typeof budgetPeriodGroups.$inferSelect;
+export type BudgetPeriodItem = typeof budgetPeriodItems.$inferSelect;
+export type BudgetPurchase = typeof budgetPurchases.$inferSelect;
 export type SinkingFund = typeof sinkingFunds.$inferSelect;
 export type SinkingFundTransaction = typeof sinkingFundTransactions.$inferSelect;
 export type NewSinkingFundTransaction = typeof sinkingFundTransactions.$inferInsert;

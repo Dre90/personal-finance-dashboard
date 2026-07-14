@@ -243,6 +243,11 @@ async function insertDashboard(client, name, createdAt) {
     `INSERT INTO dashboards (id, name, created_at, updated_at) VALUES ($1, $2, $3, now())`,
     [id, name, createdAt],
   );
+  await client.query(
+    `INSERT INTO budget_payday_rules (dashboard_id, payday, effective_from)
+     VALUES ($1, 25, '0001-01-01')`,
+    [id],
+  );
   return id;
 }
 
@@ -272,6 +277,153 @@ async function insertBudgetEntries(client, dashboardId, categoryIds, months, amo
         [dashboardId, categoryIds[c.name], ymLabel, budgeted, actual],
       );
     }
+  }
+}
+
+function budgetPeriodDates(ym, payday = 25) {
+  return {
+    startDate: dateStr(ymAdd(ym.year, ym.month, payday === 1 ? 0 : -1), payday),
+    endDate:
+      payday === 1
+        ? dateStr(ym, new Date(Date.UTC(ym.year, ym.month, 0)).getUTCDate())
+        : dateStr(ym, payday - 1),
+  };
+}
+
+function zeroBasedBudgetGroups() {
+  const groups = [];
+  for (const [groupName, isConsumption] of [
+    ["Inntekt", false],
+    ["Faste utgifter", false],
+    ["Variable utgifter", true],
+    ["Sparing", false],
+  ]) {
+    const categories = CATEGORIES.filter((category) => category.groupName === groupName);
+    if (categories.length === 0) continue;
+    groups.push({
+      name: groupName,
+      kind: categories[0].kind,
+      isConsumption,
+      items: categories.map((category) => ({
+        name: category.name,
+        expected: Number(categoryAmounts(category.name, TODAY, 0, `mal:${category.name}`).budgeted),
+      })),
+    });
+  }
+
+  const expectedIncome = groups
+    .filter((group) => group.kind === "income")
+    .flatMap((group) => group.items)
+    .reduce((total, item) => total + item.expected, 0);
+  const expectedExpenses = groups
+    .filter((group) => group.kind === "expense")
+    .flatMap((group) => group.items)
+    .reduce((total, item) => total + item.expected, 0);
+  groups.push({
+    name: "Fordeling",
+    kind: "expense",
+    isConsumption: false,
+    items: [{ name: "Ekstra sparing", expected: round2(expectedIncome - expectedExpenses) }],
+  });
+  return groups;
+}
+
+async function insertZeroBasedBudget(client, dashboardId, months, dashboardKey) {
+  const groups = zeroBasedBudgetGroups();
+  const templateResult = await client.query(
+    `INSERT INTO budget_templates (dashboard_id, name, sort_order)
+     VALUES ($1, 'Hverdagsbudsjett', 0) RETURNING id`,
+    [dashboardId],
+  );
+  const templateId = templateResult.rows[0].id;
+
+  for (const [groupIndex, group] of groups.entries()) {
+    const groupResult = await client.query(
+      `INSERT INTO budget_template_groups
+         (template_id, name, kind, is_consumption, sort_order)
+       VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+      [templateId, group.name, group.kind, group.isConsumption, groupIndex],
+    );
+    group.templateGroupId = groupResult.rows[0].id;
+    for (const [itemIndex, item] of group.items.entries()) {
+      await client.query(
+        `INSERT INTO budget_template_items (group_id, name, expected, sort_order)
+         VALUES ($1,$2,$3,$4)`,
+        [group.templateGroupId, item.name, money(item.expected), itemIndex],
+      );
+    }
+  }
+
+  for (const [monthIndex, ym] of months.entries()) {
+    const { startDate, endDate } = budgetPeriodDates(ym);
+    const periodResult = await client.query(
+      `INSERT INTO budget_periods (dashboard_id, template_id, start_date, end_date)
+       VALUES ($1,$2,$3,$4) RETURNING id`,
+      [dashboardId, templateId, startDate, endDate],
+    );
+    const periodId = periodResult.rows[0].id;
+    const yearIndex = Math.floor(monthIndex / 12);
+    let distributionGroupId;
+    let distributionExpected = 0;
+
+    for (const [groupIndex, group] of groups.entries()) {
+      const periodGroupResult = await client.query(
+        `INSERT INTO budget_period_groups
+           (period_id, name, kind, is_consumption, sort_order)
+         VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+        [periodId, group.name, group.kind, group.isConsumption, groupIndex],
+      );
+      const periodGroupId = periodGroupResult.rows[0].id;
+
+      if (group.name === "Fordeling") {
+        distributionGroupId = periodGroupId;
+        distributionExpected = group.items[0].expected;
+        continue;
+      }
+
+      for (const [itemIndex, item] of group.items.entries()) {
+        const amount = categoryAmounts(
+          item.name,
+          ym,
+          yearIndex,
+          `${dashboardKey}:zero:${item.name}:${ymStr(ym)}`,
+        );
+        const actual = Number(amount.actual);
+        const itemResult = await client.query(
+          `INSERT INTO budget_period_items (group_id, name, expected, actual, sort_order)
+           VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+          [
+            periodGroupId,
+            item.name,
+            money(item.expected),
+            group.isConsumption ? "0.00" : money(actual),
+            itemIndex,
+          ],
+        );
+
+        if (group.isConsumption) {
+          const firstPurchase = round2(actual * 0.58);
+          const secondPurchase = round2(actual - firstPurchase);
+          for (const [day, value, description] of [
+            [4, firstPurchase, `${item.name} - første kjøp`],
+            [14, secondPurchase, `${item.name} - påfyll`],
+          ]) {
+            if (value <= 0) continue;
+            await client.query(
+              `INSERT INTO budget_purchases (period_id, item_id, occurred_at, description, amount)
+               VALUES ($1,$2,$3,$4,$5)`,
+              [periodId, itemResult.rows[0].id, dateStr(ym, day), description, money(value)],
+            );
+          }
+        }
+      }
+    }
+
+    await client.query(
+      `INSERT INTO budget_period_items (group_id, name, expected, actual, sort_order)
+       VALUES ($1, 'Ekstra sparing', $2, $3, 0)`,
+      [distributionGroupId, money(distributionExpected), money(distributionExpected)],
+    );
   }
 }
 
@@ -422,6 +574,7 @@ async function insertLoan(client, dashboardId, loan, months, dashboardKey, payof
 async function seedAlmostEmpty(client) {
   const dashboardId = await insertDashboard(client, "Demo – Nesten tomt", dateStr(TODAY, 1));
   const categoryIds = await insertCategories(client, dashboardId);
+  await insertZeroBasedBudget(client, dashboardId, [], "nesten-tomt");
   await insertSinkingFunds(client, dashboardId); // defaults only, no transactions
   await insertBudgetEntries(client, dashboardId, categoryIds, [TODAY], (name) =>
     almostNothingAmounts(name),
@@ -436,6 +589,7 @@ async function seedFewMonths(client) {
   const dashboardId = await insertDashboard(client, "Demo – Noen måneder", dateStr(start, 3));
 
   const categoryIds = await insertCategories(client, dashboardId);
+  await insertZeroBasedBudget(client, dashboardId, months, dashboardKey);
   await insertBudgetEntries(
     client,
     dashboardId,
@@ -468,6 +622,7 @@ async function seedYearsActive(client) {
   const dashboardId = await insertDashboard(client, "Demo – Flere år", dateStr(start, 15));
 
   const categoryIds = await insertCategories(client, dashboardId);
+  await insertZeroBasedBudget(client, dashboardId, months, dashboardKey);
   await insertBudgetEntries(
     client,
     dashboardId,

@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Wallet,
   CalendarRange,
+  Files,
   PiggyBank,
   TrendingUp,
   Landmark,
@@ -30,6 +31,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarProvider,
   SidebarTrigger,
 } from "~/components/ui/sidebar";
@@ -45,13 +49,19 @@ interface NavItem {
 const NAV: ReadonlyArray<NavItem> = [
   { to: "/dashboard", label: "Forside", icon: LayoutDashboard, exact: true },
   { to: "/dashboard/budget", label: "Budsjett", icon: Wallet, exact: true },
-  { to: "/dashboard/budget/yearly", label: "Årsoversikt", icon: CalendarRange },
   { to: "/dashboard/sinking-funds", label: "Sinking funds", icon: PiggyBank },
   { to: "/dashboard/assets", label: "Formue", icon: TrendingUp },
   { to: "/dashboard/loans", label: "Lån", icon: Landmark },
   { to: "/dashboard/recap", label: "Recap", icon: ChartColumnBig },
   { to: "/dashboard/settings", label: "Innstillinger", icon: Settings },
 ];
+
+const BUDGET_NAV: ReadonlyArray<NavItem> = [
+  { to: "/dashboard/budget/templates", label: "Maler", icon: Files },
+  { to: "/dashboard/budget/yearly", label: "Årsoversikt", icon: CalendarRange },
+];
+
+const PAGE_NAV = [...NAV, ...BUDGET_NAV];
 
 function matchesRoute(item: NavItem, pathname: string): boolean {
   if (item.exact) return pathname === item.to;
@@ -77,7 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 function CurrentPageTitle() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const current = [...NAV].reverse().find((n) => matchesRoute(n, pathname));
+  const current = [...PAGE_NAV].reverse().find((n) => matchesRoute(n, pathname));
   return <span className="text-sm font-medium">{current?.label ?? "Dashboard"}</span>;
 }
 
@@ -122,16 +132,36 @@ function AppSidebar() {
               {NAV.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <SidebarMenuItem key={item.to}>
-                    <SidebarMenuButton
-                      isActive={matchesRoute(item, pathname)}
-                      tooltip={item.label}
-                      render={<Link to={item.to} />}
-                    >
-                      <Icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <React.Fragment key={item.to}>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        isActive={
+                          item.to === "/dashboard/budget"
+                            ? pathname.startsWith(item.to)
+                            : matchesRoute(item, pathname)
+                        }
+                        tooltip={item.label}
+                        render={<Link to={item.to} />}
+                      >
+                        <Icon />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    {item.to === "/dashboard/budget" && (
+                      <SidebarMenuSub>
+                        {BUDGET_NAV.map((child) => (
+                          <SidebarMenuSubItem key={child.to}>
+                            <SidebarMenuSubButton
+                              isActive={matchesRoute(child, pathname)}
+                              render={<Link to={child.to} />}
+                            >
+                              {child.label}
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </SidebarMenu>

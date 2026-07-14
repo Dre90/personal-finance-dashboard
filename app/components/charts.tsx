@@ -77,6 +77,7 @@ export interface MoneyBarSeries {
   dataKey: string;
   name: string;
   color: string;
+  stackId?: string;
 }
 
 export function MoneyBarChart<T extends Record<string, unknown>>({
@@ -117,6 +118,7 @@ export function MoneyBarChart<T extends Record<string, unknown>>({
             dataKey={s.dataKey}
             name={s.name}
             fill={`var(--color-${s.dataKey})`}
+            stackId={s.stackId}
             radius={[4, 4, 0, 0]}
           />
         ))}

@@ -14,6 +14,7 @@ const nokFormatter = new Intl.NumberFormat("nb-NO", {
 const nokFormatterDecimals = new Intl.NumberFormat("nb-NO", {
   style: "currency",
   currency: "NOK",
+  minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
@@ -21,13 +22,30 @@ const numberFormatter = new Intl.NumberFormat("nb-NO", {
   maximumFractionDigits: 0,
 });
 
+const moneyInputFormatter = new Intl.NumberFormat("nb-NO", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 export function toNumber(value: string | number | null | undefined): number {
   if (value === null || value === undefined || value === "") return 0;
-  const n = typeof value === "number" ? value : Number(value);
+  const normalized =
+    typeof value === "number"
+      ? value
+      : value.includes(",")
+        ? value.replace(/[\s.]/g, "").replace(",", ".")
+        : /^-?(?:\d{1,3}\.)+\d{3}$/.test(value)
+          ? value.replace(/[\s.]/g, "")
+          : value.replace(/\s/g, "");
+  const n = typeof normalized === "number" ? normalized : Number(normalized);
   return Number.isFinite(n) ? n : 0;
 }
 
-export function formatNOK(value: string | number | null | undefined, decimals = false): string {
+export function formatMoneyInput(value: string | number | null | undefined): string {
+  return moneyInputFormatter.format(toNumber(value));
+}
+
+export function formatNOK(value: string | number | null | undefined, decimals = true): string {
   const n = toNumber(value);
   return decimals ? nokFormatterDecimals.format(n) : nokFormatter.format(n);
 }

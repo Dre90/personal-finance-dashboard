@@ -5,11 +5,16 @@ import { getDashboard } from "~/features/dashboard/server";
 import { clearStoredDashboardId, getStoredDashboardId } from "./auth";
 import { clearQueryCache, useQuery } from "./query";
 
+export type DashboardWithBudgetPeriodState = Dashboard & {
+  hasBudgetPeriods: boolean;
+  lastBudgetPeriodEndDate: string | null;
+};
+
 export interface DashboardContextValue {
   /** Stable dashboard id, guaranteed non-null inside the dashboard layout. */
   id: string;
-  dashboard: Dashboard;
-  refetch: () => Promise<Dashboard | null | undefined>;
+  dashboard: DashboardWithBudgetPeriodState;
+  refetch: () => Promise<DashboardWithBudgetPeriodState | null | undefined>;
 }
 
 const DashboardContext = React.createContext<DashboardContextValue | null>(null);

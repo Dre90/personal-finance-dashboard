@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Pencil, Plus, X } from "lucide-react";
+import { DeleteConfirmationDialog } from "~/components/DeleteConfirmationDialog";
 import {
   Empty,
   LoadingPlaceholder,
@@ -74,6 +75,7 @@ export function AssetsPage() {
     asset: Asset;
     snapshot: AssetSnapshot;
   } | null>(null);
+  const [snapshotToDelete, setSnapshotToDelete] = React.useState<number | null>(null);
   const [chartDateRange, setChartDateRange] = React.useState<ChartDateRange>({
     start: null,
     end: null,
@@ -138,9 +140,7 @@ export function AssetsPage() {
     setOpenAsset(true);
   };
   const handleDeleteSnapshot = (id: number) => {
-    if (confirm("Slette dette datapunktet?")) {
-      void deleteSnapshotMutation.mutate(id);
-    }
+    setSnapshotToDelete(id);
   };
   const openNew = (kind: AssetKind) => {
     setEditing(null);
@@ -381,6 +381,21 @@ export function AssetsPage() {
           setEditingSnapshot({ asset, snapshot });
         }}
         onDelete={handleDeleteSnapshot}
+      />
+      <DeleteConfirmationDialog
+        open={snapshotToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setSnapshotToDelete(null);
+        }}
+        title="Slette datapunktet?"
+        description="Dette datapunktet fjernes fra verdiutviklingen. Handlingen kan ikke angres."
+        busy={deleteSnapshotMutation.loading}
+        onConfirm={() => {
+          if (snapshotToDelete === null) return;
+          deleteSnapshotMutation.mutate(snapshotToDelete);
+          setSnapshotToDelete(null);
+        }}
+        confirmLabel="Slett datapunkt"
       />
     </div>
   );
@@ -750,6 +765,7 @@ function AssetModal({
     { resetWhen: open ? (asset ?? `new-${defaultKind}`) : null },
   );
   const toast = useToast();
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
 
   const saveMutation = useMutation({
     fn: async () => {
@@ -800,11 +816,7 @@ function AssetModal({
               variant="destructive"
               className="mr-auto"
               disabled={busy}
-              onClick={() => {
-                if (confirm(`Slette "${asset.name}" og all historikk?`)) {
-                  void deleteMutation.mutate(undefined);
-                }
-              }}
+              onClick={() => setDeleteOpen(true)}
             >
               Slett
             </Button>
@@ -868,6 +880,20 @@ function AssetModal({
           <Input id="asset-notes" value={form.values.notes} onChange={form.setField("notes")} />
         </Field>
       </FieldGroup>
+      <DeleteConfirmationDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Slette eiendelen?"
+        description={
+          <>Eiendelen «{asset?.name}» og all historikk blir slettet. Dette kan ikke angres.</>
+        }
+        busy={deleteMutation.loading}
+        onConfirm={() => {
+          deleteMutation.mutate(undefined);
+          setDeleteOpen(false);
+        }}
+        confirmLabel="Slett eiendel"
+      />
     </Modal>
   );
 }
