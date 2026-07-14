@@ -28,7 +28,15 @@ types.setTypeParser(16, (v) => v); // bool -> 't' / 'f' text (valid bool input)
 // Insert order is FK-safe (parents before children). TRUNCATE uses CASCADE.
 const ORDER = [
   "dashboards",
+  "budget_payday_rules",
   "categories",
+  "budget_templates",
+  "budget_template_groups",
+  "budget_template_items",
+  "budget_periods",
+  "budget_period_groups",
+  "budget_period_items",
+  "budget_purchases",
   "budget_entries",
   "sinking_funds",
   "sinking_fund_transactions",
@@ -40,8 +48,16 @@ const ORDER = [
 // Tables with a serial `id` whose sequence must be advanced after copy.
 // (dashboards uses a uuid default, so it has no sequence.)
 const SERIAL = new Set([
+  "budget_payday_rules",
   "categories",
   "budget_entries",
+  "budget_templates",
+  "budget_template_groups",
+  "budget_template_items",
+  "budget_periods",
+  "budget_period_groups",
+  "budget_period_items",
+  "budget_purchases",
   "sinking_funds",
   "sinking_fund_transactions",
   "assets",

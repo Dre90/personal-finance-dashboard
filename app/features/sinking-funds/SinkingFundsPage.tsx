@@ -11,6 +11,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
+import { DeleteConfirmationDialog } from "~/components/DeleteConfirmationDialog";
 import {
   Empty,
   LoadingPlaceholder,
@@ -793,6 +794,8 @@ function FundHistoryModal({
   onDeleted: () => void | Promise<void>;
 }) {
   const toast = useToast();
+  const [transactionToDelete, setTransactionToDelete] =
+    React.useState<SinkingFundTransaction | null>(null);
   const { data, isInitialLoading } = useQuery({
     key: ["sinking-fund-txns", dashboardId, fund?.id ?? "none"],
     fn: async () => {
@@ -834,15 +837,26 @@ function FundHistoryModal({
               key={t.id}
               txn={t}
               onEdit={() => onEdit(t, fund)}
-              onDelete={() => {
-                if (confirm("Slette denne transaksjonen?")) {
-                  void deleteMutation.mutate(t.id);
-                }
-              }}
+              onDelete={() => setTransactionToDelete(t)}
             />
           ))}
         </ul>
       )}
+      <DeleteConfirmationDialog
+        open={transactionToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setTransactionToDelete(null);
+        }}
+        title="Slette transaksjonen?"
+        description="Transaksjonen fjernes fra fondets historikk, og saldoen beregnes på nytt. Dette kan ikke angres."
+        busy={deleteMutation.loading}
+        onConfirm={() => {
+          if (!transactionToDelete) return;
+          deleteMutation.mutate(transactionToDelete.id);
+          setTransactionToDelete(null);
+        }}
+        confirmLabel="Slett transaksjon"
+      />
     </HistoryModal>
   );
 }
@@ -936,6 +950,7 @@ function FundModal({
     { resetWhen: open ? (fund ?? "new") : null },
   );
   const toast = useToast();
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
 
   const saveMutation = useMutation({
     fn: async () => {
@@ -981,9 +996,7 @@ function FundModal({
               variant="destructive"
               className="mr-auto"
               disabled={busy}
-              onClick={() => {
-                if (confirm(`Slette "${fund.name}"?`)) void deleteMutation.mutate(undefined);
-              }}
+              onClick={() => setDeleteOpen(true)}
             >
               Slett
             </Button>
@@ -1050,6 +1063,22 @@ function FundModal({
           <Input id="fund-notes" value={form.values.notes} onChange={form.setField("notes")} />
         </Field>
       </div>
+      <DeleteConfirmationDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Slette fondet?"
+        description={
+          <>
+            Fondet «{fund?.name}» og alle transaksjonene i det blir slettet. Dette kan ikke angres.
+          </>
+        }
+        busy={deleteMutation.loading}
+        onConfirm={() => {
+          deleteMutation.mutate(undefined);
+          setDeleteOpen(false);
+        }}
+        confirmLabel="Slett fond"
+      />
     </Modal>
   );
 }

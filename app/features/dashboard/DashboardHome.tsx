@@ -8,7 +8,7 @@ import { getDashboardSummary } from "~/features/dashboard/server";
 import { useDashboard } from "../../lib/dashboard-context";
 import { useQuery } from "../../lib/query";
 import { ASSET_KIND_COLOR, FLOW_COLORS } from "../../lib/colors";
-import { formatNOK, monthLabel } from "../../lib/utils";
+import { formatNOK } from "../../lib/utils";
 
 export function DashboardHome() {
   const { id } = useDashboard();
@@ -79,7 +79,7 @@ export function DashboardHome() {
     <div className="space-y-6">
       <PageHeader
         title="Oversikt"
-        subtitle={`Stilling per i dag · ${monthLabel(data.currentMonth)}`}
+        subtitle={`Stilling per i dag${data.currentMonth ? ` · ${periodLabel(data.currentMonth)}` : ""}`}
       />
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -102,7 +102,9 @@ export function DashboardHome() {
           <CardHeader>
             <CardTitle>Kontantstrøm</CardTitle>
             <CardAction>
-              <Badge variant="secondary">{monthLabel(data.currentMonth)} vs forrige måned</Badge>
+              <Badge variant="secondary">
+                {data.currentMonth ? periodLabel(data.currentMonth) : "Ingen periode"} vs forrige
+              </Badge>
             </CardAction>
           </CardHeader>
           <CardContent>
@@ -226,6 +228,12 @@ export function DashboardHome() {
         </Card>
       </div>
     </div>
+  );
+}
+
+function periodLabel(date: string) {
+  return new Intl.DateTimeFormat("nb-NO", { month: "long", year: "numeric" }).format(
+    new Date(`${date}T00:00:00`),
   );
 }
 

@@ -4,13 +4,14 @@ Instructions for AI coding agents working in this repo. Follow these or you will
 
 ## Project at a glance
 
-Personal finance dashboard (Norwegian) — budget, sinking funds, assets, loans, recap. Anonymous: each dashboard is a UUID the user stores; no accounts, no email.
+Personal finance dashboard (Norwegian) — zero-based budget, sinking funds, assets, loans, recap. Anonymous: each dashboard is a UUID the user stores; no accounts, no email.
 
 - **Framework:** TanStack Start (React 19, SSR) on Netlify Functions
 - **Styling:** Tailwind CSS 4 (via `@tailwindcss/vite`).
 - **UI components:** shadcn/ui (the **base-ui** variant, not Radix — components use the `render` prop, NOT `asChild`). Preset `base-mira`, green theme. Primitives live in `app/components/ui/` (added via `npx shadcn@latest add`); toasts use `sonner`. The shadcn agent skill lives in `.agents/skills/shadcn/`.
 - **Theming:** Light/dark/auto. The resolved theme is applied as the `.dark` **class** on `<html>` (shadcn convention — bare `:root` is light, `.dark` is dark), set before first paint by `THEME_INIT_SCRIPT` and kept in sync by `app/lib/theme-context.tsx`; toggle lives in Settings. Colour tokens are shadcn's (`--background`, `--primary`, …) in `app/styles/app.css`; the app adds a `--app-gradient` page background + `--pos`/`--warn` finance colours (backing `text-success`/`text-warning`). Charts read hex palettes from `app/lib/colors.ts`.
 - **Data:** Netlify Database (Postgres) + Drizzle ORM
+- **Forms and destructive actions:** Use Zod-validated server functions. New complex forms use `@tanstack/react-form`; retain server validation as the safety net. Use the shared `DeleteConfirmationDialog` for ordinary deletion; dashboard deletion intentionally requires typing `SLETT`.
 - **Build/test/lint:** Plain Vite 7 + `@netlify/vite-plugin-tanstack-start`. Tooling: standalone `oxlint`, `oxfmt`, `tsc --noEmit`. (We previously tried Vite+ aka `vp` — it caused persistent `504 Outdated Optimize Dep` / `EPERM` issues on Windows. Do NOT migrate back.)
 - **Deploy:** Netlify (auto from `main`) — site id `2e0830d2-6e2f-47fd-b7d0-f111d5985ab8`, live at https://personal-finance-dashboard-dre90.netlify.app
 - **Language in UI strings:** Norwegian (Bokmål). Be careful with encoding (see below).
@@ -26,16 +27,17 @@ Personal finance dashboard (Norwegian) — budget, sinking funds, assets, loans,
    - **Bootstrap local Postgres** (needed once per machine, or whenever `NETLIFY_DB_URL` errors appear in SSR logs): `netlify database connect --query "SELECT 1"`. The Vite plugin emulates routing but doesn't actually spin up the local Postgres process — this command does.
    - Reset local DB: `netlify database reset`.
 3. Make changes. Test in the browser locally.
-4. `npm run check:fix` — `oxfmt` + `oxlint --fix` + `tsc --noEmit`. Must be clean.
-5. `npm run build` — must pass and produce `.netlify/v1/functions/server.mjs` + `dist/client/assets/`.
-6. **Run `npm run check:fix` again immediately before every `git commit`** — even if
+4. If `db/schema.ts` changed, run `npm run db:generate`, inspect the generated migration, then run `npm run db:migrate` locally before testing. `netlify database migrations apply` applies pending migrations through the Netlify CLI.
+5. `npm run check:fix` — `oxfmt` + `oxlint --fix` + `tsc --noEmit`. Must be clean.
+6. `npm run build` — must pass and produce `.netlify/v1/functions/server.mjs` + `dist/client/assets/`.
+7. **Run `npm run check:fix` again immediately before every `git commit`** — even if
    you already ran it in step 4. Editors/format-on-save can reformat files after
    that point (e.g. right before you stage them), leaving an uncommitted diff. Only
    `git add` + `git commit` once `git status` is clean of stray formatting changes.
-7. Commit with the `Co-authored-by` trailer for the agent making the commit — Copilot uses `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`, Claude uses `Co-Authored-By: Claude <noreply@anthropic.com>`.
-8. Push the branch and open a PR via `gh pr create` (do NOT merge to main without testing).
-9. After merging to `main`, Netlify auto-deploys production.
-10. Verify deploy via `netlify api listSiteDeploys --data '{"site_id":"2e0830d2-6e2f-47fd-b7d0-f111d5985ab8"}'`.
+8. Commit with the `Co-authored-by` trailer for the agent making the commit — Copilot uses `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`, Claude uses `Co-Authored-By: Claude <noreply@anthropic.com>`. Model upgrades (including GPT-5.6 Terra) do not change the Copilot attribution trailer.
+9. Push the branch and open a PR via `gh pr create` (do NOT merge to main without testing).
+10. After merging to `main`, Netlify auto-deploys production.
+11. Verify deploy via `netlify api listSiteDeploys --data '{"site_id":"2e0830d2-6e2f-47fd-b7d0-f111d5985ab8"}'`.
 
 **Netlify build credits are scarce.** PR/branch deploys are intentionally disabled (`allowed_branches: ["main"]`, `skip_prs: true`) — only `main` builds. Test everything locally before merging.
 
@@ -94,7 +96,7 @@ app/
     ui/             shadcn/ui primitives (button, card, dialog, table, chart, sidebar, sonner, …)
   features/         Feature code — routes are thin, features hold the real work
     dashboard/      DashboardHome, SettingsPage, server.ts (identity + summary + export)
-    budget/         BudgetPage, YearlyBudgetPage, server.ts (categories + budget entries)
+    budget/         BudgetPage, TemplatesPage, YearlyBudgetPage, server.ts (zero-based templates, periods, purchases)
     sinking-funds/  SinkingFundsPage, HistoryPage, server.ts (funds + transactions)
     assets/         AssetsPage, stacked-series.ts, server.ts
     loans/          LoansPage, server.ts
@@ -112,9 +114,11 @@ codex/skills/       Netlify-specific reference docs (see codex/AGENTS.md)
 
 ## Domain model (db/schema.ts)
 
-- **`dashboards`** — UUID, name, currency. The only "identity" in the app; everything cascades from here.
-- **`categories`** — budget line items. `kind: 'income' | 'expense'`, grouped by `groupName`, ordered by `sortOrder`, soft-deletable via `archived`.
-- **`budget_entries`** — one row per `(category, year_month)` with `budgeted` + `actual` (numeric 14/2) and optional `note`. Unique on `(categoryId, yearMonth)`.
+- **`dashboards`** — UUID, name, currency, and `payday` (1–28; default 25). The only "identity" in the app; everything cascades from here. `payday` defines the start/end dates for newly created budget periods.
+- **`budget_templates`** — reusable zero-based budget plans. `budget_template_groups` and `budget_template_items` hold their ordered income/expense structure and expected amounts. Expense groups can have `isConsumption: true`.
+- **`budget_periods`** — immutable instances of templates, with a `startDate` and `endDate` calculated from `payday`. `budget_period_groups` and `budget_period_items` are period-local snapshots: later template changes must never mutate history.
+- **`budget_purchases`** — dated purchases assigned to an item in a consumption group. They are the source of the item's actual amount; consumption actuals must not be edited directly.
+- **`categories`** and **`budget_entries`** — legacy category/month tables retained for historical compatibility. New budget work uses the zero-based tables above.
 - **`sinking_funds`** — named savings goals: `target`, `currentAmount`, `monthlyContribution`, `color`, `notes`, `sortOrder`. `currentAmount` is a denormalised cache of `sinking_fund_transactions` (kept in sync server-side via `recomputeSinkingFundBalance`).
 - **`sinking_fund_transactions`** — append-only log of deposits, withdrawals, adjustments, and one-time `opening` rows. `amount` is signed (`numeric 14/2`). `allocationGroupId` (UUID) ties together rows produced by one lump-sum distribution. Source of truth for fund balances.
 - **`assets` + `asset_snapshots`** — `kind: 'ask' | 'pension' | 'cash' | 'other'`. Snapshots are unique per `(assetId, snapshotDate)` and drive the time-series charts.
@@ -130,8 +134,9 @@ actual page component (and its colocated modals/helpers) lives in the feature.
 | Route                              | Component (in `app/features/`)       | Purpose                                              |
 | ---------------------------------- | ------------------------------------ | ---------------------------------------------------- |
 | `/dashboard/`                      | `dashboard/DashboardHome.tsx`        | Recap home: net worth, cash flow, asset/debt summary |
-| `/dashboard/budget`                | `budget/BudgetPage.tsx`              | Monthly budget editor, categories grouped            |
-| `/dashboard/budget/yearly`         | `budget/YearlyBudgetPage.tsx`        | Yearly aggregation                                   |
+| `/dashboard/budget`                | `budget/BudgetPage.tsx`              | Zero-based budget period, purchases, expected/actual |
+| `/dashboard/budget/templates`      | `budget/TemplatesPage.tsx`           | Reusable template editor                             |
+| `/dashboard/budget/yearly`         | `budget/YearlyBudgetPage.tsx`        | Annual spending by period and expense group          |
 | `/dashboard/assets`                | `assets/AssetsPage.tsx`              | Formue — tabbed by `kind`, stacked area charts       |
 | `/dashboard/sinking-funds`         | `sinking-funds/SinkingFundsPage.tsx` | Savings goals tracker (allocate, deposit, withdraw)  |
 | `/dashboard/sinking-funds/history` | `sinking-funds/HistoryPage.tsx`      | Global transaction log with filters                  |
@@ -142,6 +147,8 @@ actual page component (and its colocated modals/helpers) lives in the feature.
 Trailing underscore on a route filename segment (e.g. `budget_.yearly.tsx`) opts the route out of nesting under the same-named parent route. Without it TanStack nests the child and the parent must render an `<Outlet />`, which we don't want on flat dashboard pages.
 
 All server-side data ops live in `app/features/<feature>/server.ts` (Zod-validated `createServerFn` handlers). Shared Zod validators are in `app/server/_helpers.ts`; shared server-only db helpers (that must not leak into the client bundle) in `app/server/_db.ts`. The landing/auth page and root layout stay in `app/routes/` (`index.tsx`, `__root.tsx`, `dashboard.tsx`).
+
+For non-trivial client forms, follow the established `@tanstack/react-form` + Zod pattern in `budget/TemplatesPage.tsx`: show Norwegian field feedback, but always validate and normalize values again server-side. Do not send empty strings to numeric database columns; `numericInput()` normalizes an empty money value to `"0"`.
 
 ## When in doubt
 

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Pencil, Plus, X } from "lucide-react";
+import { DeleteConfirmationDialog } from "~/components/DeleteConfirmationDialog";
 import { Empty, LoadingPlaceholder, Modal, PageHeader, StatCard } from "../../components/ui";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -48,6 +49,7 @@ export function LoansPage() {
     loan: Loan;
     snapshot: LoanSnapshot;
   } | null>(null);
+  const [snapshotToDelete, setSnapshotToDelete] = React.useState<number | null>(null);
   const [chartDateRange, setChartDateRange] = React.useState<ChartDateRange>({
     start: null,
     end: null,
@@ -275,10 +277,23 @@ export function LoansPage() {
           setEditingSnapshot({ loan, snapshot });
         }}
         onDelete={(id) => {
-          if (confirm("Slette dette datapunktet?")) {
-            void deleteSnapshotMutation.mutate(id);
-          }
+          setSnapshotToDelete(id);
         }}
+      />
+      <DeleteConfirmationDialog
+        open={snapshotToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setSnapshotToDelete(null);
+        }}
+        title="Slette datapunktet?"
+        description="Dette datapunktet fjernes fra lånehistorikken. Handlingen kan ikke angres."
+        busy={deleteSnapshotMutation.loading}
+        onConfirm={() => {
+          if (snapshotToDelete === null) return;
+          deleteSnapshotMutation.mutate(snapshotToDelete);
+          setSnapshotToDelete(null);
+        }}
+        confirmLabel="Slett datapunkt"
       />
     </div>
   );
@@ -374,6 +389,7 @@ function LoanModal({
     { resetWhen: open ? (loan ?? "new") : null },
   );
   const toast = useToast();
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
 
   const saveMutation = useMutation({
     fn: async () => {
@@ -420,11 +436,7 @@ function LoanModal({
               variant="destructive"
               className="mr-auto"
               disabled={busy}
-              onClick={() => {
-                if (confirm(`Slette lånet "${loan.name}"?`)) {
-                  void deleteMutation.mutate(undefined);
-                }
-              }}
+              onClick={() => setDeleteOpen(true)}
             >
               Slett
             </Button>
@@ -497,6 +509,20 @@ function LoanModal({
           <Input id="loan-notes" value={form.values.notes} onChange={form.setField("notes")} />
         </Field>
       </FieldGroup>
+      <DeleteConfirmationDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Slette lånet?"
+        description={
+          <>Lånet «{loan?.name}» og hele lånehistorikken blir slettet. Dette kan ikke angres.</>
+        }
+        busy={deleteMutation.loading}
+        onConfirm={() => {
+          deleteMutation.mutate(undefined);
+          setDeleteOpen(false);
+        }}
+        confirmLabel="Slett lån"
+      />
     </Modal>
   );
 }

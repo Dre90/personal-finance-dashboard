@@ -1,0 +1,28 @@
+{
+  "name": "Personal Finance Dashboard",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:dev-24-bookworm",
+  "remoteUser": "node",
+  "forwardPorts": [5173],
+  "portsAttributes": {
+    "5173": {
+      "label": "TanStack Start",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "containerEnv": {
+    "DEV_SERVER_HOST": "0.0.0.0",
+    "NETLIFY_CLI_TELEMETRY_DISABLED": "true",
+    "NODE_OPTIONS": "--dns-result-order=ipv4first"
+  },
+  "postCreateCommand": "npm install && npm install --global netlify-cli@26.2.0",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bradlc.vscode-tailwindcss",
+        "ms-azuretools.vscode-docker",
+        "oxc.oxc-vscode",
+        "codeandstuff.package-json-upgrade"
+      ]
+    }
+  }
+}

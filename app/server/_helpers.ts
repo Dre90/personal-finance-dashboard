@@ -3,6 +3,12 @@ import { z } from "zod";
 /** UUID validator used by every server function that takes a dashboardId. */
 export const uuidSchema = z.string().uuid();
 
+function normalizeNumericString(value: string): string {
+  if (value.includes(",")) return value.replace(/[\s.]/g, "").replace(",", ".");
+  if (/^-?(?:\d{1,3}\.)+\d{3}$/.test(value)) return value.replace(/[\s.]/g, "");
+  return value.replace(/\s/g, "");
+}
+
 /**
  * Validator for a "money-like" input: the client can send either a string or a number,
  * but the database expects a numeric column stored as a string.
@@ -12,7 +18,16 @@ export const uuidSchema = z.string().uuid();
  *
  * The transform happens at parse time so handlers receive strings ready for drizzle.
  */
-export const numericInput = () => z.union([z.string(), z.number()]).transform((v) => String(v));
+export const numericInput = () =>
+  z
+    .union([z.string(), z.number()])
+    .transform((value) => {
+      if (typeof value === "number") return String(value);
+      const trimmed = value.trim();
+      if (!trimmed) return "0";
+      return normalizeNumericString(trimmed);
+    })
+    .refine((value) => Number.isFinite(Number(value)), "Forventet et gyldig beløp");
 
 /** Date input as YYYY-MM-DD string. */
 export const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Forventet YYYY-MM-DD");

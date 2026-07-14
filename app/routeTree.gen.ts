@@ -20,6 +20,7 @@ import { Route as DashboardBudgetRouteImport } from './routes/dashboard/budget'
 import { Route as DashboardAssetsRouteImport } from './routes/dashboard/assets'
 import { Route as DashboardSinkingFundsHistoryRouteImport } from './routes/dashboard/sinking-funds_.history'
 import { Route as DashboardBudgetYearlyRouteImport } from './routes/dashboard/budget_.yearly'
+import { Route as DashboardBudgetTemplatesRouteImport } from './routes/dashboard/budget_.templates'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -77,6 +78,12 @@ const DashboardBudgetYearlyRoute = DashboardBudgetYearlyRouteImport.update({
   path: '/budget/yearly',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardBudgetTemplatesRoute =
+  DashboardBudgetTemplatesRouteImport.update({
+    id: '/budget_/templates',
+    path: '/budget/templates',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/sinking-funds': typeof DashboardSinkingFundsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/budget/templates': typeof DashboardBudgetTemplatesRoute
   '/dashboard/budget/yearly': typeof DashboardBudgetYearlyRoute
   '/dashboard/sinking-funds/history': typeof DashboardSinkingFundsHistoryRoute
 }
@@ -100,6 +108,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/sinking-funds': typeof DashboardSinkingFundsRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/budget/templates': typeof DashboardBudgetTemplatesRoute
   '/dashboard/budget/yearly': typeof DashboardBudgetYearlyRoute
   '/dashboard/sinking-funds/history': typeof DashboardSinkingFundsHistoryRoute
 }
@@ -114,6 +123,7 @@ export interface FileRoutesById {
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/sinking-funds': typeof DashboardSinkingFundsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/budget_/templates': typeof DashboardBudgetTemplatesRoute
   '/dashboard/budget_/yearly': typeof DashboardBudgetYearlyRoute
   '/dashboard/sinking-funds_/history': typeof DashboardSinkingFundsHistoryRoute
 }
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/dashboard/sinking-funds'
     | '/dashboard/'
+    | '/dashboard/budget/templates'
     | '/dashboard/budget/yearly'
     | '/dashboard/sinking-funds/history'
   fileRoutesByTo: FileRoutesByTo
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/dashboard/sinking-funds'
     | '/dashboard'
+    | '/dashboard/budget/templates'
     | '/dashboard/budget/yearly'
     | '/dashboard/sinking-funds/history'
   id:
@@ -154,6 +166,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/dashboard/sinking-funds'
     | '/dashboard/'
+    | '/dashboard/budget_/templates'
     | '/dashboard/budget_/yearly'
     | '/dashboard/sinking-funds_/history'
   fileRoutesById: FileRoutesById
@@ -242,6 +255,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBudgetYearlyRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/budget_/templates': {
+      id: '/dashboard/budget_/templates'
+      path: '/budget/templates'
+      fullPath: '/dashboard/budget/templates'
+      preLoaderRoute: typeof DashboardBudgetTemplatesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
   }
 }
 
@@ -253,6 +273,7 @@ interface DashboardRouteChildren {
   DashboardSettingsRoute: typeof DashboardSettingsRoute
   DashboardSinkingFundsRoute: typeof DashboardSinkingFundsRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardBudgetTemplatesRoute: typeof DashboardBudgetTemplatesRoute
   DashboardBudgetYearlyRoute: typeof DashboardBudgetYearlyRoute
   DashboardSinkingFundsHistoryRoute: typeof DashboardSinkingFundsHistoryRoute
 }
@@ -265,6 +286,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardSettingsRoute: DashboardSettingsRoute,
   DashboardSinkingFundsRoute: DashboardSinkingFundsRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardBudgetTemplatesRoute: DashboardBudgetTemplatesRoute,
   DashboardBudgetYearlyRoute: DashboardBudgetYearlyRoute,
   DashboardSinkingFundsHistoryRoute: DashboardSinkingFundsHistoryRoute,
 }
