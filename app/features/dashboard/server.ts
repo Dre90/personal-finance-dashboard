@@ -3,19 +3,8 @@ import { and, asc, desc, eq, gte, inArray, lte } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "../../../db";
 import { DEFAULT_CATEGORIES, DEFAULT_SINKING_FUNDS } from "~/lib/defaults";
+import { dayAfter, dayBefore, formatISODate } from "~/lib/utils";
 import { isoDateSchema, safeHandler, uuidSchema } from "~/server/_helpers";
-
-function dayAfter(date: string): string {
-  const value = new Date(`${date}T00:00:00.000Z`);
-  value.setUTCDate(value.getUTCDate() + 1);
-  return value.toISOString().slice(0, 10);
-}
-
-function dayBefore(date: string): string {
-  const value = new Date(`${date}T00:00:00.000Z`);
-  value.setUTCDate(value.getUTCDate() - 1);
-  return value.toISOString().slice(0, 10);
-}
 
 export const createDashboard = createServerFn({ method: "POST" })
   .validator((data: unknown) =>
@@ -23,40 +12,42 @@ export const createDashboard = createServerFn({ method: "POST" })
   )
   .handler(
     safeHandler(async ({ data }) => {
-      const [dash] = await db
-        .insert(schema.dashboards)
-        .values({ name: data.name ?? "Mitt dashboard" })
-        .returning();
-      if (!dash) throw new Error("Klarte ikke opprette dashboard");
+      return db.transaction(async (tx) => {
+        const [dash] = await tx
+          .insert(schema.dashboards)
+          .values({ name: data.name ?? "Mitt dashboard" })
+          .returning();
+        if (!dash) throw new Error("Klarte ikke opprette dashboard");
 
-      await db.insert(schema.budgetPaydayRules).values({
-        dashboardId: dash.id,
-        payday: dash.payday,
-        effectiveFrom: "0001-01-01",
+        await tx.insert(schema.budgetPaydayRules).values({
+          dashboardId: dash.id,
+          payday: dash.payday,
+          effectiveFrom: "0001-01-01",
+        });
+
+        await tx.insert(schema.categories).values(
+          DEFAULT_CATEGORIES.map((c) => ({
+            dashboardId: dash.id,
+            name: c.name,
+            kind: c.kind,
+            groupName: c.groupName,
+            sortOrder: c.sortOrder,
+          })),
+        );
+
+        await tx.insert(schema.sinkingFunds).values(
+          DEFAULT_SINKING_FUNDS.map((f, idx) => ({
+            dashboardId: dash.id,
+            name: f.name,
+            target: String(f.target),
+            monthlyContribution: String(f.monthlyContribution),
+            color: f.color,
+            sortOrder: idx * 10,
+          })),
+        );
+
+        return { id: dash.id, name: dash.name };
       });
-
-      await db.insert(schema.categories).values(
-        DEFAULT_CATEGORIES.map((c) => ({
-          dashboardId: dash.id,
-          name: c.name,
-          kind: c.kind,
-          groupName: c.groupName,
-          sortOrder: c.sortOrder,
-        })),
-      );
-
-      await db.insert(schema.sinkingFunds).values(
-        DEFAULT_SINKING_FUNDS.map((f, idx) => ({
-          dashboardId: dash.id,
-          name: f.name,
-          target: String(f.target),
-          monthlyContribution: String(f.monthlyContribution),
-          color: f.color,
-          sortOrder: idx * 10,
-        })),
-      );
-
-      return { id: dash.id, name: dash.name };
     }),
   );
 
@@ -115,14 +106,16 @@ export const updateDashboard = createServerFn({ method: "POST" })
           throw new Error("Lønningsdagen er låst etter at du har opprettet en budsjettperiode");
         }
         await db
-          .update(schema.budgetPaydayRules)
-          .set({ payday: data.payday })
-          .where(
-            and(
-              eq(schema.budgetPaydayRules.dashboardId, data.dashboardId),
-              eq(schema.budgetPaydayRules.effectiveFrom, "0001-01-01"),
-            ),
-          );
+          .insert(schema.budgetPaydayRules)
+          .values({
+            dashboardId: data.dashboardId,
+            payday: data.payday,
+            effectiveFrom: "0001-01-01",
+          })
+          .onConflictDoUpdate({
+            target: [schema.budgetPaydayRules.dashboardId, schema.budgetPaydayRules.effectiveFrom],
+            set: { payday: data.payday },
+          });
       }
       await db
         .update(schema.dashboards)
@@ -165,7 +158,7 @@ export const changeBudgetPayday = createServerFn({ method: "POST" })
         .where(eq(schema.budgetPeriods.dashboardId, data.dashboardId))
         .orderBy(desc(schema.budgetPeriods.endDate))
         .limit(1);
-      if (!previous) throw new Error("Endre lønningsdagen før du oppretter en budsjettperiode");
+      if (!previous) throw new Error("Opprett en budsjettperiode før du bytter lønningsdag");
 
       const transitionStart = dayAfter(previous.endDate);
       if (data.effectiveFrom < transitionStart) {
@@ -267,7 +260,7 @@ export const changeBudgetPayday = createServerFn({ method: "POST" })
             const carryoverAmount = actualBalance.toFixed(2);
             await tx.insert(schema.budgetPeriodItems).values({
               groupId: transitionIncomeGroupId,
-              name: `Overført fra ${previous.endDate}`,
+              name: `Overført fra ${formatISODate(previous.endDate, { month: "long", year: "numeric" })}`,
               expected: carryoverAmount,
               actual: carryoverAmount,
               sortOrder: -1,
@@ -275,11 +268,17 @@ export const changeBudgetPayday = createServerFn({ method: "POST" })
           }
         }
 
-        await tx.insert(schema.budgetPaydayRules).values({
-          dashboardId: data.dashboardId,
-          payday: data.payday,
-          effectiveFrom: data.effectiveFrom,
-        });
+        await tx
+          .insert(schema.budgetPaydayRules)
+          .values({
+            dashboardId: data.dashboardId,
+            payday: data.payday,
+            effectiveFrom: data.effectiveFrom,
+          })
+          .onConflictDoUpdate({
+            target: [schema.budgetPaydayRules.dashboardId, schema.budgetPaydayRules.effectiveFrom],
+            set: { payday: data.payday },
+          });
         await tx
           .update(schema.dashboards)
           .set({ payday: data.payday, updatedAt: new Date() })

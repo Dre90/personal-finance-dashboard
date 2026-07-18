@@ -36,24 +36,13 @@ import { useToast } from "../../components/Toaster";
 import { clearStoredDashboardId } from "../../lib/auth";
 import { useTheme } from "../../lib/theme-context";
 import type { ThemePreference } from "../../lib/theme";
+import { dayAfter, dayBefore, formatISODate } from "../../lib/utils";
 
 const THEME_OPTIONS: ReadonlyArray<{ value: ThemePreference; label: string }> = [
   { value: "auto", label: "Auto" },
   { value: "light", label: "Lyst" },
   { value: "dark", label: "Mørkt" },
 ];
-
-function dayAfter(date: string): string {
-  const value = new Date(`${date}T00:00:00.000Z`);
-  value.setUTCDate(value.getUTCDate() + 1);
-  return value.toISOString().slice(0, 10);
-}
-
-function dayBefore(date: string): string {
-  const value = new Date(`${date}T00:00:00.000Z`);
-  value.setUTCDate(value.getUTCDate() - 1);
-  return value.toISOString().slice(0, 10);
-}
 
 function nextPaydayAfter(date: string, payday: number): string {
   const [year, month, day] = date.split("-").map(Number);
@@ -64,9 +53,7 @@ function nextPaydayAfter(date: string, payday: number): string {
 }
 
 function formatDate(date: string): string {
-  return new Intl.DateTimeFormat("nb-NO", { dateStyle: "long" }).format(
-    new Date(`${date}T00:00:00`),
-  );
+  return formatISODate(date, { dateStyle: "long" });
 }
 
 export function SettingsPage() {

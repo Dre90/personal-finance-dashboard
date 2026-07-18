@@ -21,11 +21,12 @@ export function GroupColorField({
             type="button"
             onClick={() => onColorChange(option)}
             className={cn(
-              "size-7 rounded-full border-2",
+              "focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none size-7 rounded-full border-2",
               color === option ? "border-foreground" : "border-transparent",
             )}
             style={{ backgroundColor: option }}
             aria-label={`Farge ${option}`}
+            aria-pressed={color === option}
           />
         ))}
       </div>

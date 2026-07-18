@@ -8,7 +8,7 @@ import { getDashboardSummary } from "~/features/dashboard/server";
 import { useDashboard } from "../../lib/dashboard-context";
 import { useQuery } from "../../lib/query";
 import { ASSET_KIND_COLOR, FLOW_COLORS } from "../../lib/colors";
-import { formatNOK } from "../../lib/utils";
+import { formatISODate, formatNOK } from "../../lib/utils";
 
 export function DashboardHome() {
   const { id } = useDashboard();
@@ -104,6 +104,7 @@ export function DashboardHome() {
             <CardAction>
               <Badge variant="secondary">
                 {data.currentMonth ? periodLabel(data.currentMonth) : "Ingen periode"} vs forrige
+                periode
               </Badge>
             </CardAction>
           </CardHeader>
@@ -232,9 +233,7 @@ export function DashboardHome() {
 }
 
 function periodLabel(date: string) {
-  return new Intl.DateTimeFormat("nb-NO", { month: "long", year: "numeric" }).format(
-    new Date(`${date}T00:00:00`),
-  );
+  return formatISODate(date, { month: "long", year: "numeric" });
 }
 
 function SoftStat({ label, value }: { label: string; value: number }) {

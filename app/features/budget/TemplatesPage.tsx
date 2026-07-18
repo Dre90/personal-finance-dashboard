@@ -31,7 +31,7 @@ import { ConsumptionGroupField } from "~/features/budget/ConsumptionGroupField";
 import { DEFAULT_BUDGET_GROUP_COLOR, GroupColorField } from "~/features/budget/GroupColorField";
 import { useDashboard } from "~/lib/dashboard-context";
 import { useMutation, useQuery } from "~/lib/query";
-import { cn, formatMoneyInput, formatNOK, toNumber } from "~/lib/utils";
+import { cn, formatMoneyInput, formatNOK, roundMoney, toNumber } from "~/lib/utils";
 import {
   createBudgetTemplate,
   createTemplateGroup,
@@ -51,9 +51,20 @@ type Template = Awaited<ReturnType<typeof listBudgetTemplates>>[number];
 type TemplateGroup = Template["groups"][number];
 type ReorderEntry = { id: number; name: string; value?: number };
 
+const templateItemExpectedSchema = z
+  .string()
+  .transform((value) => {
+    const trimmed = value.trim();
+    if (!trimmed) return "0";
+    if (trimmed.includes(",")) return trimmed.replace(/[\s.]/g, "").replace(",", ".");
+    if (/^-?(?:\d{1,3}\.)+\d{3}$/.test(trimmed)) return trimmed.replace(/[\s.]/g, "");
+    return trimmed.replace(/\s/g, "");
+  })
+  .refine((value) => Number.isFinite(Number(value)), "Skriv et gyldig beløp.");
+
 const templateItemFormSchema = z.object({
   name: z.string().trim().min(1, "Skriv et navn på posten."),
-  expected: z.string(),
+  expected: templateItemExpectedSchema,
 });
 
 export function TemplatesPage() {
@@ -291,7 +302,7 @@ function TemplateEditor({
     },
     { income: 0, expense: 0 },
   );
-  const expectedBalance = totals.income - totals.expense;
+  const expectedBalance = roundMoney(totals.income - totals.expense);
   return (
     <>
       <Card>
@@ -748,24 +759,30 @@ function TemplateItemModal({
           }}
         </form.Field>
         <form.Field name="expected">
-          {(field) => (
-            <Field>
-              <FieldLabel htmlFor="template-item-expected">Forventet beløp</FieldLabel>
-              <Input
-                id="template-item-expected"
-                name={field.name}
-                type="text"
-                inputMode="decimal"
-                value={field.state.value}
-                onBlur={() => {
-                  field.handleBlur();
-                  if (field.state.value) field.handleChange(formatMoneyInput(field.state.value));
-                }}
-                onChange={(event) => field.handleChange(event.target.value)}
-              />
-              <p className="text-muted-foreground text-xs">Tomt beløp lagres som 0,00 kr.</p>
-            </Field>
-          )}
+          {(field) => {
+            const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+            return (
+              <Field data-invalid={isInvalid}>
+                <FieldLabel htmlFor="template-item-expected">Forventet beløp</FieldLabel>
+                <Input
+                  id="template-item-expected"
+                  name={field.name}
+                  type="text"
+                  inputMode="decimal"
+                  value={field.state.value}
+                  onBlur={() => {
+                    field.handleBlur();
+                    const parsed = templateItemExpectedSchema.safeParse(field.state.value);
+                    if (parsed.success) field.handleChange(formatMoneyInput(parsed.data));
+                  }}
+                  onChange={(event) => field.handleChange(event.target.value)}
+                  aria-invalid={isInvalid}
+                />
+                {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                <p className="text-muted-foreground text-xs">Tomt beløp lagres som 0,00 kr.</p>
+              </Field>
+            );
+          }}
         </form.Field>
       </div>
     </Modal>

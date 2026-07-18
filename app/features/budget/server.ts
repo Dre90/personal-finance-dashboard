@@ -2,11 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, gte, inArray, lt, lte } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "../../../db";
-import { numericInput, safeHandler, uuidSchema } from "~/server/_helpers";
+import { isoDateSchema, numericInput, safeHandler, uuidSchema } from "~/server/_helpers";
 import { assertDashboardExists } from "~/server/_db";
 
 const kindSchema = z.enum(["income", "expense"]);
-const periodMonthSchema = z.string().regex(/^\d{4}-\d{2}$/, "Forventet YYYY-MM");
+const periodMonthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Forventet YYYY-MM");
 const nameSchema = z.string().trim().min(1, "Navn kan ikke være tomt").max(120);
 const groupNameSchema = nameSchema.max(60);
 const groupColorSchema = z.string().regex(/^#[0-9a-f]{6}$/i, "Ugyldig farge");
@@ -48,8 +48,8 @@ async function getPaydayForPeriodMonth(dashboardId: string, periodMonth: string)
 }
 
 function monthName(date: string): string {
-  const name = new Intl.DateTimeFormat("nb-NO", { month: "long" }).format(
-    new Date(`${date}T00:00:00`),
+  const name = new Intl.DateTimeFormat("nb-NO", { month: "long", timeZone: "UTC" }).format(
+    new Date(`${date}T00:00:00.000Z`),
   );
   return `${name[0]?.toUpperCase() ?? ""}${name.slice(1)}`;
 }
@@ -300,15 +300,10 @@ export const reorderTemplateGroups = createServerFn({ method: "POST" })
         .select({ id: schema.budgetTemplateGroups.id })
         .from(schema.budgetTemplateGroups)
         .where(eq(schema.budgetTemplateGroups.templateId, data.templateId));
-      const ownedIds = new Set(groups.map((group) => group.id));
-      const orderedIds = new Set(data.orderedIds);
-      if (
-        groups.length !== data.orderedIds.length ||
-        orderedIds.size !== data.orderedIds.length ||
-        data.orderedIds.some((id) => !ownedIds.has(id))
-      ) {
-        throw new Error("Ugyldig rekkefølge");
-      }
+      validateOrder(
+        groups.map((group) => group.id),
+        data.orderedIds,
+      );
       // Netlify Database's prepared-statement driver does not reliably infer the
       // parameter type for a CASE expression used in an integer assignment. Keep
       // this atomic while using ordinary typed updates instead.
@@ -460,15 +455,10 @@ export const reorderTemplateItems = createServerFn({ method: "POST" })
         .select({ id: schema.budgetTemplateItems.id })
         .from(schema.budgetTemplateItems)
         .where(eq(schema.budgetTemplateItems.groupId, data.groupId));
-      const ownedIds = new Set(items.map((item) => item.id));
-      const orderedIds = new Set(data.orderedIds);
-      if (
-        items.length !== data.orderedIds.length ||
-        orderedIds.size !== data.orderedIds.length ||
-        data.orderedIds.some((id) => !ownedIds.has(id))
-      ) {
-        throw new Error("Ugyldig rekkefølge");
-      }
+      validateOrder(
+        items.map((item) => item.id),
+        data.orderedIds,
+      );
       await db.transaction(async (tx) => {
         for (const [index, id] of data.orderedIds.entries()) {
           await tx
@@ -995,7 +985,7 @@ export const createBudgetPurchase = createServerFn({ method: "POST" })
         dashboardId: uuidSchema,
         periodId: z.number().int(),
         itemId: z.number().int(),
-        occurredAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        occurredAt: isoDateSchema,
         description: nameSchema,
         amount: numericInput(),
       })
@@ -1047,7 +1037,7 @@ export const updateBudgetPurchase = createServerFn({ method: "POST" })
         periodId: z.number().int(),
         purchaseId: z.number().int(),
         itemId: z.number().int(),
-        occurredAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        occurredAt: isoDateSchema,
         description: nameSchema,
         amount: numericInput(),
       })
@@ -1128,7 +1118,7 @@ export const deleteBudgetPurchase = createServerFn({ method: "POST" })
 
 export const getBudgetYear = createServerFn({ method: "GET" })
   .validator((data: unknown) =>
-    z.object({ dashboardId: uuidSchema, year: z.number().int() }).parse(data),
+    z.object({ dashboardId: uuidSchema, year: z.number().int().min(1000).max(9998) }).parse(data),
   )
   .handler(
     safeHandler(async ({ data }) => {
@@ -1154,6 +1144,11 @@ export const getBudgetYear = createServerFn({ method: "GET" })
             schema.budgetPeriodGroups.periodId,
             periods.map((period) => period.id),
           ),
+        )
+        .orderBy(
+          asc(schema.budgetPeriodGroups.periodId),
+          asc(schema.budgetPeriodGroups.sortOrder),
+          asc(schema.budgetPeriodGroups.name),
         );
       const items =
         groups.length === 0
@@ -1166,6 +1161,11 @@ export const getBudgetYear = createServerFn({ method: "GET" })
                   schema.budgetPeriodItems.groupId,
                   groups.map((group) => group.id),
                 ),
+              )
+              .orderBy(
+                asc(schema.budgetPeriodItems.groupId),
+                asc(schema.budgetPeriodItems.sortOrder),
+                asc(schema.budgetPeriodItems.name),
               );
       const purchases = await db
         .select()

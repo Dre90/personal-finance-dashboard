@@ -29,8 +29,14 @@ export const numericInput = () =>
     })
     .refine((value) => Number.isFinite(Number(value)), "Forventet et gyldig beløp");
 
-/** Date input as YYYY-MM-DD string. */
-export const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Forventet YYYY-MM-DD");
+/** Date input as a real calendar date in YYYY-MM-DD format. */
+export const isoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Forventet YYYY-MM-DD")
+  .refine((value) => {
+    const parsed = new Date(`${value}T00:00:00.000Z`);
+    return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+  }, "Forventet en gyldig dato");
 
 /** YYYY-MM string. */
 export const yearMonthSchema = z.string().regex(/^\d{4}-\d{2}$/, "Forventet YYYY-MM");

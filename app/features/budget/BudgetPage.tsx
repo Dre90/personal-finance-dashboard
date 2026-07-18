@@ -32,7 +32,15 @@ import { ConsumptionGroupField } from "~/features/budget/ConsumptionGroupField";
 import { DEFAULT_BUDGET_GROUP_COLOR, GroupColorField } from "~/features/budget/GroupColorField";
 import { useDashboard } from "~/lib/dashboard-context";
 import { invalidateQueries, useMutation, useQuery } from "~/lib/query";
-import { cn, formatMoneyInput, formatNOK, todayISO, toNumber } from "~/lib/utils";
+import {
+  cn,
+  formatISODate,
+  formatMoneyInput,
+  formatNOK,
+  roundMoney,
+  todayISO,
+  toNumber,
+} from "~/lib/utils";
 import {
   createBudgetPeriod,
   createBudgetPurchase,
@@ -311,8 +319,8 @@ function calculateTotals(groups: PeriodGroup[]) {
           totals.expenseActual += actual;
         }
       }
-      totals.expectedBalance = totals.incomeExpected - totals.expenseExpected;
-      totals.actualBalance = totals.incomeActual - totals.expenseActual;
+      totals.expectedBalance = roundMoney(totals.incomeExpected - totals.expenseExpected);
+      totals.actualBalance = roundMoney(totals.incomeActual - totals.expenseActual);
       return totals;
     },
     {
@@ -548,13 +556,11 @@ function BudgetGroup({
                         key={`name-${item.id}-${item.name}`}
                         defaultValue={item.name}
                         aria-label={`Navn på ${item.name}`}
-                        onBlur={(event) =>
-                          saveMutation.mutate({
-                            itemId: item.id,
-                            field: "name",
-                            value: event.target.value,
-                          })
-                        }
+                        onBlur={(event) => {
+                          const value = event.target.value.trim();
+                          if (value === item.name.trim()) return;
+                          saveMutation.mutate({ itemId: item.id, field: "name", value });
+                        }}
                       />
                     </TableCell>
                     <TableCell className="text-right">
@@ -566,10 +572,12 @@ function BudgetGroup({
                         className="ml-auto w-28 text-right tabular-nums"
                         aria-label={`Forventet for ${item.name}`}
                         onBlur={(event) => {
+                          const value = event.target.value.trim();
+                          if (value === formatMoneyInput(item.expected)) return;
                           saveMutation.mutate({
                             itemId: item.id,
                             field: "expected",
-                            value: event.target.value,
+                            value,
                           });
                         }}
                       />
@@ -588,10 +596,12 @@ function BudgetGroup({
                           className="ml-auto w-28 text-right tabular-nums"
                           aria-label={`Faktisk for ${item.name}`}
                           onBlur={(event) => {
+                            const value = event.target.value.trim();
+                            if (value === formatMoneyInput(item.actual)) return;
                             saveMutation.mutate({
                               itemId: item.id,
                               field: "actual",
-                              value: event.target.value,
+                              value,
                             });
                           }}
                         />
@@ -903,6 +913,8 @@ function PurchaseList({
             type="date"
             className="h-8"
             value={occurredAt}
+            min={period.startDate}
+            max={period.endDate}
             onChange={(event) => setOccurredAt(event.target.value)}
           />
         </Field>
@@ -1430,17 +1442,15 @@ function PeriodGroupModal({
 }
 
 function formatPeriod(date: string) {
-  return new Intl.DateTimeFormat("nb-NO", {
+  return formatISODate(date, {
     day: "numeric",
     month: "short",
     year: "numeric",
-  }).format(new Date(`${date}T00:00:00`));
+  });
 }
 
 function formatBudgetMonth(date: string) {
-  return new Intl.DateTimeFormat("nb-NO", { month: "long", year: "numeric" }).format(
-    new Date(`${date}T00:00:00`),
-  );
+  return formatISODate(date, { month: "long", year: "numeric" });
 }
 
 function getPurchaseDescriptionSuggestions(purchases: BudgetPurchase[]) {

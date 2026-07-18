@@ -1,0 +1,2 @@
+ALTER TABLE "budget_payday_rules" ADD CONSTRAINT "budget_payday_rules_payday_range_check" CHECK ("payday" BETWEEN 1 AND 28);--> statement-breakpoint
+ALTER TABLE "dashboards" ADD CONSTRAINT "dashboards_payday_range_check" CHECK ("payday" BETWEEN 1 AND 28);
