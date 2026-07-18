@@ -41,6 +41,10 @@ export function toNumber(value: string | number | null | undefined): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+export function roundMoney(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
 export function formatMoneyInput(value: string | number | null | undefined): string {
   return moneyInputFormatter.format(toNumber(value));
 }
@@ -118,4 +122,22 @@ export function monthsInYear(year: number): string[] {
 
 export function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+export function formatISODate(date: string, options: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat("nb-NO", { ...options, timeZone: "UTC" }).format(
+    new Date(`${date}T00:00:00.000Z`),
+  );
+}
+
+export function dayAfter(date: string): string {
+  const value = new Date(`${date}T00:00:00.000Z`);
+  value.setUTCDate(value.getUTCDate() + 1);
+  return value.toISOString().slice(0, 10);
+}
+
+export function dayBefore(date: string): string {
+  const value = new Date(`${date}T00:00:00.000Z`);
+  value.setUTCDate(value.getUTCDate() - 1);
+  return value.toISOString().slice(0, 10);
 }

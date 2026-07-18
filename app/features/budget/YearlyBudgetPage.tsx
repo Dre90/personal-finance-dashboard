@@ -18,7 +18,7 @@ import { MoneyBarChart, MoneyDonut } from "~/components/charts";
 import { getBudgetYear } from "~/features/budget/server";
 import { useDashboard } from "~/lib/dashboard-context";
 import { useQuery } from "~/lib/query";
-import { formatNOK } from "~/lib/utils";
+import { formatISODate, formatNOK, roundMoney } from "~/lib/utils";
 
 export function YearlyBudgetPage() {
   const { id: dashboardId } = useDashboard();
@@ -38,6 +38,7 @@ export function YearlyBudgetPage() {
     }),
     { incomeBudget: 0, incomeActual: 0, expenseBudget: 0, expenseActual: 0 },
   );
+  const expenseVariance = roundMoney(totals.expenseBudget - totals.expenseActual);
   const expenseColors = new Map<string, string>();
   for (const period of data) {
     for (const group of period.expenseGroups) expenseColors.set(group.name, group.color);
@@ -50,9 +51,7 @@ export function YearlyBudgetPage() {
     stackId: "expenses",
   }));
   const chartData = data.map((period) => ({
-    label: new Intl.DateTimeFormat("nb-NO", { month: "short" }).format(
-      new Date(`${period.endDate}T00:00:00`),
-    ),
+    label: formatISODate(period.endDate, { month: "short" }),
     ...Object.fromEntries(
       expenseNames.map((name, index) => [
         `expense-${index}`,
@@ -102,13 +101,9 @@ export function YearlyBudgetPage() {
             <StatCard label="Forventede utgifter" value={totals.expenseBudget} />
             <StatCard
               label="Avvik mot budsjett"
-              value={totals.expenseBudget - totals.expenseActual}
-              tone={totals.expenseBudget - totals.expenseActual >= 0 ? "positive" : "negative"}
-              hint={
-                totals.expenseBudget - totals.expenseActual >= 0
-                  ? "Under budsjett"
-                  : "Over budsjett"
-              }
+              value={expenseVariance}
+              tone={expenseVariance >= 0 ? "positive" : "negative"}
+              hint={expenseVariance >= 0 ? "Under budsjett" : "Over budsjett"}
             />
           </div>
           <section className="flex flex-col gap-3">
@@ -233,7 +228,5 @@ export function YearlyBudgetPage() {
 }
 
 function formatBudgetMonth(endDate: string) {
-  return new Intl.DateTimeFormat("nb-NO", { month: "long" }).format(
-    new Date(`${endDate}T00:00:00`),
-  );
+  return formatISODate(endDate, { month: "long" });
 }

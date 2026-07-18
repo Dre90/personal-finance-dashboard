@@ -9,7 +9,7 @@ import { getBudgetYear } from "~/features/budget/server";
 import { useDashboard } from "~/lib/dashboard-context";
 import { useQuery } from "~/lib/query";
 import { FLOW_COLORS } from "~/lib/colors";
-import { formatNOK } from "~/lib/utils";
+import { formatISODate, formatNOK, roundMoney } from "~/lib/utils";
 
 export function RecapPage() {
   const { id: dashboardId } = useDashboard();
@@ -26,12 +26,10 @@ export function RecapPage() {
     }),
     { income: 0, expense: 0 },
   );
-  const savings = totals.income - totals.expense;
+  const savings = roundMoney(totals.income - totals.expense);
   const savingRate = totals.income > 0 ? (savings / totals.income) * 100 : 0;
   const months = data.map((period) => ({
-    month: new Intl.DateTimeFormat("nb-NO", { month: "short" }).format(
-      new Date(`${period.endDate}T00:00:00`),
-    ),
+    month: formatISODate(period.endDate, { month: "short" }),
     income: period.incomeActual,
     expense: period.expenseActual,
     savings: period.incomeActual - period.expenseActual,

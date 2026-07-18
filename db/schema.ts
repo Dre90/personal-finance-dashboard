@@ -1,4 +1,5 @@
 import {
+  check,
   pgTable,
   serial,
   uuid,
@@ -12,17 +13,22 @@ import {
   index,
   foreignKey,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // -- Dashboards -------------------------------------------------------------
 
-export const dashboards = pgTable("dashboards", {
-  id: uuid().primaryKey().defaultRandom(),
-  name: text().notNull().default("Mitt dashboard"),
-  currency: text().notNull().default("NOK"),
-  payday: integer().notNull().default(25),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-});
+export const dashboards = pgTable(
+  "dashboards",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    name: text().notNull().default("Mitt dashboard"),
+    currency: text().notNull().default("NOK"),
+    payday: integer().notNull().default(25),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [check("dashboards_payday_range_check", sql`${t.payday} BETWEEN 1 AND 28`)],
+);
 
 export const budgetPaydayRules = pgTable(
   "budget_payday_rules",
@@ -38,6 +44,7 @@ export const budgetPaydayRules = pgTable(
   (t) => [
     unique("budget_payday_rules_dashboard_effective_unique").on(t.dashboardId, t.effectiveFrom),
     index("budget_payday_rules_dashboard_effective_idx").on(t.dashboardId, t.effectiveFrom),
+    check("budget_payday_rules_payday_range_check", sql`${t.payday} BETWEEN 1 AND 28`),
   ],
 );
 

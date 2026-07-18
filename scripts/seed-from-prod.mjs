@@ -143,6 +143,19 @@ async function main() {
     const summary = {};
     for (const table of ORDER) {
       const cols = await columns(prod, table);
+      if (cols.length === 0) {
+        if (table === "budget_payday_rules") {
+          const dashboards = await local.query(`SELECT id, payday FROM dashboards`);
+          if (dashboards.rows.length > 0) {
+            await local.query(
+              `INSERT INTO budget_payday_rules (dashboard_id, payday, effective_from)
+               SELECT id, payday, '0001-01-01' FROM dashboards`,
+            );
+          }
+        }
+        summary[table] = "ikke deployet";
+        continue;
+      }
       const colList = cols.map((c) => `"${c}"`).join(", ");
       const src = await prod.query(`SELECT ${colList} FROM "${table}"`);
       summary[table] = src.rows.length;
