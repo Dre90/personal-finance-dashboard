@@ -4,10 +4,12 @@ import { z } from "zod";
 import { db, schema } from "../../../db";
 import { isoDateSchema, numericInput, safeHandler, uuidSchema } from "~/server/_helpers";
 import { assertDashboardExists } from "~/server/_db";
+import { formatISODate, roundMoney } from "~/lib/utils";
 
 const kindSchema = z.enum(["income", "expense"]);
 const periodMonthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Forventet YYYY-MM");
 const nameSchema = z.string().trim().min(1, "Navn kan ikke være tomt").max(120);
+const descriptionSchema = z.string().trim().min(1, "Beskrivelse kan ikke være tom").max(120);
 const groupNameSchema = nameSchema.max(60);
 const groupColorSchema = z.string().regex(/^#[0-9a-f]{6}$/i, "Ugyldig farge");
 
@@ -19,7 +21,10 @@ function monthStartDate(periodMonth: string, payday: number): string {
 
 function monthEndDate(periodMonth: string, payday: number): string {
   const [year, month] = periodMonth.split("-").map(Number);
-  const date = new Date(Date.UTC(year!, month! - (payday === 1 ? 0 : 1), payday - 1));
+  const date =
+    payday === 1
+      ? new Date(Date.UTC(year!, month!, 0))
+      : new Date(Date.UTC(year!, month! - 1, payday - 1));
   return date.toISOString().slice(0, 10);
 }
 
@@ -45,13 +50,6 @@ async function getPaydayForPeriodMonth(dashboardId: string, periodMonth: string)
     .find((entry) => firstPeriodMonthForRule(entry.effectiveFrom, entry.payday) <= periodMonth);
   if (!rule) throw new Error("Fant ingen lønningsdagsregel for budsjettperioden");
   return rule.payday;
-}
-
-function monthName(date: string): string {
-  const name = new Intl.DateTimeFormat("nb-NO", { month: "long", timeZone: "UTC" }).format(
-    new Date(`${date}T00:00:00.000Z`),
-  );
-  return `${name[0]?.toUpperCase() ?? ""}${name.slice(1)}`;
 }
 
 function parseExpected(value: string | number) {
@@ -541,8 +539,6 @@ export const createBudgetPeriod = createServerFn({ method: "POST" })
                 ),
               );
 
-      const previousEndDate = new Date(`${startDate}T00:00:00.000Z`);
-      previousEndDate.setUTCDate(previousEndDate.getUTCDate() - 1);
       return db.transaction(async (tx) => {
         const [period] = await tx
           .insert(schema.budgetPeriods)
@@ -582,9 +578,10 @@ export const createBudgetPeriod = createServerFn({ method: "POST" })
           .where(
             and(
               eq(schema.budgetPeriods.dashboardId, data.dashboardId),
-              eq(schema.budgetPeriods.endDate, previousEndDate.toISOString().slice(0, 10)),
+              lt(schema.budgetPeriods.endDate, startDate),
             ),
           )
+          .orderBy(desc(schema.budgetPeriods.endDate))
           .limit(1);
         if (previous) {
           const previousGroups = await tx
@@ -614,13 +611,15 @@ export const createBudgetPeriod = createServerFn({ method: "POST" })
               (previousPurchaseActual.get(purchase.itemId) ?? 0) + Number(purchase.amount),
             );
           }
-          const actualBalance = previousItems.reduce((total, item) => {
-            const group = previousGroups.find((entry) => entry.id === item.groupId);
-            const actual = group?.isConsumption
-              ? (previousPurchaseActual.get(item.id) ?? 0)
-              : Number(item.actual);
-            return total + (group?.kind === "income" ? actual : -actual);
-          }, 0);
+          const actualBalance = roundMoney(
+            previousItems.reduce((total, item) => {
+              const group = previousGroups.find((entry) => entry.id === item.groupId);
+              const actual = group?.isConsumption
+                ? (previousPurchaseActual.get(item.id) ?? 0)
+                : Number(item.actual);
+              return total + (group?.kind === "income" ? actual : -actual);
+            }, 0),
+          );
           if (actualBalance > 0) {
             const carryoverAmount = actualBalance.toFixed(2);
             const [incomeGroup] = await tx
@@ -637,7 +636,7 @@ export const createBudgetPeriod = createServerFn({ method: "POST" })
             if (incomeGroup) {
               await tx.insert(schema.budgetPeriodItems).values({
                 groupId: incomeGroup.id,
-                name: `Overført fra ${monthName(previous.endDate)}`,
+                name: `Overført fra ${formatISODate(previous.endDate, { month: "long", year: "numeric" })}`,
                 expected: carryoverAmount,
                 actual: carryoverAmount,
                 sortOrder: -1,
@@ -696,7 +695,9 @@ export const getBudgetPeriod = createServerFn({ method: "GET" })
             .filter((item) => item.groupId === group.id)
             .map((item) => ({
               ...item,
-              actual: group.isConsumption ? String(purchaseActual.get(item.id) ?? 0) : item.actual,
+              actual: group.isConsumption
+                ? roundMoney(purchaseActual.get(item.id) ?? 0).toFixed(2)
+                : item.actual,
             })),
         })),
       };
@@ -986,7 +987,7 @@ export const createBudgetPurchase = createServerFn({ method: "POST" })
         periodId: z.number().int(),
         itemId: z.number().int(),
         occurredAt: isoDateSchema,
-        description: nameSchema,
+        description: descriptionSchema,
         amount: numericInput(),
       })
       .parse(data),
@@ -1038,7 +1039,7 @@ export const updateBudgetPurchase = createServerFn({ method: "POST" })
         purchaseId: z.number().int(),
         itemId: z.number().int(),
         occurredAt: isoDateSchema,
-        description: nameSchema,
+        description: descriptionSchema,
         amount: numericInput(),
       })
       .parse(data),

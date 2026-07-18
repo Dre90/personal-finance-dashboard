@@ -152,8 +152,10 @@ async function main() {
                SELECT id, payday, '0001-01-01' FROM dashboards`,
             );
           }
+          summary[table] = dashboards.rows.length;
+        } else {
+          summary[table] = "ikke deployet";
         }
-        summary[table] = "ikke deployet";
         continue;
       }
       const colList = cols.map((c) => `"${c}"`).join(", ");

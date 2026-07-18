@@ -31,7 +31,14 @@ import { ConsumptionGroupField } from "~/features/budget/ConsumptionGroupField";
 import { DEFAULT_BUDGET_GROUP_COLOR, GroupColorField } from "~/features/budget/GroupColorField";
 import { useDashboard } from "~/lib/dashboard-context";
 import { useMutation, useQuery } from "~/lib/query";
-import { cn, formatMoneyInput, formatNOK, roundMoney, toNumber } from "~/lib/utils";
+import {
+  cn,
+  formatMoneyInput,
+  formatNOK,
+  normalizeNumericString,
+  roundMoney,
+  toNumber,
+} from "~/lib/utils";
 import {
   createBudgetTemplate,
   createTemplateGroup,
@@ -56,9 +63,7 @@ const templateItemExpectedSchema = z
   .transform((value) => {
     const trimmed = value.trim();
     if (!trimmed) return "0";
-    if (trimmed.includes(",")) return trimmed.replace(/[\s.]/g, "").replace(",", ".");
-    if (/^-?(?:\d{1,3}\.)+\d{3}$/.test(trimmed)) return trimmed.replace(/[\s.]/g, "");
-    return trimmed.replace(/\s/g, "");
+    return normalizeNumericString(trimmed);
   })
   .refine((value) => Number.isFinite(Number(value)), "Skriv et gyldig beløp.");
 
@@ -462,8 +467,15 @@ function TemplateGroupEditor({
                       defaultValue={formatMoneyInput(item.expected)}
                       className="ml-auto w-32 text-right tabular-nums"
                       onBlur={(event) => {
-                        const value = event.target.value.trim();
-                        if (value === formatMoneyInput(item.expected)) return;
+                        const value = event.target.value.trim() || "0";
+                        const normalizedValue = normalizeNumericString(value);
+                        if (!Number.isFinite(Number(normalizedValue))) {
+                          updateItem.mutate({ itemId: item.id, expected: value });
+                          return;
+                        }
+                        const formattedValue = formatMoneyInput(value);
+                        event.target.value = formattedValue;
+                        if (formattedValue === formatMoneyInput(item.expected)) return;
                         updateItem.mutate({ itemId: item.id, expected: value });
                       }}
                       aria-label={`Forventet for ${item.name}`}

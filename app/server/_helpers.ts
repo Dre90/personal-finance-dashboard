@@ -1,13 +1,8 @@
 import { z } from "zod";
+import { normalizeNumericString } from "~/lib/utils";
 
 /** UUID validator used by every server function that takes a dashboardId. */
 export const uuidSchema = z.string().uuid();
-
-function normalizeNumericString(value: string): string {
-  if (value.includes(",")) return value.replace(/[\s.]/g, "").replace(",", ".");
-  if (/^-?(?:\d{1,3}\.)+\d{3}$/.test(value)) return value.replace(/[\s.]/g, "");
-  return value.replace(/\s/g, "");
-}
 
 /**
  * Validator for a "money-like" input: the client can send either a string or a number,

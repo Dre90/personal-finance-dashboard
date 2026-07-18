@@ -119,7 +119,7 @@ export function MoneyBarChart<T extends Record<string, unknown>>({
             name={s.name}
             fill={`var(--color-${s.dataKey})`}
             stackId={s.stackId}
-            radius={[4, 4, 0, 0]}
+            radius={s.stackId ? 0 : [4, 4, 0, 0]}
           />
         ))}
       </BarChart>

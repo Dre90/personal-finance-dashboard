@@ -5,6 +5,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function normalizeNumericString(value: string): string {
+  if (value.includes(",")) return value.replace(/[\s.]/g, "").replace(",", ".");
+  if (/^-?(?:\d{1,3}\.)+\d{3}$/.test(value)) return value.replace(/[\s.]/g, "");
+  return value.replace(/\s/g, "");
+}
+
 const nokFormatter = new Intl.NumberFormat("nb-NO", {
   style: "currency",
   currency: "NOK",
@@ -29,27 +35,20 @@ const moneyInputFormatter = new Intl.NumberFormat("nb-NO", {
 
 export function toNumber(value: string | number | null | undefined): number {
   if (value === null || value === undefined || value === "") return 0;
-  const normalized =
-    typeof value === "number"
-      ? value
-      : value.includes(",")
-        ? value.replace(/[\s.]/g, "").replace(",", ".")
-        : /^-?(?:\d{1,3}\.)+\d{3}$/.test(value)
-          ? value.replace(/[\s.]/g, "")
-          : value.replace(/\s/g, "");
+  const normalized = typeof value === "number" ? value : normalizeNumericString(value);
   const n = typeof normalized === "number" ? normalized : Number(normalized);
   return Number.isFinite(n) ? n : 0;
 }
 
 export function roundMoney(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
+  return Math.round((value + Math.sign(value) * Number.EPSILON) * 100) / 100;
 }
 
 export function formatMoneyInput(value: string | number | null | undefined): string {
   return moneyInputFormatter.format(toNumber(value));
 }
 
-export function formatNOK(value: string | number | null | undefined, decimals = true): string {
+export function formatNOK(value: string | number | null | undefined, decimals = false): string {
   const n = toNumber(value);
   return decimals ? nokFormatterDecimals.format(n) : nokFormatter.format(n);
 }
