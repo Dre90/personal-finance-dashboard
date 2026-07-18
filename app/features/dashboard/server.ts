@@ -3,7 +3,7 @@ import { and, asc, desc, eq, gte, inArray, lte } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "../../../db";
 import { DEFAULT_CATEGORIES, DEFAULT_SINKING_FUNDS } from "~/lib/defaults";
-import { dayAfter, dayBefore, formatISODate } from "~/lib/utils";
+import { dayAfter, dayBefore, formatISODate, roundMoney, todayISO } from "~/lib/utils";
 import { isoDateSchema, safeHandler, uuidSchema } from "~/server/_helpers";
 
 export const createDashboard = createServerFn({ method: "POST" })
@@ -67,10 +67,21 @@ export const getDashboard = createServerFn({ method: "GET" })
         .where(eq(schema.budgetPeriods.dashboardId, data.dashboardId))
         .orderBy(desc(schema.budgetPeriods.endDate))
         .limit(1);
+      const [latestActivePeriod] = await db
+        .select({ endDate: schema.budgetPeriods.endDate })
+        .from(schema.budgetPeriods)
+        .where(
+          and(
+            eq(schema.budgetPeriods.dashboardId, data.dashboardId),
+            lte(schema.budgetPeriods.startDate, todayISO()),
+          ),
+        )
+        .orderBy(desc(schema.budgetPeriods.endDate))
+        .limit(1);
       return {
         ...row,
         hasBudgetPeriods: Boolean(latestPeriod),
-        lastBudgetPeriodEndDate: latestPeriod?.endDate ?? null,
+        lastBudgetPeriodEndDate: latestActivePeriod?.endDate ?? null,
       };
     }),
   );
@@ -96,35 +107,40 @@ export const updateDashboard = createServerFn({ method: "POST" })
         .where(eq(schema.dashboards.id, data.dashboardId))
         .limit(1);
       if (!dashboard) throw new Error("Dashboardet finnes ikke");
-      if (data.payday !== undefined && data.payday !== dashboard.payday) {
-        const [period] = await db
-          .select({ id: schema.budgetPeriods.id })
-          .from(schema.budgetPeriods)
-          .where(eq(schema.budgetPeriods.dashboardId, data.dashboardId))
-          .limit(1);
-        if (period) {
-          throw new Error("Lønningsdagen er låst etter at du har opprettet en budsjettperiode");
+      await db.transaction(async (tx) => {
+        if (data.payday !== undefined && data.payday !== dashboard.payday) {
+          const [period] = await tx
+            .select({ id: schema.budgetPeriods.id })
+            .from(schema.budgetPeriods)
+            .where(eq(schema.budgetPeriods.dashboardId, data.dashboardId))
+            .limit(1);
+          if (period) {
+            throw new Error("Lønningsdagen er låst etter at du har opprettet en budsjettperiode");
+          }
+          await tx
+            .insert(schema.budgetPaydayRules)
+            .values({
+              dashboardId: data.dashboardId,
+              payday: data.payday,
+              effectiveFrom: "0001-01-01",
+            })
+            .onConflictDoUpdate({
+              target: [
+                schema.budgetPaydayRules.dashboardId,
+                schema.budgetPaydayRules.effectiveFrom,
+              ],
+              set: { payday: data.payday },
+            });
         }
-        await db
-          .insert(schema.budgetPaydayRules)
-          .values({
-            dashboardId: data.dashboardId,
-            payday: data.payday,
-            effectiveFrom: "0001-01-01",
+        await tx
+          .update(schema.dashboards)
+          .set({
+            ...(data.name === undefined ? {} : { name: data.name }),
+            ...(data.payday === undefined ? {} : { payday: data.payday }),
+            updatedAt: new Date(),
           })
-          .onConflictDoUpdate({
-            target: [schema.budgetPaydayRules.dashboardId, schema.budgetPaydayRules.effectiveFrom],
-            set: { payday: data.payday },
-          });
-      }
-      await db
-        .update(schema.dashboards)
-        .set({
-          ...(data.name === undefined ? {} : { name: data.name }),
-          ...(data.payday === undefined ? {} : { payday: data.payday }),
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.dashboards.id, data.dashboardId));
+          .where(eq(schema.dashboards.id, data.dashboardId));
+      });
       return { ok: true as const };
     }),
   );
@@ -183,7 +199,8 @@ export const changeBudgetPayday = createServerFn({ method: "POST" })
           const sourceGroups = await tx
             .select()
             .from(schema.budgetPeriodGroups)
-            .where(eq(schema.budgetPeriodGroups.periodId, previous.id));
+            .where(eq(schema.budgetPeriodGroups.periodId, previous.id))
+            .orderBy(asc(schema.budgetPeriodGroups.sortOrder), asc(schema.budgetPeriodGroups.name));
           const sourceItems =
             sourceGroups.length === 0
               ? []
@@ -249,13 +266,15 @@ export const changeBudgetPayday = createServerFn({ method: "POST" })
             }
           }
 
-          const actualBalance = sourceItems.reduce((total, item) => {
-            const group = sourceGroups.find((entry) => entry.id === item.groupId);
-            const actual = group?.isConsumption
-              ? (purchaseActual.get(item.id) ?? 0)
-              : Number(item.actual);
-            return total + (group?.kind === "income" ? actual : -actual);
-          }, 0);
+          const actualBalance = roundMoney(
+            sourceItems.reduce((total, item) => {
+              const group = sourceGroups.find((entry) => entry.id === item.groupId);
+              const actual = group?.isConsumption
+                ? (purchaseActual.get(item.id) ?? 0)
+                : Number(item.actual);
+              return total + (group?.kind === "income" ? actual : -actual);
+            }, 0),
+          );
           if (actualBalance > 0 && transitionIncomeGroupId !== null) {
             const carryoverAmount = actualBalance.toFixed(2);
             await tx.insert(schema.budgetPeriodItems).values({
@@ -426,16 +445,14 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
           (purchaseActual.get(purchase.itemId) ?? 0) + Number(purchase.amount),
         );
       }
+      const groupsById = new Map(groups.map((group) => [group.id, group]));
       const cashFlow: Record<string, CashBucket> = {};
       for (const period of [currentPeriod, previousPeriod]) {
         if (!period) continue;
         const bucket = empty();
-        const periodGroups = groups.filter((group) => group.periodId === period.id);
-        for (const item of items.filter((item) =>
-          periodGroups.some((group) => group.id === item.groupId),
-        )) {
-          const group = periodGroups.find((entry) => entry.id === item.groupId);
-          if (!group) continue;
+        for (const item of items) {
+          const group = groupsById.get(item.groupId);
+          if (!group || group.periodId !== period.id) continue;
           const actual = group.isConsumption
             ? (purchaseActual.get(item.id) ?? 0)
             : Number(item.actual);
